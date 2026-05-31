@@ -1,6 +1,6 @@
 # Kingdom Manager
 
-A FoundryVTT v13 module for managing a domain/kingdom in D&D 5e, designed for the homebrew system *An Echo Resounding* by Kevin Crawford.
+A FoundryVTT v13 module for managing a domain/kingdom in D&D 5e, designed for the homebrew system and based on *An Echo Resounding* by Kevin Crawford.
 
 ## Overview
 
