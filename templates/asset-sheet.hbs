@@ -1,0 +1,222 @@
+{{! templates/asset-sheet.hbs }}
+<div class="km-asset-form kingdom-manager">
+
+  <div class="km-form-name">
+    <img class="km-asset-img" src="{{item.img}}" data-edit="img" title="{{item.name}}" />
+    <input type="text" name="name" value="{{item.name}}" class="km-name-input" placeholder="Asset name" />
+  </div>
+
+  <div class="km-form-row">
+    <label>Type</label>
+    <select name="system.assetType">
+      {{#each assetTypeOptions}}
+      <option value="{{value}}" {{#if (eq value ../system.assetType)}}selected{{/if}}>{{label}}</option>
+      {{/each}}
+    </select>
+  </div>
+
+  {{! ── Province fields ── }}
+  {{#if isProvince}}
+  <div class="km-form-row">
+    <label>Terrain</label>
+    <select name="system.terrainType">
+      {{#each terrainOptions}}
+      <option value="{{value}}" {{#if (eq value ../system.terrainType)}}selected{{/if}}>{{label}}</option>
+      {{/each}}
+    </select>
+  </div>
+  <div class="km-form-hint">Magic potential and movement cost are set by terrain. Military, Wealth and Social are set below.</div>
+  {{/if}}
+
+  {{#if isUnit}}
+  <div class="km-form-row" style="align-items:center;">
+    <label>Agent unit</label>
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+      <input type="checkbox" name="system.isAgent" {{#if system.isAgent}}checked{{/if}} style="width:16px;height:16px;cursor:pointer;accent-color:#633806;" />
+      <span class="km-stat-hint" style="margin:0;">Agents cannot be garrisoned in a barracks</span>
+    </label>
+  </div>
+  {{/if}}
+
+  <div class="km-form-row">
+    <label>Location</label>
+    <input type="text" name="system.location" value="{{system.location}}" placeholder="Region or territory…" />
+  </div>
+
+  {{! ── Obstacle fields ── }}
+  {{#if isObstacle}}
+  <fieldset class="km-fieldset">
+    <legend>Obstacle</legend>
+    <div class="km-stat-inputs">
+      <div class="km-stat-input-row">
+        <label>Score (0-6)</label>
+        <input type="number" name="system.obstacleScore" value="{{system.obstacleScore}}" min="0" max="6" />
+        <span class="km-stat-hint">Current DC: {{obstacleDC}}</span>
+      </div>
+      <div class="km-stat-input-row">
+        <label>Base DC</label>
+        <input type="number" name="system.obstacleBaseDC" value="{{system.obstacleBaseDC}}" min="1" />
+        <span class="km-stat-hint">DC = base + score (total: {{obstacleDC}})</span>
+      </div>
+      <div class="km-stat-input-row">
+        <label>Checked stat</label>
+        <select name="system.obstacleStat">
+          {{#each obstacleStatOptions}}
+          <option value="{{value}}" {{#if (eq value ../system.obstacleStat)}}selected{{/if}}>{{label}}</option>
+          {{/each}}
+        </select>
+        <span class="km-stat-hint">Kingdom rating bonus applies</span>
+      </div>
+      {{#if blockableOptions.length}}
+      <div class="km-stat-input-row">
+        <label>Blocks asset</label>
+        <select name="system.blockedAssetId">
+          <option value="">— none —</option>
+          {{#each blockableOptions}}
+          <option value="{{value}}" {{#if (eq value ../system.blockedAssetId)}}selected{{/if}}>{{label}}</option>
+          {{/each}}
+        </select>
+        <span class="km-stat-hint">Disables that asset while score &gt; 0</span>
+      </div>
+      {{/if}}
+    </div>
+  </fieldset>
+  {{/if}}
+
+  {{! ── Stats — province, unit: single column; asset: two columns (contribution + upkeep) ── }}
+  {{#unless isObstacle}}
+  <fieldset class="km-fieldset">
+    <legend>
+      {{#if isUnit}}Upkeep per turn (negative values drain rating)
+      {{else if isProvince}}Land values (GM-assigned)
+      {{else}}Stats
+      {{/if}}
+    </legend>
+
+    {{! Two-column layout for assets }}
+    {{#if isAsset}}
+    <div class="km-stats-two-col">
+      <div class="km-stats-col">
+        <div class="km-stats-col-header">Contribution</div>
+        {{#each (array "military" "wealth" "social" "magic")}}
+        <div class="km-stat-input-row">
+          <label>{{capitalize this}}</label>
+          <input type="text" name="system.stats.{{this}}"
+                 value="{{#if (ne (lookup ../system.stats this) null)}}{{lookup ../system.stats this}}{{else}}-{{/if}}"
+                 placeholder="-" class="km-stat-field" />
+          <span class="km-stat-hint">
+            {{#if (ne (lookup ../system.stats this) null)}}DC {{add 12 (abs (nullish (lookup ../system.stats this) 0)) (lookup ../system.upkeep this)}}{{else}}—{{/if}}
+          </span>
+        </div>
+        {{/each}}
+      </div>
+      <div class="km-stats-col">
+        <div class="km-stats-col-header">Upkeep</div>
+        {{#each (array "military" "wealth" "social" "magic")}}
+        <div class="km-stat-input-row">
+          <label>{{capitalize this}}</label>
+          <input type="number" name="system.upkeep.{{this}}" value="{{lookup ../system.upkeep this}}" min="0" class="km-stat-field" />
+        </div>
+        {{/each}}
+      </div>
+    </div>
+    {{else}}
+    {{! Single column for province and unit }}
+    <div class="km-stat-inputs">
+      <div class="km-stat-input-row">
+        <label><i class="fas fa-shield-alt"></i> Military</label>
+        <input type="text" name="system.stats.military"
+               value="{{#if (ne system.stats.military null)}}{{system.stats.military}}{{else}}-{{/if}}"
+               placeholder="-" class="km-stat-field" />
+        {{#unless isProvince}}<span class="km-stat-hint">
+          {{#if (ne system.stats.military null)}}DC {{add 12 (abs (nullish system.stats.military 0))}}{{else}}ignored{{/if}}
+        </span>{{/unless}}
+      </div>
+      <div class="km-stat-input-row">
+        <label><i class="fas fa-coins"></i> Wealth</label>
+        <input type="text" name="system.stats.wealth"
+               value="{{#if (ne system.stats.wealth null)}}{{system.stats.wealth}}{{else}}-{{/if}}"
+               placeholder="-" class="km-stat-field" />
+        {{#unless isProvince}}<span class="km-stat-hint">
+          {{#if (ne system.stats.wealth null)}}DC {{add 12 (abs (nullish system.stats.wealth 0))}}{{else}}ignored{{/if}}
+        </span>{{/unless}}
+      </div>
+      <div class="km-stat-input-row">
+        <label><i class="fas fa-users"></i> Social</label>
+        <input type="text" name="system.stats.social"
+               value="{{#if (ne system.stats.social null)}}{{system.stats.social}}{{else}}-{{/if}}"
+               placeholder="-" class="km-stat-field" />
+        {{#unless isProvince}}<span class="km-stat-hint">
+          {{#if (ne system.stats.social null)}}DC {{add 12 (abs (nullish system.stats.social 0))}}{{else}}ignored{{/if}}
+        </span>{{/unless}}
+      </div>
+      {{#unless isProvince}}
+      <div class="km-stat-input-row">
+        <label><i class="fas fa-magic"></i> Magic</label>
+        <input type="text" name="system.stats.magic"
+               value="{{#if (ne system.stats.magic null)}}{{system.stats.magic}}{{else}}-{{/if}}"
+               placeholder="-" class="km-stat-field" />
+        <span class="km-stat-hint">
+          {{#if (ne system.stats.magic null)}}DC {{add 12 (abs (nullish system.stats.magic 0))}}{{else}}ignored{{/if}}
+        </span>
+      </div>
+      {{/unless}}
+    </div>
+    {{/if}}
+  </fieldset>
+  {{/unless}}
+
+  {{! ── Development cost and unit slots (assets only) ── }}
+  {{#if isAsset}}
+  <div class="km-stats-two-col" style="margin-top:6px;">
+    <div class="km-form-row">
+      <label><i class="fas fa-building"></i> Dev cost</label>
+      <input type="number" name="system.devCost" value="{{system.devCost}}" min="0" style="width:60px;" />
+      <span class="km-stat-hint">Suppresses magic</span>
+    </div>
+    <div class="km-form-row">
+      <label><i class="fas fa-home"></i> Unit slots</label>
+      <input type="number" name="system.unitSlots" value="{{system.unitSlots}}" min="0" style="width:60px;" />
+      <span class="km-stat-hint">Free garrison slots</span>
+    </div>
+  </div>
+  {{/if}}
+
+  {{#if isUnit}}
+  <fieldset class="km-fieldset">
+    <legend>Unit feature — obstacle resolve</legend>
+    <div class="km-stat-inputs">
+      <div class="km-stat-input-row">
+        <label>Stat</label>
+        <select name="system.unitFeatureStat">
+          <option value="">— none —</option>
+          <option value="military" {{#if (eq system.unitFeatureStat "military")}}selected{{/if}}>Military</option>
+          <option value="wealth"   {{#if (eq system.unitFeatureStat "wealth")}}selected{{/if}}>Wealth</option>
+          <option value="social"   {{#if (eq system.unitFeatureStat "social")}}selected{{/if}}>Social</option>
+          <option value="magic"    {{#if (eq system.unitFeatureStat "magic")}}selected{{/if}}>Magic</option>
+        </select>
+        <span class="km-stat-hint">Which obstacle type this unit can resolve</span>
+      </div>
+      {{#if system.unitFeatureStat}}
+      <div class="km-stat-input-row">
+        <label>Bonus</label>
+        <input type="number" name="system.unitFeatureBonus" value="{{system.unitFeatureBonus}}" />
+        <span class="km-stat-hint">Added to the resolve roll</span>
+      </div>
+      {{/if}}
+    </div>
+  </fieldset>
+  {{/if}}
+
+  <div class="km-form-row">
+    <label><i class="fas fa-book" aria-hidden="true"></i> Journal</label>
+    <input type="text" name="system.journalId" value="{{#if system.journalId}}{{journalName}}{{/if}}" placeholder="Drop a journal entry here…" class="km-journal-input" readonly />
+    {{#if system.journalId}}<button type="button" data-action="clearJournal" class="km-btn-xs km-btn-danger" style="flex-shrink:0;"><i class="fas fa-times" aria-hidden="true"></i></button>{{/if}}
+  </div>
+
+  <div class="km-form-row km-form-desc">
+    <label>Notes</label>
+    <textarea name="system.description" placeholder="Description or notes…">{{system.description}}</textarea>
+  </div>
+
+</div>

@@ -1,0 +1,1128 @@
+/* styles/kingdom.css — Kingdom Manager */
+
+/* ── Design tokens ────────────────────────────────────────────────────────── */
+.kingdom-manager {
+  --km-mil-bg:  #EEEDFE; --km-mil-txt: #3C3489;
+  --km-wea-bg:  #FAEEDA; --km-wea-txt: #633806;
+  --km-soc-bg:  #EAF3DE; --km-soc-txt: #27500A;
+  --km-mag-bg:  #FBEAF0; --km-mag-txt: #72243E;
+  --km-dev-bg:  #E6F1FB; --km-dev-txt: #0C447C;
+  --km-neg-bg:  #FDECEA; --km-neg-txt: #8B1A1A;
+  --km-border:  1px solid #d4cfc8;
+  --km-radius:  6px;
+  --km-radius-lg: 10px;
+  --km-bg:      #f5f4f0;
+  --km-card-bg: #ffffff;
+  --km-text:    #1a1a1a;
+  --km-text-secondary: #555555;
+  --km-text-muted: #888888;
+  font-family:  var(--font-sans, sans-serif);
+  font-size:    14px;
+  color:        var(--km-text);
+}
+
+/* ── Sheet layout ─────────────────────────────────────────────────────────── */
+.kingdom-sheet .window-content {
+  padding: 0;
+  overflow-y: auto;
+  background: var(--km-bg);
+  color: var(--km-text);
+}
+.km-dark .window-content {
+  background: #1e1e22 !important;
+  color: #dddad4 !important;
+}
+.km-dark .km-sheet {
+  background: #1e1e22 !important;
+  min-height: 100%;
+}
+
+.km-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  min-height: 100%;
+  color: var(--km-text);
+}
+
+.km-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 12px;
+}
+
+.km-col-main { display: flex; flex-direction: column; gap: 12px; }
+.km-col-side { display: flex; flex-direction: column; gap: 12px; }
+
+/* ── Card ─────────────────────────────────────────────────────────────────── */
+.km-card {
+  background: var(--km-card-bg);
+  border: var(--km-border);
+  border-radius: var(--km-radius-lg);
+  padding: 12px 16px;
+  color: var(--km-text);
+}
+
+.km-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.km-card-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--km-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+.km-card-header .km-card-label { margin-bottom: 0; }
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+.km-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--km-card-bg);
+  border: var(--km-border);
+  border-radius: var(--km-radius-lg);
+}
+
+.km-header-identity { display: flex; align-items: center; gap: 10px; }
+
+.km-kingdom-name {
+  font-size: 20px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--km-text);
+  padding: 0;
+  min-width: 200px;
+}
+.km-kingdom-name:focus { outline: none; border-bottom: 1px solid #aaa; }
+
+.km-turn-badge {
+  font-size: 12px;
+  background: #f0ede8;
+  border: var(--km-border);
+  border-radius: var(--km-radius);
+  padding: 3px 10px;
+  color: var(--km-text-secondary);
+}
+.km-turn-badge strong { color: var(--km-text); font-weight: 600; }
+
+.km-header-actions { display: flex; gap: 8px; }
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+.km-btn-xs, .km-btn-icon {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: var(--km-radius);
+  border: var(--km-border);
+  background: #f7f5f2;
+  color: var(--km-text-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1.4;
+}
+.km-btn-xs:hover, .km-btn-icon:hover { background: #eceae5; }
+.km-btn-icon { padding: 4px 7px; }
+.km-btn-danger { color: #8B1A1A; background: #f7f5f2; }
+.km-btn-danger:hover { background: #FDECEA; }
+
+.km-btn-primary {
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: var(--km-radius);
+  border: 1px solid #185FA5;
+  background: #E6F1FB;
+  color: #0C447C;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 500;
+}
+.km-btn-primary:hover { background: #B5D4F4; }
+
+/* ── Ratings ──────────────────────────────────────────────────────────────── */
+.km-ratings {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  align-items: start;
+}
+.km-ratings .km-card-label { grid-column: 1 / -1; margin-bottom: 4px; }
+.km-ratings p { grid-column: 1 / -1; }
+
+.km-rating-box {
+  background: #f7f5f2;
+  border-radius: var(--km-radius);
+  padding: 10px 12px;
+  border: 1px solid #e0ddd6;
+}
+.km-rating-box.km-over {
+  border-color: #c0392b;
+  background: #FDECEA;
+}
+
+.km-rating-name {
+  font-size: 11px;
+  color: var(--km-text-secondary);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+}
+/* Coloured rating icons */
+.km-rating-box .km-icon-mil { color: #3C3489; }
+.km-rating-box .km-icon-wea { color: #633806; }
+.km-rating-box .km-icon-soc { color: #27500A; }
+.km-rating-box .km-icon-mag { color: #72243E; }
+
+.km-rating-numbers { display: flex; align-items: baseline; gap: 6px; margin-bottom: 5px; }
+.km-rating-gen { font-size: 28px; font-weight: 600; line-height: 1; color: var(--km-text); }
+.km-rating-sep { font-size: 12px; color: var(--km-text-muted); }
+.km-rating-upkeep { font-size: 14px; font-weight: 500; color: var(--km-text-muted); }
+.km-upkeep-active { color: var(--km-text-secondary); }
+.km-upkeep-over   { color: #c0392b; }
+
+.km-rating-bar { height: 4px; border-radius: 99px; background: #e0ddd6; margin-bottom: 5px; overflow: hidden; }
+.km-rating-fill { height: 100%; border-radius: 99px; }
+.km-fill-safe { background: #1D9E75; }
+.km-fill-warn { background: #BA7517; }
+.km-fill-over { background: #c0392b; }
+
+.km-rating-foot { font-size: 11px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.km-headroom    { color: var(--km-text-muted); }
+.km-build-bonus { color: #1D7A56; font-weight: 600; }
+.km-no-bonus    { color: var(--km-text-muted); }
+.km-rating-warn { font-size: 11px; color: #c0392b; display: flex; align-items: center; gap: 3px; }
+
+.km-magic-note {
+  font-size: 10px; color: var(--km-text-muted);
+  margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px;
+}
+.km-ratings-note { font-size: 11px; color: var(--km-text-muted); }
+
+/* ── Pills ────────────────────────────────────────────────────────────────── */
+.km-pill {
+  display: inline-block; font-size: 11px; padding: 1px 7px;
+  border-radius: 99px; font-weight: 600; margin: 1px;
+}
+.km-pill-mil { background: var(--km-mil-bg); color: var(--km-mil-txt); }
+.km-pill-wea { background: var(--km-wea-bg); color: var(--km-wea-txt); }
+.km-pill-soc { background: var(--km-soc-bg); color: var(--km-soc-txt); }
+.km-pill-mag { background: var(--km-mag-bg); color: var(--km-mag-txt); }
+.km-pill-dev { background: var(--km-dev-bg); color: var(--km-dev-txt); }
+.km-pill-neg { background: var(--km-neg-bg); color: var(--km-neg-txt); }
+.km-pill-upk { background: #f0ede8; color: var(--km-text-secondary); border: var(--km-border); }
+.km-pill-offset { background: var(--km-soc-bg); color: var(--km-soc-txt); }
+
+/* ── Province blocks ──────────────────────────────────────────────────────── */
+.km-province-block {
+  border: var(--km-border);
+  border-radius: var(--km-radius);
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.km-province-block:last-of-type { margin-bottom: 0; }
+
+.km-province-header {
+  background: #f7f5f2;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.km-prov-toggle {
+  cursor: pointer;
+  user-select: none;
+}
+.km-prov-toggle:hover { background: #f0ede8; }
+
+.km-prov-chevron {
+  font-size: 12px;
+  color: var(--km-text-muted);
+  flex-shrink: 0;
+  transition: transform 0.15s;
+}
+.km-prov-chevron-open { transform: rotate(0deg); }
+.km-prov-chevron-closed { transform: rotate(-90deg); }
+
+.km-prov-icon {
+  font-size: 14px;
+  color: var(--km-text-muted);
+  flex-shrink: 0;
+}
+
+.km-prov-body { display: block; }
+.km-prov-body.km-collapsed { display: none; }
+
+.km-province-identity { flex: 1; min-width: 80px; }
+.km-province-name    { font-size: 13px; font-weight: 600; display: block; color: var(--km-text); }
+.km-province-terrain { font-size: 11px; color: var(--km-text-muted); }
+.km-province-stats   { display: flex; flex-wrap: wrap; gap: 2px; }
+.km-province-actions { display: flex; gap: 4px; margin-left: auto; }
+
+.km-dev-wrap  { display: flex; align-items: center; gap: 5px; }
+.km-dev-label { font-size: 11px; color: var(--km-text-secondary); }
+.km-dev-bar   { height: 5px; border-radius: 99px; background: #fff; border: var(--km-border); width: 64px; overflow: hidden; }
+.km-dev-fill  { height: 100%; border-radius: 99px; }
+.km-dev-safe  { background: #378ADD; }
+.km-dev-warn  { background: #BA7517; }
+.km-dev-full  { background: #c0392b; }
+.km-dev-numbers { font-size: 11px; color: var(--km-text-muted); }
+
+.km-prov-magic { font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 3px; }
+.km-magic-good { color: var(--km-mag-txt); }
+.km-magic-zero { color: #c0392b; }
+
+/* ── Asset rows ───────────────────────────────────────────────────────────── */
+.km-asset-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 12px; border-top: var(--km-border); font-size: 12px;
+}
+.km-asset-wip { opacity: 0.75; }
+.km-asset-name { min-width: 120px; font-weight: 600; flex-shrink: 0; color: var(--km-text); }
+.km-asset-pills { display: flex; flex-wrap: wrap; gap: 2px; flex: 1; }
+.km-asset-actions { display: flex; gap: 4px; margin-left: auto; flex-shrink: 0; }
+.km-asset-actions button {
+  width: 28px; height: 28px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--km-radius);
+  border: var(--km-border);
+  background: #f7f5f2;
+  color: var(--km-text-secondary);
+  cursor: pointer; font-size: 12px; padding: 0;
+}
+.km-asset-actions button:hover { background: #eceae5; }
+.km-asset-actions button[data-action="deleteItem"] { color: #8B1A1A; }
+.km-asset-actions button[data-action="deleteItem"]:hover { background: #FDECEA; }
+
+/* ── Badges ───────────────────────────────────────────────────────────────── */
+.km-badge {
+  font-size: 10px; padding: 2px 8px; border-radius: var(--km-radius);
+  white-space: nowrap; display: inline-flex; align-items: center; gap: 3px; font-weight: 500;
+}
+.km-badge-active { background: var(--km-soc-bg); color: var(--km-soc-txt); }
+.km-badge-wip    { background: var(--km-wea-bg); color: var(--km-wea-txt); }
+.km-badge-over   { background: var(--km-neg-bg); color: var(--km-neg-txt); }
+
+/* ── WIP build progress ───────────────────────────────────────────────────── */
+.km-wip-block {
+  background: #f7f5f2; border-radius: var(--km-radius);
+  padding: 10px 12px; margin: 6px 12px 8px; border: var(--km-border);
+}
+.km-wip-title {
+  font-size: 11px; font-weight: 600; color: var(--km-text-secondary);
+  margin-bottom: 6px; display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+}
+.km-wip-dev-note { font-weight: 400; color: #BA7517; }
+.km-wip-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px; margin-top: 5px; color: var(--km-text-secondary);
+}
+.km-wip-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.km-dot-pass { background: #1D9E75; }
+.km-dot-pend { background: #ccc; }
+.km-wip-stat { min-width: 60px; color: var(--km-text); font-weight: 500; }
+.km-wip-dc   { color: var(--km-text-muted); min-width: 44px; }
+.km-wip-bonus { color: #1D7A56; margin-right: auto; }
+.km-check-passed { color: #1D7A56 !important; border-color: #1D9E75 !important; }
+.km-wip-complete {
+  margin-top: 8px; padding-top: 8px; border-top: var(--km-border);
+  font-size: 11px; color: #1D7A56; display: flex; align-items: center; gap: 6px;
+}
+
+/* ── Units ────────────────────────────────────────────────────────────────── */
+/* ── Unit list (div-based, matches card style) ────────────────────────────── */
+.km-unit-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+
+.kingdom-manager .km-unit-header,
+.kingdom-manager .km-unit-row {
+  display: grid !important;
+  grid-template-columns: 2fr 1.2fr 2.5fr 1fr 60px;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.kingdom-manager .km-unit-header {
+  background: #f7f5f2 !important;
+  border-radius: var(--km-radius) !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  color: #666666 !important;
+  border: var(--km-border) !important;
+}
+
+.kingdom-manager .km-unit-row {
+  background: #ffffff !important;
+  color: #1a1a1a !important;
+  border: var(--km-border) !important;
+  border-radius: var(--km-radius) !important;
+  font-size: 12px !important;
+}
+.kingdom-manager .km-unit-row span { color: #1a1a1a !important; background: transparent !important; }
+.km-unit-name { font-weight: 600; }
+.km-unit-loc  { color: #888888 !important; font-size: 11px; }
+
+.km-unit-name  { font-weight: 600; color: #1a1a1a; }
+.km-unit-loc   { color: #888888; font-size: 11px; }
+.km-unit-actions { display: flex; gap: 4px; justify-content: flex-end; }
+
+.km-consequence-banner {
+  display: flex; align-items: flex-start; gap: 6px; padding: 8px 10px;
+  background: var(--km-neg-bg); border-radius: var(--km-radius);
+  font-size: 12px; color: var(--km-neg-txt); margin-top: 8px;
+}
+
+/* ── Rulers — compact rows ────────────────────────────────────────────────── */
+.km-rulers-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+  grid-column: 1 / -1;
+  margin-top: 4px;
+}
+
+.km-ruler-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--km-card-bg);
+  border: var(--km-border);
+  border-radius: var(--km-radius);
+  flex: 1;
+  min-width: 200px;
+  max-width: 320px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.km-ruler-card.km-ruler-done {
+  border-color: #1D9E75;
+  background: #f0faf6;
+}
+
+.km-rc-portrait {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: var(--km-border);
+  background: #f7f5f2;
+  flex-shrink: 0;
+}
+
+.km-rc-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.km-rc-name {
+  font-size: 13px; font-weight: 600;
+  color: var(--km-text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.km-rc-class {
+  font-size: 11px; color: var(--km-text-secondary);
+  display: flex; align-items: center; gap: 6px;
+}
+
+.km-rc-tags { display: flex; gap: 3px; flex-wrap: wrap; }
+.km-prof-tag { font-size: 10px; padding: 1px 7px; border-radius: 99px; font-weight: 500; }
+.km-pt-mil { background: #EEEDFE; color: #3C3489; }
+.km-pt-wea { background: #FAEEDA; color: #633806; }
+.km-pt-soc { background: #EAF3DE; color: #27500A; }
+.km-pt-mag { background: #FBEAF0; color: #72243E; }
+.km-pt-none { background: #f0ede8; color: #888; border: 0.5px solid #d4cfc8; }
+
+
+.km-rc-checkbox {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 11px; color: var(--km-text-secondary); cursor: pointer;
+  white-space: nowrap;
+}
+.km-rc-checkbox input[type="checkbox"] {
+  accent-color: #1D9E75; cursor: pointer;
+  width: 13px; height: 13px;
+}
+.km-ruler-done .km-rc-checkbox { color: #0F6E56; font-weight: 500; }
+
+/* Remove old divider and bottom references */
+.km-rc-divider { display: none; }
+.km-rc-bottom  { display: none; }
+
+/* ── Log ──────────────────────────────────────────────────────────────────── */
+.km-log-entries { display: flex; flex-direction: column; }
+.km-log-row {
+  display: flex; align-items: flex-start; gap: 7px;
+  padding: 5px 0; border-bottom: var(--km-border); font-size: 12px;
+}
+.km-log-row:last-child { border-bottom: none; }
+.km-log-turn {
+  font-size: 10px; background: #f0ede8; border-radius: var(--km-radius);
+  padding: 1px 6px; color: var(--km-text-muted); white-space: nowrap; flex-shrink: 0; margin-top: 2px;
+}
+.km-log-text   { flex: 1; color: var(--km-text-secondary); line-height: 1.4; }
+.km-log-pass   { color: #1D7A56; font-weight: 600; }
+.km-log-fail   { color: #c0392b; font-weight: 600; }
+.km-log-remove { opacity: 0; transition: opacity 0.1s; }
+.km-log-row:hover .km-log-remove { opacity: 1; }
+
+/* ── Drop zone ────────────────────────────────────────────────────────────── */
+.km-drop-zone {
+  border: 1px dashed #c0bab2; border-radius: var(--km-radius);
+  padding: 12px; text-align: center; font-size: 12px;
+  color: var(--km-text-muted); margin-top: 10px;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.km-drop-zone.km-drag-over { border-color: #378ADD; background: #E6F1FB; }
+
+/* ── Empty state ──────────────────────────────────────────────────────────── */
+.km-empty {
+  font-size: 12px; color: var(--km-text-muted);
+  font-style: italic; padding: 8px 0;
+}
+
+/* ── Asset sheet form ─────────────────────────────────────────────────────── */
+.asset-sheet .window-content { padding: 1rem; color: var(--km-text); background: #f5f4f0; }
+.km-asset-form { display: flex; flex-direction: column; gap: 12px; }
+
+.km-form-name { display: flex; align-items: center; gap: 10px; }
+.km-asset-img {
+  width: 48px; height: 48px; border-radius: var(--km-radius);
+  border: var(--km-border); object-fit: cover; cursor: pointer; flex-shrink: 0;
+}
+.km-name-input {
+  flex: 1; font-size: 18px; font-weight: 600; border: none;
+  border-bottom: var(--km-border); background: transparent;
+  color: var(--km-text); padding: 4px 0;
+}
+
+.km-form-row { display: flex; align-items: center; gap: 10px; }
+.km-form-row label { font-size: 12px; color: var(--km-text-secondary); min-width: 80px; flex-shrink: 0; }
+.km-form-row input, .km-form-row select { flex: 1; color: var(--km-text); }
+.km-form-desc { align-items: flex-start; }
+.km-form-desc label { padding-top: 4px; }
+.km-form-desc textarea { flex: 1; min-height: 80px; resize: vertical; color: var(--km-text); }
+.km-form-hint { font-size: 11px; color: var(--km-text-muted); font-style: italic; margin-left: 90px; }
+
+.km-fieldset { border: var(--km-border); border-radius: var(--km-radius); padding: 10px 12px; }
+.km-fieldset legend { font-size: 11px; color: var(--km-text-muted); padding: 0 4px; }
+.km-stat-inputs { display: flex; flex-direction: column; gap: 6px; }
+.km-stat-input-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.km-stat-input-row label { min-width: 70px; color: var(--km-text-secondary); }
+.km-stat-input-row input[type="number"] { width: 60px; text-align: center; color: var(--km-text); }
+.km-stat-hint { font-size: 11px; color: var(--km-text-muted); }
+
+/* ── Form inputs — explicit colours to override Foundry/dnd5e defaults ── */
+.kingdom-manager input[type="text"],
+.kingdom-manager input[type="number"],
+.kingdom-manager select,
+.kingdom-manager textarea {
+  background: #ffffff;
+  color: #1a1a1a;
+  border: 1px solid #d4cfc8;
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 13px;
+}
+.kingdom-manager input[type="text"]:focus,
+.kingdom-manager input[type="number"]:focus,
+.kingdom-manager select:focus,
+.kingdom-manager textarea:focus {
+  outline: none;
+  border-color: #378ADD;
+  background: #ffffff;
+  color: #1a1a1a;
+}
+.kingdom-manager select option {
+  background: #ffffff;
+  color: #1a1a1a;
+}
+/* Override dnd5e dark theme inputs inside our sheet */
+.asset-sheet input,
+.asset-sheet select,
+.asset-sheet textarea {
+  background: #ffffff !important;
+  color: #1a1a1a !important;
+}
+
+/* ── Obstacles ────────────────────────────────────────────────────────────── */
+.km-obstacle-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 12px; border-top: var(--km-border);
+  background: #fff8f7; font-size: 12px;
+}
+.km-obstacle-name { font-weight: 600; color: #c0392b; flex: 1; }
+.km-obstacle-score { display: flex; align-items: center; gap: 8px; }
+.km-obstacle-badge {
+  background: #FDECEA; color: #8B1A1A;
+  font-size: 11px; font-weight: 700; padding: 2px 8px;
+  border-radius: 99px;
+}
+.km-obstacle-dc   { font-size: 11px; color: #c0392b; font-weight: 500; }
+.km-obstacle-stat { font-size: 11px; color: #1D7A56; font-weight: 500; }
+
+/* ── Kingdom icon in header ───────────────────────────────────────────────── */
+.km-kingdom-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--km-radius);
+  border: var(--km-border);
+  object-fit: cover;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+.km-kingdom-icon:hover { opacity: 0.8; }
+
+/* ── Heraldry section ─────────────────────────────────────────────────────── */
+.km-heraldry-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.km-heraldry-img {
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
+  border-radius: var(--km-radius);
+  border: var(--km-border);
+  cursor: pointer;
+  background: #f7f5f2;
+  padding: 4px;
+  transition: opacity 0.15s, box-shadow 0.15s;
+}
+.km-heraldry-img:hover {
+  opacity: 0.85;
+  box-shadow: 0 0 0 2px #378ADD;
+}
+
+.km-heraldry-info { width: 100%; }
+
+.km-motto-input {
+  width: 100%;
+  font-size: 12px;
+  font-style: italic;
+  text-align: center;
+  border: none;
+  border-bottom: var(--km-border);
+  background: transparent;
+  color: var(--km-text-secondary);
+  padding: 4px 0;
+}
+.km-motto-input:focus { outline: none; border-bottom: 1px solid #378ADD; }
+.km-motto-input::placeholder { color: #bbb; }
+
+/* ── Foundry window-level isolation ──────────────────────────────────────── */
+.kingdom-sheet .window-content div,
+.kingdom-sheet .window-content span,
+.kingdom-sheet .window-content p {
+  box-sizing: border-box;
+}
+
+/* Force all divs inside our unit list to be white/light */
+.kingdom-sheet .km-unit-header { background: #f7f5f2 !important; color: #666 !important; }
+.kingdom-sheet .km-unit-row    { background: #ffffff !important; color: #1a1a1a !important; }
+
+/* ── Obstacle upkeep tag ──────────────────────────────────────────────────── */
+.km-obstacle-upkeep {
+  font-size: 11px;
+  font-weight: 600;
+  color: #c0392b;
+  background: #FDECEA;
+  padding: 1px 7px;
+  border-radius: 99px;
+}
+
+/* ── Asset description toggle ─────────────────────────────────────────────── */
+.km-desc-toggle {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--km-text-muted);
+  font-size: 11px;
+  padding: 4px 7px;
+  border-radius: var(--km-radius);
+  border: var(--km-border);
+  background: #f7f5f2;
+  flex-shrink: 0;
+  margin-left: 4px;
+  transition: color 0.1s, background 0.1s;
+}
+.km-desc-toggle:hover { background: #eceae5; color: var(--km-text-secondary); }
+.km-desc-toggle i { transition: transform 0.15s; display: inline-block; }
+.km-desc-toggle.open i { transform: rotate(180deg); }
+
+.km-asset-desc {
+  display: none;
+  font-size: 12px;
+  color: var(--km-text-secondary);
+  font-style: italic;
+  line-height: 1.5;
+  padding: 4px 12px 8px 12px;
+  border-top: 0.5px dashed #e0ddd6;
+  background: #faf9f7;
+}
+.km-asset-desc.open { display: block; }
+
+/* ── Treasury & Atrocity ──────────────────────────────────────────────────── */
+.km-treasury-atrocity {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+  grid-column: 1 / -1;  /* span all 4 rating columns */
+}
+.km-ta-box {
+  background: var(--km-card-bg);
+  border: var(--km-border);
+  border-radius: var(--km-radius);
+  padding: 8px 12px;
+}
+.km-ta-atrocity-active {
+  border-color: #c0392b;
+  background: #fff8f7;
+}
+.km-ta-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--km-text-muted);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.km-ta-atrocity-active .km-ta-label { color: #c0392b; }
+.km-ta-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.km-ta-btn {
+  width: 24px; height: 24px;
+  border-radius: var(--km-radius);
+  border: var(--km-border);
+  background: #f7f5f2;
+  color: var(--km-text-secondary);
+  font-size: 14px; font-weight: 600;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  line-height: 1;
+}
+.km-ta-btn:hover { background: #eceae5; }
+.km-ta-value {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--km-text);
+  min-width: 32px;
+  text-align: center;
+}
+.km-ta-atrocity-active .km-ta-value { color: #c0392b; }
+.km-ta-hint { font-size: 11px; color: var(--km-text-muted); line-height: 1.4; }
+.km-ta-penalty { color: #c0392b; font-weight: 500; }
+
+.km-ta-input {
+  width: 56px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 600;
+  color: #1a1a1a;
+  background: #ffffff;
+  border: var(--km-border);
+  border-radius: var(--km-radius);
+  padding: 2px 4px;
+}
+.km-ta-input-danger { color: #c0392b !important; border-color: #c0392b !important; }
+.km-ta-input:focus { outline: none; border-color: #378ADD; }
+
+/* ── Ruler card bottom row ────────────────────────────────────────────────── */
+.km-rc-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+  padding-top: 4px;
+  border-top: 0.5px solid #e0ddd6;
+}
+
+/* ── Rulers section label in divider ─────────────────────────────────────── */
+.km-rulers-label {
+  grid-column: 1 / -1;
+  width: 100%;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--km-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+.km-rulers-label::before,
+.km-rulers-label::after {
+  content: "";
+  flex: 1;
+  height: 0.5px;
+  background: #d4cfc8;
+}
+
+/* ── Blocked asset ────────────────────────────────────────────────────────── */
+.km-asset-blocked {
+  opacity: 0.6;
+  background: #faf8f5;
+}
+.km-badge-blocked {
+  background: #f0ede8;
+  color: #888;
+  font-size: 10px; padding: 2px 8px;
+  border-radius: var(--km-radius);
+  display: inline-flex; align-items: center; gap: 3px;
+}
+
+/* ── Unit feature pill ────────────────────────────────────────────────────── */
+.km-pill-feature {
+  background: #FEF3C7;
+  color: #92400E;
+  font-size: 10px;
+  padding: 1px 7px;
+  border-radius: 99px;
+  font-weight: 500;
+}
+
+/* ── Unit feature tag (under name, like ruler prof tags) ──────────────────── */
+.km-unit-feature {
+  display: inline-block;
+  font-size: 10px;
+  padding: 1px 7px;
+  border-radius: 99px;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+/* ── Unit slots pill ──────────────────────────────────────────────────────── */
+.km-pill-slots {
+  background: #EAF3DE;
+  color: #27500A;
+  font-size: 11px;
+  padding: 1px 7px;
+  border-radius: 99px;
+  font-weight: 500;
+}
+
+/* ── Garrison icon ────────────────────────────────────────────────────────── */
+.km-garrison-icon {
+  color: #27500A;
+  font-size: 11px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+/* ── Agent unit tag ───────────────────────────────────────────────────────── */
+.km-unit-agent-tag {
+  display: inline-block;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 99px;
+  font-weight: 500;
+  background: #FAEEDA;
+  color: #633806;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+/* ── Asset total pills in province header ─────────────────────────────────── */
+.km-pill-asset-total {
+  opacity: 0.75;
+  font-style: italic;
+  border: 0.5px dashed currentColor;
+}
+
+/* ── Journal linked asset name ────────────────────────────────────────────── */
+.km-has-journal {
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+.km-has-journal:hover { color: #0C447C; }
+
+.km-journal-input {
+  flex: 1;
+  cursor: pointer;
+  background: #f7f5f2 !important;
+  color: var(--km-text-secondary) !important;
+}
+.km-journal-input:hover { background: #eceae5 !important; }
+
+/* ── Asset sheet two-column stats layout ─────────────────────────────────── */
+.km-stats-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 16px;
+}
+.km-stats-col-header {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--km-text-muted);
+  padding-bottom: 4px;
+  margin-bottom: 4px;
+  border-bottom: 0.5px solid #e0ddd6;
+}
+
+/* ── Asset sheet two-column stats layout ─────────────────────────────────── */
+.km-stats-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 16px;
+}
+.km-stats-col-header {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--km-text-muted);
+  padding-bottom: 4px;
+  margin-bottom: 4px;
+  border-bottom: 0.5px solid #e0ddd6;
+}
+
+/* ── Dark theme ───────────────────────────────────────────────────────────── */
+/* Scoped from window-content.km-dark since that's what v13 gives us */
+
+.km-dark .km-sheet,
+.km-dark.window-content {
+  --km-mil-bg:  #2d2a52; --km-mil-txt: #c4c0f0;
+  --km-wea-bg:  #3d2e12; --km-wea-txt: #f5c97e;
+  --km-soc-bg:  #1e3010; --km-soc-txt: #a8d470;
+  --km-mag-bg:  #3a1828; --km-mag-txt: #f0a0c0;
+  --km-dev-bg:  #0f2d48; --km-dev-txt: #90c4e8;
+  --km-neg-bg:  #3d1212; --km-neg-txt: #f0a0a0;
+  --km-border:     1px solid #404045;
+  --km-bg:         #1e1e22;
+  --km-card-bg:    #28282e;
+  --km-text:       #dddad4;
+  --km-text-secondary: #9a9690;
+  --km-text-muted:     #5e5c58;
+  background: #1e1e22;
+  color: #dddad4;
+}
+
+/* All text */
+.km-dark .km-sheet *       { color: inherit; }
+.km-dark .km-sheet          { color: #dddad4; background: #1e1e22; }
+
+/* Cards & containers */
+.km-dark .km-card          { background: #28282e !important; border-color: #404045 !important; }
+.km-dark .km-rating-box    { background: #222228 !important; border-color: #404045 !important; color: #dddad4 !important; }
+.km-dark .km-ta-box        { background: #222228 !important; border-color: #404045 !important; }
+.km-dark .km-heraldry-wrap { background: #222228 !important; }
+.km-dark .km-log-entries   { background: #1a1a1e !important; }
+
+/* Province */
+.km-dark .km-province-block               { border-color: #404045 !important; }
+.km-dark .km-province-header              { background: #222228 !important; }
+.km-dark .km-prov-toggle:hover            { background: #2a2a32 !important; }
+.km-dark .km-prov-body                    { background: #1e1e22 !important; }
+.km-dark .km-asset-row                    { border-color: #383840 !important; background: transparent; }
+.km-dark .km-asset-row:hover              { background: #262630 !important; }
+.km-dark .km-wip-block                    { background: #222228 !important; border-color: #404045 !important; }
+.km-dark .km-wip-row                      { border-color: #383840 !important; }
+.km-dark .km-obstacle-row                 { border-color: #383840 !important; background: transparent; }
+.km-dark .km-obstacle-row:hover           { background: #262630 !important; }
+.km-dark .km-unit-row                     { background: #28282e !important; border-color: #383840 !important; color: #dddad4 !important; }
+.km-dark .km-unit-row span                  { color: #dddad4 !important; background: transparent !important; }
+.km-dark .km-unit-row:hover                 { background: #303038 !important; }
+
+/* Text colors */
+.km-dark .km-province-name               { color: #dddad4 !important; }
+.km-dark .km-province-terrain            { color: #9a9690 !important; }
+.km-dark .km-asset-name                  { color: #dddad4 !important; }
+.km-dark .km-unit-name                   { color: #dddad4 !important; }
+.km-dark .km-rating-label                { color: #9a9690 !important; }
+.km-dark .km-rating-value                { color: #dddad4 !important; }
+.km-dark .km-rating-headroom             { color: #9a9690 !important; }
+.km-dark .km-ta-label                    { color: #9a9690 !important; }
+.km-dark .km-log-row                     { color: #9a9690 !important; border-color: #383840 !important; }
+.km-dark .km-log-turn                    { color: #5e5c58 !important; }
+.km-dark .km-heraldry-motto              { color: #9a9690 !important; }
+.km-dark .km-prov-icon                   { color: #5e5c58 !important; }
+.km-dark .km-dev-numbers                 { color: #9a9690 !important; }
+.km-dark .km-magic-good                  { color: #c4c0f0 !important; }
+.km-dark .km-magic-zero                  { color: #5e5c58 !important; }
+.km-dark .km-obstacle-name               { color: #dddad4 !important; }
+.km-dark .km-card-label                  { color: #9a9690 !important; }
+.km-dark .km-section-title               { color: #9a9690 !important; }
+.km-dark .km-empty                       { color: #5e5c58 !important; }
+.km-dark .km-rc-name                     { color: #dddad4 !important; }
+.km-dark .km-rc-class                    { color: #9a9690 !important; }
+.km-dark .km-rc-checkbox                 { color: #9a9690 !important; }
+.km-dark .km-ruler-done .km-rc-checkbox  { color: #4dbb88 !important; }
+.km-dark .km-wip-title                   { color: #9a9690 !important; }
+.km-dark .km-wip-stat                    { color: #dddad4 !important; }
+.km-dark .km-wip-dc                      { color: #9a9690 !important; }
+
+/* Pills */
+.km-dark .km-pill-mil                    { background: #2d2a52 !important; color: #c4c0f0 !important; }
+.km-dark .km-pill-wea                    { background: #3d2e12 !important; color: #f5c97e !important; }
+.km-dark .km-pill-soc                    { background: #1e3010 !important; color: #a8d470 !important; }
+.km-dark .km-pill-mag                    { background: #3a1828 !important; color: #f0a0c0 !important; }
+.km-dark .km-pill-dev                    { background: #0f2d48 !important; color: #90c4e8 !important; }
+.km-dark .km-pill-upk                    { background: #3d1212 !important; color: #f0a0a0 !important; }
+.km-dark .km-pill-slots                  { background: #1e3010 !important; color: #a8d470 !important; }
+.km-dark .km-pill-feature                { background: #3d2e12 !important; color: #f5c97e !important; }
+
+/* Badges */
+.km-dark .km-badge-active                { background: #102418 !important; color: #4dbb88 !important; }
+.km-dark .km-badge-wip                   { background: #3d2e12 !important; color: #f5c97e !important; }
+.km-dark .km-badge-blocked               { background: #2a2a30 !important; color: #6a6760 !important; }
+.km-dark .km-badge-over                  { background: #3d1212 !important; color: #f09090 !important; }
+
+/* Rulers */
+.km-dark .km-ruler-card                  { background: #222228 !important; border-color: #404045 !important; }
+.km-dark .km-ruler-card.km-ruler-done    { background: #102418 !important; border-color: #1D9E75 !important; }
+.km-dark .km-rc-bottom                   { border-color: #404045 !important; }
+.km-dark .km-rulers-label                { color: #5e5c58 !important; }
+.km-dark .km-rulers-label::before,
+.km-dark .km-rulers-label::after         { background: #404045 !important; }
+
+/* Buttons */
+.km-dark .km-btn-xs,
+.km-dark .km-btn-icon                    { background: #333338 !important; border-color: #4a4a50 !important; color: #9a9690 !important; }
+.km-dark .km-btn-xs:hover,
+.km-dark .km-btn-icon:hover              { background: #3e3e46 !important; color: #dddad4 !important; }
+.km-dark .km-btn-primary                 { background: #1a3a5c !important; border-color: #2a5480 !important; color: #90c4e8 !important; }
+.km-dark .km-btn-danger                  { color: #f09090 !important; }
+.km-dark .km-btn-danger:hover            { background: #3d1212 !important; }
+.km-dark .km-asset-actions button        { background: #333338 !important; border-color: #4a4a50 !important; color: #9a9690 !important; }
+.km-dark .km-asset-actions button:hover  { background: #3e3e46 !important; color: #dddad4 !important; }
+.km-dark .km-asset-actions button[data-action="deleteItem"]       { color: #f09090 !important; }
+.km-dark .km-asset-actions button[data-action="deleteItem"]:hover { background: #3d1212 !important; }
+.km-dark .km-ta-btn                      { background: #333338 !important; border-color: #4a4a50 !important; color: #dddad4 !important; }
+.km-dark .km-ta-btn:hover                { background: #3e3e46 !important; }
+.km-dark .km-ta-input                    { background: #1e1e22 !important; color: #dddad4 !important; border-color: #404045 !important; }
+
+/* Desc + misc */
+.km-dark .km-desc-toggle                 { background: #333338 !important; border-color: #4a4a50 !important; color: #9a9690 !important; }
+.km-dark .km-desc-toggle:hover           { background: #3e3e46 !important; color: #dddad4 !important; }
+.km-dark .km-asset-desc                  { background: #1a1a1e !important; border-color: #383840 !important; color: #9a9690 !important; }
+.km-dark .km-asset-blocked               { opacity: 0.5; background: #1a1a1e !important; }
+.km-dark .km-garrison-icon               { color: #4dbb88 !important; }
+.km-dark .km-unit-agent-tag              { background: #3d2e12 !important; color: #f5c97e !important; }
+.km-dark .km-dev-safe                    { background: #4dbb88 !important; }
+.km-dark .km-dev-warn                    { background: #e09020 !important; }
+.km-dark .km-dev-full                    { background: #c04040 !important; }
+.km-dark .km-rating-bar-bg               { background: #333338 !important; }
+
+/* Inputs */
+.km-dark input,
+.km-dark select,
+.km-dark textarea                        { background: #222228 !important; border-color: #404045 !important; color: #dddad4 !important; }
+.km-dark input::placeholder              { color: #5e5c58 !important; }
+/* ── Dark theme — additional coverage ────────────────────────────────────── */
+.km-dark .km-ratings                     { background: #28282e !important; border-color: #404045 !important; }
+.km-dark .km-col-side                    { background: transparent; }
+.km-dark .km-col-side .km-card           { background: #28282e !important; border-color: #404045 !important; }
+.km-dark .km-header                      { background: #1e1e22 !important; border-color: #404045 !important; }
+.km-dark .km-header-name                 { color: #dddad4 !important; }
+.km-dark .km-header-motto                { color: #9a9690 !important; }
+.km-dark .km-turn-badge                  { background: #333338 !important; border-color: #404045 !important; color: #dddad4 !important; }
+.km-dark .km-rulers-row                  { background: transparent; }
+.km-dark .km-heraldry-img                { filter: brightness(0.85); }
+.km-dark .km-heraldry-wrap               { background: #222228 !important; border-color: #404045 !important; }
+.km-dark .km-heraldry-motto              { color: #9a9690 !important; background: #222228 !important; }
+.km-dark .km-log-entries                 { background: #1a1a1e !important; }
+.km-dark .km-log-row                     { color: #9a9690 !important; border-color: #383840 !important; }
+/* Rating value numbers and headroom text */
+.km-dark .km-rating-value                { color: #dddad4 !important; }
+.km-dark .km-rating-headroom             { color: #9a9690 !important; }
+.km-dark .km-rating-bonus                { color: #a8d470 !important; }
+.km-dark .km-rating-upkeep               { color: #f0a0a0 !important; }
+.km-dark .km-rating-bar-bg               { background: #383840 !important; }
+.km-dark .km-rating-bar-fill             { background: #4dbb88 !important; }
+.km-dark .km-rating-bar-over             { background: #c04040 !important; }
+/* Province magic detail text */
+.km-dark .km-rating-detail               { color: #6a6760 !important; font-size: 11px; }
+/* Drop zones */
+.km-dark .km-drop-zone                   { background: #222228 !important; border-color: #404045 !important; color: #5e5c58 !important; }
+/* Wip dots */
+.km-dark .km-dot-pend                    { background: #404045 !important; }
+.km-dark .km-dot-pass                    { background: #4dbb88 !important; }
+/* Check passed button */
+.km-dark .km-check-passed               { background: #102418 !important; border-color: #1D9E75 !important; color: #4dbb88 !important; }
+/* Obstacle score badge */
+.km-dark .km-obstacle-badge             { background: #3d1212 !important; color: #f0a0a0 !important; }
+.km-dark .km-obstacle-dc                { color: #9a9690 !important; }
+.km-dark .km-obstacle-stat              { color: #c4c0f0 !important; }
+.km-dark .km-obstacle-upkeep            { color: #f0a0a0 !important; }
+/* Unit feature tag */
+.km-dark .km-unit-feature               { opacity: 0.9; }
+/* Section headers */
+.km-dark .km-card-label                 { color: #9a9690 !important; }
+/* Resolve button */
+.km-dark span[data-km-action]           { background: #3d1212 !important; border-color: #6a2020 !important; color: #f0a0a0 !important; }
+
+/* ── Dark theme — units table + scrollbar area ───────────────────────────── */
+.km-dark .km-units                       { background: #28282e !important; border-color: #404045 !important; }
+.km-dark .km-unit-table                  { background: transparent !important; }
+.km-dark .km-unit-table thead tr         { background: #222228 !important; border-color: #404045 !important; }
+.km-dark .km-unit-table th               { color: #9a9690 !important; border-color: #404045 !important; }
+.km-dark .km-unit-table td               { border-color: #383840 !important; color: #dddad4 !important; }
+.km-dark .km-unit-table tr:hover         { background: #262630 !important; }
+.km-dark .km-unit-table tr               { background: transparent !important; }
+
+/* Scrollbar track area */
+.km-dark.window-content                  { background: #1e1e22 !important; }
+.km-dark .km-sheet                       { background: #1e1e22 !important; }
+
+.km-dark .km-unit-list                   { background: transparent !important; }
+.km-dark .km-unit-header                 { background: #222228 !important; border-color: #404045 !important; color: #9a9690 !important; }
+.km-dark .km-unit-header span            { color: #9a9690 !important; }
+
+/* ── Dark theme — asset sheet ─────────────────────────────────────────────── */
+.asset-sheet .window-content.km-dark,
+.km-dark.window-content.asset-sheet-content {
+  background: #1e1e22 !important;
+  color: #dddad4 !important;
+}
+.km-dark .km-asset-form                  { background: #1e1e22 !important; color: #dddad4 !important; }
+.km-dark .km-asset-form label            { color: #9a9690 !important; }
+.km-dark .km-asset-img-wrap              { background: #222228 !important; }
+.km-dark .km-form-row                    { border-color: #383840 !important; }
+.km-dark .km-fieldset                    { border-color: #404045 !important; background: #222228 !important; }
+.km-dark .km-fieldset legend             { color: #9a9690 !important; background: #222228 !important; }
+.km-dark .km-stat-input-row              { border-color: #383840 !important; }
+.km-dark .km-stat-input-row label        { color: #9a9690 !important; }
+.km-dark .km-stat-hint                   { color: #5e5c58 !important; }
+.km-dark .km-stats-col-header            { color: #9a9690 !important; border-color: #404045 !important; }
+.km-dark .km-journal-input              { background: #222228 !important; color: #9a9690 !important; border-color: #404045 !important; }
+.km-dark .km-journal-input:hover        { background: #2a2a30 !important; }

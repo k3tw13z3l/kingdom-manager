@@ -1,0 +1,45 @@
+{
+  "KINGDOM.SheetTitle": "Kingdom Sheet",
+  "KINGDOM.DomainTurn": "Domain Turn",
+  "KINGDOM.TurnNumber": "Turn",
+  "KINGDOM.NewTurn": "Start New Turn",
+  "KINGDOM.ResetTurn": "Reset Turn",
+  "KINGDOM.Actions": "Actions",
+  "KINGDOM.Military": "Military",
+  "KINGDOM.Social": "Social",
+  "KINGDOM.Economic": "Economic",
+  "KINGDOM.Magic": "Magic",
+  "KINGDOM.Used": "Used",
+  "KINGDOM.Available": "Available",
+  "KINGDOM.Rulers": "Rulers",
+  "KINGDOM.PersonalTurn": "Personal Turn",
+  "KINGDOM.AddRuler": "Add Ruler",
+  "KINGDOM.RulerName": "Ruler Name",
+  "KINGDOM.Assets": "Assets",
+  "KINGDOM.AssetName": "Asset Name",
+  "KINGDOM.AssetType": "Type",
+  "KINGDOM.AssetRating": "Rating",
+  "KINGDOM.DropAssets": "Drop items here to add assets",
+  "KINGDOM.KingdomName": "Kingdom Name",
+  "KINGDOM.Notes": "Notes",
+  "KINGDOM.TurnLog": "Turn Log",
+  "KINGDOM.LogEntry": "Log Entry",
+  "KINGDOM.AddLog": "Add Entry",
+  "KINGDOM.Province": "Province",
+  "KINGDOM.Source": "Source",
+  "KINGDOM.Holding": "Holding",
+  "KINGDOM.Law": "Law",
+  "KINGDOM.Temple": "Temple",
+  "KINGDOM.Guild": "Guild",
+  "KINGDOM.Unit": "Unit",
+  "TYPES": {
+    "Actor": {
+      "kingdom-manager.kingdom": "Kingdom",
+      "kingdom": "Kingdom"
+    },
+    "Item": {
+      "kingdom-manager.asset": "Asset",
+      "asset": "Asset"
+    }
+  }
+}

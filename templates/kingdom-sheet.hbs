@@ -1,0 +1,452 @@
+<div class="km-sheet kingdom-manager">
+
+  {{! ── Header ── }}
+  <header class="km-header">
+    <div class="km-header-identity">
+      <img class="km-kingdom-icon" src="{{actor.img}}" data-edit="img" title="Change kingdom icon" />
+      <input class="km-kingdom-name" type="text" name="name"
+             value="{{actor.name}}" placeholder="Kingdom name" />
+      <span class="km-turn-badge">Turn <strong>{{system.turn.number}}</strong></span>
+    </div>
+    <div class="km-header-actions">
+      <button type="button" data-action="addLogEntry" class="km-btn-xs">
+        <i class="fas fa-pencil-alt" aria-hidden="true"></i> Log entry
+      </button>
+      <button type="button" data-action="nextTurn" class="km-btn-primary">
+        <i class="fas fa-step-forward" aria-hidden="true"></i> Next turn
+      </button>
+    </div>
+  </header>
+
+  {{! ── Ratings ── }}
+  <section class="km-card km-ratings">
+    <div class="km-card-label" style="grid-column:1/-1;">
+      <i class="fas fa-chart-bar" aria-hidden="true"></i> Kingdom ratings
+    </div>
+    {{#each state.ratingDisplay}}
+    <div class="km-rating-box {{#if over}}km-over{{/if}}">
+      <div class="km-rating-name">
+        {{#if (eq stat "military")}}<i class="fas fa-shield-alt km-icon-mil" aria-hidden="true"></i> Military{{/if}}
+        {{#if (eq stat "wealth"  )}}<i class="fas fa-coins km-icon-wea"    aria-hidden="true"></i> Wealth{{/if}}
+        {{#if (eq stat "social"  )}}<i class="fas fa-users km-icon-soc"   aria-hidden="true"></i> Social{{/if}}
+        {{#if (eq stat "magic"   )}}<i class="fas fa-magic km-icon-mag"   aria-hidden="true"></i> Magic{{/if}}
+      </div>
+      <div class="km-rating-numbers">
+        <span class="km-rating-gen">{{generated}}</span>
+        <span class="km-rating-sep">·</span>
+        <span class="km-rating-upkeep {{#if over}}km-upkeep-over{{else if upkeep}}km-upkeep-active{{/if}}">-{{upkeep}} upkeep</span>
+      </div>
+      <div class="km-rating-bar">
+        <div class="km-rating-fill {{#if over}}km-fill-over{{else if (lt headroom 2)}}km-fill-warn{{else}}km-fill-safe{{/if}}"
+             style="width:{{barPct}}%"></div>
+      </div>
+      {{#if over}}
+      <div class="km-rating-warn"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Upkeep exceeds rating by {{abs headroom}} — consequence due</div>
+      {{else}}
+      <div class="km-rating-foot">
+        <span class="km-headroom">{{headroom}} headroom</span>
+        {{#if buildBonus}}<span class="km-build-bonus">+{{buildBonus}} on {{capitalize stat}} builds</span>
+        {{else}}<span class="km-no-bonus">no build bonus</span>{{/if}}
+      </div>
+      {{/if}}
+      {{#if (eq stat "magic")}}
+      <div class="km-magic-note">{{#each ../provinces}}<span>{{name}}: {{magicPotential}}-{{devLoad}}={{magicRemaining}}</span>{{/each}}</div>
+      {{/if}}
+    </div>
+    {{/each}}
+
+  {{! Treasury and Atrocity — below the four rating boxes }}
+  <div class="km-treasury-atrocity">
+    <div class="km-ta-box km-ta-treasury">
+      <div class="km-ta-label"><i class="fas fa-coins" aria-hidden="true"></i> Treasury</div>
+      <div class="km-ta-controls">
+        {{#if isGM}}<button type="button" class="km-ta-btn" data-action="adjustTreasury" data-delta="-1">-</button>{{/if}}
+        <input type="number" name="system.treasury" value="{{system.treasury}}" min="0" class="km-ta-input" {{#unless isGM}}readonly{{/unless}} />
+        {{#if isGM}}<button type="button" class="km-ta-btn" data-action="adjustTreasury" data-delta="1">+</button>{{/if}}
+      </div>
+      <div class="km-ta-hint">1pt = +1 before roll (max 5) · 2pt = +1 after roll (max 4pt)</div>
+    </div>
+    <div class="km-ta-box {{#if system.atrocity}}km-ta-atrocity-active{{else}}km-ta-atrocity{{/if}}">
+      <div class="km-ta-label"><i class="fas fa-skull" aria-hidden="true"></i> Atrocity</div>
+      <div class="km-ta-controls">
+        {{#if isGM}}<button type="button" class="km-ta-btn" data-action="adjustAtrocity" data-delta="-1">-</button>{{/if}}
+        <input type="number" name="system.atrocity" value="{{system.atrocity}}" min="0" class="km-ta-input {{#if system.atrocity}}km-ta-input-danger{{/if}}" {{#unless isGM}}readonly{{/unless}} />
+        {{#if isGM}}<button type="button" class="km-ta-btn" data-action="adjustAtrocity" data-delta="1">+</button>{{/if}}
+      </div>
+      {{#if system.atrocity}}
+      <div class="km-ta-hint km-ta-penalty">
+        Upkeep penalty: -{{atrocityPenalty}} to all stats{{#if (gt system.atrocity 3)}} (+1 per 4 pts){{/if}}
+      </div>
+      {{else}}
+      <div class="km-ta-hint">No atrocity — no penalty</div>
+      {{/if}}
+    </div>
+  </div>
+
+  {{! ── Rulers — horizontal row inside ratings ── }}
+  {{#if rulers}}
+  <div class="km-rulers-row km-rulers">
+    <div class="km-rulers-label">Rulers</div>
+    {{#each rulers}}
+    <div class="km-ruler-card {{#if personalTurnUsed}}km-ruler-done{{/if}}" data-ruler-id="{{id}}">
+      <img class="km-rc-portrait" src="{{actorImg}}" title="{{name}}" />
+      <div class="km-rc-info">
+        <span class="km-rc-name">{{name}}</span>
+        <span class="km-rc-class">{{rulerClass}} · Prof +{{profBonus}}</span>
+        <div class="km-rc-tags">
+          {{#if hasMil}}<span class="km-prof-tag km-pt-mil">Military</span>{{/if}}
+          {{#if hasWea}}<span class="km-prof-tag km-pt-wea">Wealth</span>{{/if}}
+          {{#if hasSoc}}<span class="km-prof-tag km-pt-soc">Social</span>{{/if}}
+          {{#if hasMag}}<span class="km-prof-tag km-pt-mag">Magic</span>{{/if}}
+          {{#if noneProf}}<span class="km-prof-tag km-pt-none">No profs</span>{{/if}}
+        </div>
+        <div class="km-rc-bottom">
+          <label class="km-rc-checkbox">
+            <input type="checkbox" data-action="togglePersonal" data-ruler-id="{{id}}"
+                   {{#if personalTurnUsed}}checked{{/if}} />
+            Turn done
+          </label>
+          {{#if isGM}}<button type="button" data-action="removeRuler" data-ruler-id="{{id}}"
+                  class="km-btn-icon km-btn-danger"><i class="fas fa-trash" aria-hidden="true"></i></button>{{/if}}
+        </div>
+      </div>
+    </div>
+    {{/each}}
+  </div>
+  {{else}}
+  <p class="km-empty" style="grid-column:1/-1;padding:4px 0;">Drop character actors here to add rulers.</p>
+  {{/if}}
+
+  </section>
+
+  <div class="km-main-grid">
+    <div class="km-col-main">
+
+      {{! ── Assets by province ── }}
+      <section class="km-card km-assets">
+        <div class="km-card-header">
+          <div class="km-card-label"><i class="fas fa-map" aria-hidden="true"></i> Provinces &amp; assets</div>
+        </div>
+        {{#each provinces}}
+        <div class="km-province-block" data-province-id="{{id}}" data-item-id="{{item.id}}">
+          <div class="km-province-header km-prov-toggle" data-prov-id="{{id}}">
+            <i class="fas fa-chevron-down km-prov-chevron km-prov-chevron-open" aria-hidden="true"></i>
+            <i class="fas {{terrain.icon}} km-prov-icon" aria-hidden="true"></i>
+            <div class="km-province-identity">
+              <span class="km-province-name">{{name}}</span>
+              <span class="km-province-terrain">{{terrain.label}}{{#if @root.showMoveCost}} · move {{terrain.moveCost}}{{/if}}</span>
+            </div>
+            <div class="km-province-stats">
+              {{#if item.system.stats.military}}<span class="km-pill km-pill-mil">Mil {{item.system.stats.military}}</span>{{/if}}
+              {{#if item.system.stats.wealth}}<span class="km-pill km-pill-wea">Wea {{item.system.stats.wealth}}</span>{{/if}}
+              {{#if item.system.stats.social}}<span class="km-pill km-pill-soc">Soc {{item.system.stats.social}}</span>{{/if}}
+              {{#if assetTotals.military}}<span class="km-pill km-pill-mil km-pill-asset-total" title="Asset contribution">+{{assetTotals.military}}</span>{{/if}}
+              {{#if assetTotals.wealth}}<span class="km-pill km-pill-wea km-pill-asset-total" title="Asset contribution">+{{assetTotals.wealth}}</span>{{/if}}
+              {{#if assetTotals.social}}<span class="km-pill km-pill-soc km-pill-asset-total" title="Asset contribution">+{{assetTotals.social}}</span>{{/if}}
+              {{#if assetTotals.magic}}<span class="km-pill km-pill-mag km-pill-asset-total" title="Asset contribution">+{{assetTotals.magic}}</span>{{/if}}
+              <div class="km-prov-magic {{#if (gt magicRemaining 0)}}km-magic-good{{else}}km-magic-zero{{/if}}">
+                <i class="fas fa-magic" aria-hidden="true"></i> {{magicRemaining}}
+              </div>
+            </div>
+            <div class="km-dev-wrap">
+              <span class="km-dev-label">Dev</span>
+              <div class="km-dev-bar"><div class="km-dev-fill km-dev-{{devClass}}" style="width:{{devPct}}%"></div></div>
+              <span class="km-dev-numbers">{{devLoad}} / {{magicPotential}}</span>
+            </div>
+            <div class="km-prov-magic {{#if (eq magicRemaining 0)}}km-magic-zero{{else}}km-magic-good{{/if}}">
+              <i class="fas fa-magic" aria-hidden="true"></i> {{magicRemaining}} magic
+            </div>
+            {{#if isGM}}<div class="km-asset-actions" onclick="event.stopPropagation()">
+              <button type="button" data-action="editItem" data-item-id="{{item.id}}"><i class="fas fa-edit" aria-hidden="true"></i></button>
+              <button type="button" data-action="deleteItem" data-item-id="{{item.id}}"><i class="fas fa-trash" aria-hidden="true"></i></button>
+            </div>{{/if}}
+          </div>
+          <div class="km-prov-body" id="provbody-{{id}}">
+
+          {{! Province claiming progress — shown when province not yet active }}
+          {{#if claimingProv}}
+          <div class="km-wip-block" style="margin:6px 8px 4px;">
+            <div class="km-wip-title">
+              <i class="fas fa-flag" aria-hidden="true"></i> {{name}} — claiming checks (base DC 10)
+            </div>
+            {{#each claimingProv.checks}}
+            <div class="km-wip-row">
+              <div class="km-wip-dot {{#if passed}}km-dot-pass{{else}}km-dot-pend{{/if}}"></div>
+              <span class="km-wip-stat">{{capitalize stat}}</span>
+              <span class="km-wip-dc">DC {{dc}}</span>
+              <span class="km-wip-bonus">+{{buildBonus}} kingdom</span>
+              {{#unless passed}}
+              {{#if ../canRoll}}
+              <span role="button" tabindex="0" data-km-action="rollBuildCheck" data-item-id="{{../item.id}}" data-check-idx="{{@index}}"
+                      class="km-btn-xs" style="color:#0C447C;border-color:#185FA5;background:#E6F1FB;">
+                <i class="fas fa-dice-d20" aria-hidden="true"></i> Roll
+              </span>
+              {{/if}}
+              {{/unless}}
+              {{#if ../isGM}}
+              <button type="button" data-action="toggleBuildCheck" data-item-id="{{../item.id}}" data-check-idx="{{@index}}"
+                      class="km-btn-xs {{#if passed}}km-check-passed{{/if}}">
+                {{#if passed}}<i class="fas fa-check" aria-hidden="true"></i> Claimed
+                {{else}}<i class="fas fa-times" aria-hidden="true"></i> Manual{{/if}}
+              </button>
+              {{/if}}
+            </div>
+            {{/each}}
+            {{#if (allPassed claimingProv.checks)}}
+            <div class="km-wip-complete">
+              <i class="fas fa-check-circle" aria-hidden="true"></i> All checks passed —
+              <button type="button" data-action="activateAsset" data-item-id="{{item.id}}" class="km-btn-primary km-btn-xs">
+                <i class="fas fa-flag" aria-hidden="true"></i> Claim province
+              </button>
+            </div>
+            {{/if}}
+          </div>
+          {{/if}}
+
+          {{#each assets}}
+          <div class="km-asset-row {{#if isBlocked}}km-asset-blocked{{/if}}" data-item-id="{{id}}">
+            <span class="km-asset-name {{#if journalId}}km-has-journal{{/if}}" {{#if journalId}}data-journal-id="{{journalId}}" title="Open journal: {{name}}"{{/if}}>{{name}}{{#if journalId}} <i class="fas fa-book" style="font-size:10px;opacity:0.6;" aria-hidden="true"></i>{{/if}}</span>
+            <div class="km-asset-pills">
+              {{#each (statPills system.stats)}}<span class="km-pill {{cssClass}}">{{label}}</span>{{/each}}
+              {{#if system.devCost}}<span class="km-pill km-pill-dev">Dev {{system.devCost}}</span>{{/if}}
+              {{#if unitSlots}}<span class="km-pill km-pill-slots"><i class="fas fa-home" aria-hidden="true"></i> {{unitSlots}} slot{{#if (gt unitSlots 1)}}s{{/if}}</span>{{/if}}
+              {{#each upkeepPills}}<span class="km-pill km-pill-upk">{{label}} -{{cost}}</span>{{/each}}
+            </div>
+            {{#if isBlocked}}
+            <span class="km-badge km-badge-blocked"><i class="fas fa-ban" aria-hidden="true"></i> Blocked</span>
+            {{else}}
+            <span class="km-badge km-badge-active"><i class="fas fa-check" aria-hidden="true"></i> Active</span>
+            {{/if}}
+            {{#if system.description}}
+            <span class="km-desc-toggle" data-target="desc-{{id}}" title="Toggle description">
+              <i class="fas fa-chevron-down" aria-hidden="true"></i>
+            </span>
+            {{/if}}
+            {{#if isGM}}<div class="km-asset-actions">
+              <button type="button" data-action="editItem"   data-item-id="{{id}}"><i class="fas fa-edit"  aria-hidden="true"></i></button>
+              <button type="button" data-action="deleteItem" data-item-id="{{id}}"><i class="fas fa-trash" aria-hidden="true"></i></button>
+            </div>{{/if}}
+          </div>
+          {{#if system.description}}
+          <div class="km-asset-desc" id="desc-{{id}}">{{system.description}}</div>
+          {{/if}}
+          {{/each}}
+
+          {{#each wipAssets}}
+          <div class="km-asset-row km-asset-wip" data-item-id="{{id}}">
+            <span class="km-asset-name {{#if journalId}}km-has-journal{{/if}}" {{#if journalId}}data-journal-id="{{journalId}}" title="Open journal: {{name}}"{{/if}}>{{name}}{{#if journalId}} <i class="fas fa-book" style="font-size:10px;opacity:0.6;" aria-hidden="true"></i>{{/if}}</span>
+            <div class="km-asset-pills">
+              {{#each (statPills system.stats)}}<span class="km-pill {{cssClass}}">{{label}}</span>{{/each}}
+              {{#if system.devCost}}<span class="km-pill km-pill-dev">Dev {{system.devCost}}</span>{{/if}}
+            </div>
+            <span class="km-badge km-badge-wip">
+              {{#if isMuster}}<i class="fas fa-drum" aria-hidden="true"></i> Mustering
+              {{else}}<i class="fas fa-hammer" aria-hidden="true"></i> Building{{/if}}
+            </span>
+            {{#if system.description}}
+            <span class="km-desc-toggle" data-target="desc-{{id}}" title="Toggle description">
+              <i class="fas fa-chevron-down" aria-hidden="true"></i>
+            </span>
+            {{/if}}
+            {{#if isGM}}<div class="km-asset-actions">
+              <button type="button" data-action="editItem"   data-item-id="{{id}}"><i class="fas fa-edit"  aria-hidden="true"></i></button>
+              <button type="button" data-action="deleteItem" data-item-id="{{id}}"><i class="fas fa-trash" aria-hidden="true"></i></button>
+            </div>{{/if}}
+          </div>
+          {{#if system.description}}
+          <div class="km-asset-desc" id="desc-{{id}}">{{system.description}}</div>
+          {{/if}}
+          <div class="km-wip-block">
+            <div class="km-wip-title">
+              {{#if isMuster}}
+              <i class="fas fa-drum" aria-hidden="true"></i> {{name}} — muster checks
+              {{else}}
+              <i class="fas fa-hammer" aria-hidden="true"></i> {{name}} — build progress
+              {{#if system.devCost}}<span class="km-wip-dev-note">· Dev {{system.devCost}} on completion</span>{{/if}}
+              {{/if}}
+            </div>
+            {{#each checks}}
+            <div class="km-wip-row">
+              <div class="km-wip-dot {{#if passed}}km-dot-pass{{else}}km-dot-pend{{/if}}"></div>
+              <span class="km-wip-stat">{{capitalize stat}}</span>
+              <span class="km-wip-dc">DC {{dc}}</span>
+              <span class="km-wip-bonus">+{{buildBonus}} kingdom</span>
+              {{#unless passed}}
+              {{#if ../canRoll}}
+              <span role="button" tabindex="0" data-km-action="rollBuildCheck" data-item-id="{{../id}}" data-check-idx="{{@index}}"
+                      class="km-btn-xs" style="color:#0C447C;border-color:#185FA5;background:#E6F1FB;">
+                <i class="fas fa-dice-d20" aria-hidden="true"></i> Roll
+              </span>
+              {{/if}}
+              {{/unless}}
+              {{#if ../isGM}}
+              <button type="button" data-action="toggleBuildCheck" data-item-id="{{../id}}" data-check-idx="{{@index}}"
+                      class="km-btn-xs {{#if passed}}km-check-passed{{/if}}">
+                {{#if passed}}<i class="fas fa-check" aria-hidden="true"></i> Passed
+                {{else}}<i class="fas fa-times" aria-hidden="true"></i> Manual{{/if}}
+              </button>
+              {{/if}}
+            </div>
+            {{/each}}
+            {{#if (allPassed checks)}}
+            <div class="km-wip-complete">
+              <i class="fas fa-check-circle" aria-hidden="true"></i> All checks passed —
+              <button type="button" data-action="activateAsset" data-item-id="{{id}}" class="km-btn-primary km-btn-xs">
+                {{#if isMuster}}<i class="fas fa-drum" aria-hidden="true"></i> Muster unit{{else}}<i class="fas fa-check-circle" aria-hidden="true"></i> Activate{{/if}}
+              </button>
+            </div>
+            {{/if}}
+          </div>
+          {{/each}}
+          </div>{{! end km-prov-body }}
+        </div>
+        {{/each}}
+
+        {{! Obstacles — shown after all province asset blocks }}
+        {{#each provinces}}
+        {{#each obstacles}}
+        <div class="km-obstacle-row" data-item-id="{{id}}">
+          <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+          <span class="km-obstacle-name">{{name}} <span style="font-size:10px;color:#888;">({{../name}})</span></span>
+          <div class="km-obstacle-score">
+            <span class="km-obstacle-badge">Score {{system.obstacleScore}}</span>
+            <span class="km-obstacle-dc">DC {{dc}}</span>
+            <span class="km-obstacle-stat">{{capitalize stat}} +{{bonus}}</span>
+            {{#if blockedAssetName}}
+            <span class="km-obstacle-upkeep" style="background:#EEEDFE;color:#3C3489;" title="Blocks this asset while score &gt; 0">
+              <i class="fas fa-ban" aria-hidden="true"></i> {{blockedAssetName}}
+            </span>
+            {{else}}
+            <span class="km-obstacle-upkeep" title="Upkeep drain per turn (all stats)">-{{upkeepDrain}} all/turn</span>
+            {{/if}}
+          </div>
+          {{#if canRoll}}
+          <span role="button" tabindex="0" data-km-action="resolveObstacle" data-item-id="{{id}}" class="km-btn-xs km-btn-danger">
+            <i class="fas fa-dice-d20"></i> Resolve
+          </span>
+          {{/if}}
+          {{#if system.description}}
+          <span class="km-desc-toggle" data-target="desc-{{id}}" title="Toggle description">
+            <i class="fas fa-chevron-down" aria-hidden="true"></i>
+          </span>
+          {{/if}}
+          {{#if isGM}}<div class="km-asset-actions">
+            <button type="button" data-action="editItem"   data-item-id="{{id}}"><i class="fas fa-edit" aria-hidden="true"></i></button>
+            <button type="button" data-action="deleteItem" data-item-id="{{id}}"><i class="fas fa-trash" aria-hidden="true"></i></button>
+          </div>{{/if}}
+        </div>
+        {{#if system.description}}
+        <div class="km-asset-desc" id="desc-{{id}}">{{system.description}}</div>
+        {{/if}}
+        {{/each}}
+        {{/each}}
+
+        <div class="km-drop-zone" data-province-id="">
+          <i class="fas fa-grip-vertical" aria-hidden="true"></i> Drop a province or asset item here
+        </div>
+      </section>
+
+      {{! ── Units ── }}
+      <section class="km-card km-units">
+        <div class="km-card-label"><i class="fas fa-sword" aria-hidden="true"></i> Units &amp; upkeep</div>
+        {{#if units}}
+        <div class="km-unit-list">
+          <div class="km-unit-header">
+            <span>Unit</span>
+            <span>Province</span>
+            <span>Upkeep per turn</span>
+            <span>Status</span>
+            <span></span>
+          </div>
+          {{#each units}}
+          <div class="km-unit-row {{#if isBlocked}}km-asset-blocked{{/if}}" data-item-id="{{id}}">
+            <span class="km-unit-name">{{name}}
+              {{#if isAgent}}<span class="km-unit-agent-tag">Agent</span>{{/if}}
+              {{#if isGarrisoned}}<i class="fas fa-home km-garrison-icon" title="Upkeep covered by garrison" aria-hidden="true"></i>{{/if}}
+              {{#if hasFeature}}<span class="km-unit-feature km-pt-{{featureStat}}">{{capitalize featureStat}} +{{featureBonus}}</span>{{/if}}
+            </span>
+            <span class="km-unit-loc">{{provinceName}}</span>
+            <span>
+              {{#each pills}}<span class="km-pill km-pill-upk">{{label}} -{{cost}}</span>
+              {{/each}}
+
+            </span>
+            <span>
+              {{#if isBlocked}}<span class="km-badge km-badge-blocked"><i class="fas fa-ban" aria-hidden="true"></i> Blocked</span>
+              {{else if isOver}}<span class="km-badge km-badge-over"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Over</span>
+              {{else}}<span class="km-badge km-badge-active"><i class="fas fa-check" aria-hidden="true"></i> Active</span>{{/if}}
+            </span>
+            <span class="km-unit-actions">
+              {{#if system.description}}
+              <span class="km-desc-toggle" data-target="desc-{{id}}" title="Toggle description">
+                <i class="fas fa-chevron-down" aria-hidden="true"></i>
+              </span>
+              {{/if}}
+              {{#if isGM}}<div class="km-asset-actions">
+                <button type="button" data-action="editItem"   data-item-id="{{id}}"><i class="fas fa-edit"  aria-hidden="true"></i></button>
+                <button type="button" data-action="deleteItem" data-item-id="{{id}}"><i class="fas fa-trash" aria-hidden="true"></i></button>
+              </div>{{/if}}
+            </span>
+          </div>
+          {{#if system.description}}
+          <div class="km-asset-desc" id="desc-{{id}}">{{system.description}}</div>
+          {{/if}}
+          {{/each}}
+        </div>
+        {{else}}<p class="km-empty">No units mustered. Drop unit items here.</p>{{/if}}
+        {{#each state.ratingDisplay}}{{#if over}}
+        <div class="km-consequence-banner">
+          <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+          <span>{{capitalize stat}} upkeep exceeds rating — a consequence is due this turn.</span>
+        </div>
+        {{/if}}{{/each}}
+        <div class="km-drop-zone"><i class="fas fa-grip-vertical" aria-hidden="true"></i> Drop unit items here</div>
+      </section>
+
+    </div>
+
+    <div class="km-col-side">
+
+      {{! ── Heraldry ── }}
+      <section class="km-card km-heraldry">
+        <div class="km-card-label"><i class="fas fa-shield-alt" aria-hidden="true"></i> Heraldry</div>
+        <div class="km-heraldry-wrap">
+          <img class="km-heraldry-img"
+               src="{{#if system.heraldry}}{{system.heraldry}}{{else}}icons/svg/shield.svg{{/if}}"
+               data-edit="system.heraldry"
+               title="Click to change heraldry" />
+          <div class="km-heraldry-info">
+            <input type="text" name="system.motto" value="{{system.motto}}"
+                   class="km-motto-input" placeholder="Kingdom motto…" />
+          </div>
+        </div>
+      </section>
+
+      {{! ── Turn log ── }}
+      <section class="km-card km-log">
+        <div class="km-card-header">
+          <div class="km-card-label"><i class="fas fa-scroll" aria-hidden="true"></i> Turn log</div>
+          <button type="button" data-action="addLogEntry" class="km-btn-xs"><i class="fas fa-plus" aria-hidden="true"></i></button>
+        </div>
+        {{#if turnLog}}
+        <div class="km-log-entries">
+          {{#each turnLog}}
+          <div class="km-log-row">
+            {{#with (parseTurnTag this)}}
+            <span class="km-log-turn">{{tag}}</span>
+            <span class="km-log-text {{resultClass}}">{{text}}</span>
+            {{/with}}
+            <button type="button" data-action="removeLogEntry"
+                    data-log-index="{{reverseIndex @index ../turnLog.length}}"
+                    class="km-btn-icon km-log-remove">
+              <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
+          </div>
+          {{/each}}
+        </div>
+        {{else}}<p class="km-empty">No entries yet.</p>{{/if}}
+      </section>
+
+    </div>
+  </div>
+</div>
