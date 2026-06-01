@@ -364,6 +364,19 @@
         {{/each}}
         {{/each}}
 
+        {{! Orphaned WIP items — no province assigned}}
+        {{#each orphanedWip}}
+        <div class="km-asset-row km-asset-wip" data-item-id="{{id}}" style="border-left:2px solid #E24B4A;padding-left:10px;">
+          <span class="km-asset-name">{{name}} <span style="font-size:10px;color:#E24B4A;">(no province)</span></span>
+          <div class="km-asset-pills"></div>
+          <span class="km-badge" style="background:#FCEBEB;color:#A32D2D;">Unassigned</span>
+          {{#if isGM}}<div class="km-asset-actions">
+            <button type="button" data-action="editItem"   data-item-id="{{id}}"><i class="fas fa-edit"  aria-hidden="true"></i></button>
+            <button type="button" data-action="deleteItem" data-item-id="{{id}}"><i class="fas fa-trash" aria-hidden="true"></i></button>
+          </div>{{/if}}
+        </div>
+        {{/each}}
+
         <div class="km-drop-zone" data-province-id="">
           <i class="fas fa-grip-vertical" aria-hidden="true"></i> Drop a province or asset item here
         </div>

@@ -200,8 +200,20 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
         noneProf: profStats.length === 0, isGM };
     });
 
+    // Items with no province assigned and not yet active
+    const activeProvinceIds2 = new Set(items.filter(i =>
+      i.type === "kingdom-manager.asset" && i.system.assetType === "province"
+    ).map(i => i.id));
+
+    const orphanedWip = items.filter(i =>
+      i.type === "kingdom-manager.asset"
+      && !i.system.buildState?.active
+      && !activeProvinceIds2.has(i.system.provinceId)
+      && !i.system.provinceId
+    ).map(i => ({ id: i.id, name: i.name, system: i.system, isGM }));
+
     return {
-      ...ctx, actor, system: sys, state, provinces, units, rulers,
+      ...ctx, actor, system: sys, state, provinces, units, rulers, orphanedWip,
       atrocityPenalty: sys.atrocity > 0 ? 2 + Math.floor(sys.atrocity / 4) : 0,
       canRoll, isGM,
       showMoveCost: game.settings.get("kingdom-manager", "showMoveCost"),
