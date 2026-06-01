@@ -121,7 +121,7 @@
                  value="{{#if (ne (lookup ../system.stats this) null)}}{{lookup ../system.stats this}}{{else}}-{{/if}}"
                  placeholder="-" class="km-stat-field" />
           <span class="km-stat-hint">
-            {{#if (ne (lookup ../system.stats this) null)}}DC {{add 12 (abs (nullish (lookup ../system.stats this) 0)) (lookup ../system.upkeep this)}}{{else}}—{{/if}}
+            {{#if (ne (lookup ../system.stats this) null)}}DC {{add ../system.buildBaseDC (abs (nullish (lookup ../system.stats this) 0)) (lookup ../system.upkeep this)}}{{else}}—{{/if}}
           </span>
         </div>
         {{/each}}
@@ -145,7 +145,7 @@
                value="{{#if (ne system.stats.military null)}}{{system.stats.military}}{{else}}-{{/if}}"
                placeholder="-" class="km-stat-field" />
         {{#unless isProvince}}<span class="km-stat-hint">
-          {{#if (ne system.stats.military null)}}DC {{add 12 (abs (nullish system.stats.military 0))}}{{else}}ignored{{/if}}
+          {{#if (ne system.stats.military null)}}DC {{add system.buildBaseDC (abs (nullish system.stats.military 0))}}{{else}}ignored{{/if}}
         </span>{{/unless}}
       </div>
       <div class="km-stat-input-row">
@@ -154,7 +154,7 @@
                value="{{#if (ne system.stats.wealth null)}}{{system.stats.wealth}}{{else}}-{{/if}}"
                placeholder="-" class="km-stat-field" />
         {{#unless isProvince}}<span class="km-stat-hint">
-          {{#if (ne system.stats.wealth null)}}DC {{add 12 (abs (nullish system.stats.wealth 0))}}{{else}}ignored{{/if}}
+          {{#if (ne system.stats.wealth null)}}DC {{add system.buildBaseDC (abs (nullish system.stats.wealth 0))}}{{else}}ignored{{/if}}
         </span>{{/unless}}
       </div>
       <div class="km-stat-input-row">
@@ -163,7 +163,7 @@
                value="{{#if (ne system.stats.social null)}}{{system.stats.social}}{{else}}-{{/if}}"
                placeholder="-" class="km-stat-field" />
         {{#unless isProvince}}<span class="km-stat-hint">
-          {{#if (ne system.stats.social null)}}DC {{add 12 (abs (nullish system.stats.social 0))}}{{else}}ignored{{/if}}
+          {{#if (ne system.stats.social null)}}DC {{add system.buildBaseDC (abs (nullish system.stats.social 0))}}{{else}}ignored{{/if}}
         </span>{{/unless}}
       </div>
       {{#unless isProvince}}
@@ -173,7 +173,7 @@
                value="{{#if (ne system.stats.magic null)}}{{system.stats.magic}}{{else}}-{{/if}}"
                placeholder="-" class="km-stat-field" />
         <span class="km-stat-hint">
-          {{#if (ne system.stats.magic null)}}DC {{add 12 (abs (nullish system.stats.magic 0))}}{{else}}ignored{{/if}}
+          {{#if (ne system.stats.magic null)}}DC {{add system.buildBaseDC (abs (nullish system.stats.magic 0))}}{{else}}ignored{{/if}}
         </span>
       </div>
       {{/unless}}

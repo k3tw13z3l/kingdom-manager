@@ -554,13 +554,22 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       return a && (a.ownership[userId] ?? a.ownership.default ?? 0) >= 3;
     });
 
-    // Units with a matching feature stat can also resolve
-    const eligibleUnits = this.document.items.filter(i =>
-      i.type === "kingdom-manager.asset"
-      && i.system.assetType === "unit"
-      && i.system.buildState?.active
-      && i.system.unitFeatureStat === stat
-    );
+    // Units with a matching feature stat can resolve if they are in the same province
+    // Match by provinceId or by location matching the obstacle's province name
+    const obstacleProvinceId   = item.system.provinceId;
+    const obstacleProvince     = this.document.items.get(obstacleProvinceId);
+    const obstacleProvinceName = obstacleProvince?.name ?? "";
+
+    const eligibleUnits = this.document.items.filter(i => {
+      if (i.type !== "kingdom-manager.asset") return false;
+      if (i.system.assetType !== "unit") return false;
+      if (!i.system.buildState?.active) return false;
+      if (i.system.unitFeatureStat !== stat) return false;
+      // Must be in the same province as the obstacle
+      const sameById   = obstacleProvinceId && i.system.provinceId === obstacleProvinceId;
+      const sameByName = obstacleProvinceName && i.system.location === obstacleProvinceName;
+      return sameById || sameByName;
+    });
 
     const rulerOpts = [
       ...eligible.map(r => `<option value="ruler-${rulers.indexOf(r)}">${r.name} (ruler)</option>`),
@@ -710,7 +719,7 @@ function buildProvinceData(items, state) {
       };
     });
 
-    return { ...prov, devPct, devClass, assets, wipAssets, obstacles, claimingProv, isGM: state._isGM, canRoll: state._canRoll, assetTotals };
+    return { ...prov, devPct, devClass, assets, wipAssets, obstacles, claimingProv, stationedUnits, isGM: state._isGM, canRoll: state._canRoll, assetTotals };
   });
 }
 
@@ -721,9 +730,17 @@ function buildUnitData(items, state, garrisonedUnitIds = new Set()) {
       && (i.system.obstacleScore ?? 0) > 0 && i.system.blockedAssetId)
     .map(i => i.system.blockedAssetId)
   );
-  return items.filter(i =>
-    i.type === "kingdom-manager.asset" && i.system.assetType === "unit" && i.system.buildState?.active
-  ).map(unit => {
+  // Active province ids and names — units in these are shown inside the province
+  const activeProvinceIds   = new Set(items.filter(i => i.type === "kingdom-manager.asset" && i.system.assetType === "province" && i.system.buildState?.active !== false).map(i => i.id));
+  const activeProvinceNames = new Set(items.filter(i => i.type === "kingdom-manager.asset" && i.system.assetType === "province" && i.system.buildState?.active !== false).map(i => i.name));
+
+  return items.filter(i => {
+    if (i.type !== "kingdom-manager.asset" || i.system.assetType !== "unit" || !i.system.buildState?.active) return false;
+    // Exclude units shown inside a province
+    if (activeProvinceIds.has(i.system.provinceId)) return false;
+    if (i.system.location && activeProvinceNames.has(i.system.location)) return false;
+    return true;
+  }).map(unit => {
     const stats  = unit.system.stats;
     const offset = (() => {
       const o = { military:0, wealth:0, social:0, magic:0 };
