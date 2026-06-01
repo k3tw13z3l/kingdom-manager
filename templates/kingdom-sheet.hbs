@@ -156,7 +156,7 @@
             <div class="km-prov-magic {{#if (eq magicRemaining 0)}}km-magic-zero{{else}}km-magic-good{{/if}}">
               <i class="fas fa-magic" aria-hidden="true"></i> {{magicRemaining}} magic
             </div>
-            {{#if isGM}}<div class="km-asset-actions" onclick="event.stopPropagation()">
+            {{#if isGM}}<div class="km-asset-actions km-prov-actions">
               <button type="button" data-action="editItem" data-item-id="{{item.id}}"><i class="fas fa-edit" aria-hidden="true"></i></button>
               <button type="button" data-action="deleteItem" data-item-id="{{item.id}}"><i class="fas fa-trash" aria-hidden="true"></i></button>
             </div>{{/if}}

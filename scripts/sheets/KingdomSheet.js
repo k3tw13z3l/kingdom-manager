@@ -66,9 +66,9 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     const win = this.element.parentElement ?? this.element;
 
     win.addEventListener("click", async (event) => {
-      // Province collapse toggle
+      // Province collapse toggle — skip if clicking action buttons
       const provToggle = event.target.closest(".km-prov-toggle");
-      if (provToggle && !event.target.closest(".km-asset-actions") && !event.target.closest("[data-action]")) {
+      if (provToggle && !event.target.closest(".km-prov-actions")) {
         const provId  = provToggle.dataset.provId;
         const body    = win.querySelector(`#provbody-${provId}`);
         const chevron = provToggle.querySelector(".km-prov-chevron");
