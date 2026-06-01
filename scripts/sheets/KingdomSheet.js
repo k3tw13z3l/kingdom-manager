@@ -755,12 +755,13 @@ function buildUnitData(items, state, garrisonedUnitIds = new Set()) {
     .map(i => i.system.blockedAssetId)
   );
   // Active province ids and names — units in these are shown inside the province
-  const activeProvinceIds   = new Set(items.filter(i => i.type === "kingdom-manager.asset" && i.system.assetType === "province" && i.system.buildState?.active !== false).map(i => i.id));
-  const activeProvinceNames = new Set(items.filter(i => i.type === "kingdom-manager.asset" && i.system.assetType === "province" && i.system.buildState?.active !== false).map(i => i.name));
+  // active === true means claimed; active === false means pending claim
+  const activeProvinceIds   = new Set(items.filter(i => i.type === "kingdom-manager.asset" && i.system.assetType === "province" && i.system.buildState?.active === true).map(i => i.id));
+  const activeProvinceNames = new Set(items.filter(i => i.type === "kingdom-manager.asset" && i.system.assetType === "province" && i.system.buildState?.active === true).map(i => i.name));
 
   return items.filter(i => {
     if (i.type !== "kingdom-manager.asset" || i.system.assetType !== "unit" || !i.system.buildState?.active) return false;
-    // Exclude units shown inside a province
+    // Exclude units shown inside an active (claimed) province
     if (activeProvinceIds.has(i.system.provinceId)) return false;
     if (i.system.location && activeProvinceNames.has(i.system.location)) return false;
     return true;
