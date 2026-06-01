@@ -719,6 +719,30 @@ function buildProvinceData(items, state) {
       };
     });
 
+    const statLabels = { military:"Mil", wealth:"Wea", social:"Soc", magic:"Mag" };
+    const stationedUnits = items.filter(i =>
+      i.type === "kingdom-manager.asset"
+      && i.system.assetType === "unit"
+      && i.system.buildState?.active
+      && (i.system.provinceId === prov.id || i.system.location === prov.name)
+    ).map(i => {
+      const pills = Object.entries(i.system.stats ?? {})
+        .filter(([, v]) => v !== null && v !== undefined && v !== 0)
+        .map(([stat, val]) => ({ stat, label: statLabels[stat], cost: Math.abs(val) }));
+      return {
+        id: i.id, name: i.name, system: i.system, pills,
+        isGM:         state._isGM,
+        isBlocked:    blockedIds.has(i.id),
+        isGarrisoned: state.garrisonedUnitIds?.has(i.id) ?? false,
+        unitType:     i.system.unitType ?? "army",
+        isAgent:      (i.system.unitType ?? "army") !== "army",
+        hasFeature:   !!(i.system.unitFeatureStat),
+        featureStat:  i.system.unitFeatureStat ?? "",
+        featureBonus: i.system.unitFeatureBonus ?? 0,
+        journalId:    i.system.journalId ?? "",
+      };
+    });
+
     return { ...prov, devPct, devClass, assets, wipAssets, obstacles, claimingProv, stationedUnits, isGM: state._isGM, canRoll: state._canRoll, assetTotals };
   });
 }
