@@ -29,12 +29,20 @@
   {{/if}}
 
   {{#if isUnit}}
-  <div class="km-form-row" style="align-items:center;">
-    <label>Agent unit</label>
-    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
-      <input type="checkbox" name="system.isAgent" {{#if system.isAgent}}checked{{/if}} style="width:16px;height:16px;cursor:pointer;accent-color:#633806;" />
-      <span class="km-stat-hint" style="margin:0;">Agents cannot be garrisoned in a barracks</span>
-    </label>
+  <div class="km-form-row">
+    <label>Unit type</label>
+    <select name="system.unitType">
+      <option value="army"       {{#if (eq system.unitType "army")}}selected{{/if}}>Army (can garrison in barracks)</option>
+      <option value="assassin"   {{#if (eq system.unitType "assassin")}}selected{{/if}}>Assassin</option>
+      <option value="bodyguard"  {{#if (eq system.unitType "bodyguard")}}selected{{/if}}>Bodyguard</option>
+      <option value="diplomat"   {{#if (eq system.unitType "diplomat")}}selected{{/if}}>Diplomat</option>
+      <option value="garrison"   {{#if (eq system.unitType "garrison")}}selected{{/if}}>Garrison</option>
+      <option value="merchant"   {{#if (eq system.unitType "merchant")}}selected{{/if}}>Merchant</option>
+      <option value="prophet"    {{#if (eq system.unitType "prophet")}}selected{{/if}}>Prophet</option>
+      <option value="sage"       {{#if (eq system.unitType "sage")}}selected{{/if}}>Sage</option>
+      <option value="spy"        {{#if (eq system.unitType "spy")}}selected{{/if}}>Spy</option>
+      <option value="warden"     {{#if (eq system.unitType "warden")}}selected{{/if}}>Warden</option>
+    </select>
   </div>
   {{/if}}
 
@@ -166,7 +174,7 @@
   </fieldset>
   {{/unless}}
 
-  {{! ── Development cost and unit slots (assets only) ── }}
+  {{! ── Development cost, unit slots and base DC (assets only) ── }}
   {{#if isAsset}}
   <div class="km-stats-two-col" style="margin-top:6px;">
     <div class="km-form-row">
@@ -179,6 +187,11 @@
       <input type="number" name="system.unitSlots" value="{{system.unitSlots}}" min="0" style="width:60px;" />
       <span class="km-stat-hint">Free garrison slots</span>
     </div>
+  </div>
+  <div class="km-form-row" style="margin-top:4px;">
+    <label><i class="fas fa-dice-d20"></i> Base build DC</label>
+    <input type="number" name="system.buildBaseDC" value="{{system.buildBaseDC}}" min="1" style="width:60px;" />
+    <span class="km-stat-hint">Default 12 — DC per check = base + abs(stat) + upkeep</span>
   </div>
   {{/if}}
 

@@ -113,7 +113,7 @@ export class KingdomActorData extends foundry.abstract.TypeDataModel {
         if (d.buildState?.active) {
           // Check if a slot covers this unit's location
           const key     = locationKey(d);
-          const hasSlot = !d.isAgent && key && (slotsByLocation[key] ?? 0) > 0;
+          const hasSlot = d.unitType === "army" && key && (slotsByLocation[key] ?? 0) > 0;
           if (hasSlot) {
             slotsByLocation[key]--;
             garrisonedUnitIds.add(item.id);

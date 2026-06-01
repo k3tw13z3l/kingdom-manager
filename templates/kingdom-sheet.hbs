@@ -361,7 +361,7 @@
           {{#each units}}
           <div class="km-unit-row {{#if isBlocked}}km-asset-blocked{{/if}}" data-item-id="{{id}}">
             <span class="km-unit-name">{{name}}
-              {{#if isAgent}}<span class="km-unit-agent-tag">Agent</span>{{/if}}
+              {{#if isAgent}}<span class="km-unit-agent-tag">{{capitalize unitType}}</span>{{/if}}
               {{#if isGarrisoned}}<i class="fas fa-home km-garrison-icon" title="Upkeep covered by garrison" aria-hidden="true"></i>{{/if}}
               {{#if hasFeature}}<span class="km-unit-feature km-pt-{{featureStat}}">{{capitalize featureStat}} +{{featureBonus}}</span>{{/if}}
             </span>

@@ -392,6 +392,19 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     const check = item.system.buildState?.checks?.[checkIdx];
     if (!check) return ui.notifications.error(`Check ${checkIdx} not found on ${item.name}.`);
 
+    // Assets: max 2 build checks per turn
+    if (item.system.assetType === "asset") {
+      const turnNum    = this.document.system.turn.number;
+      const log        = this.document.system.turn.log ?? [];
+      const checkVerb2 = "Build check";
+      const checksThisTurn = log.filter(e =>
+        e.includes(`[T${turnNum}]`) && e.includes(checkVerb2) && e.includes(item.name)
+      ).length;
+      if (checksThisTurn >= 2) {
+        return ui.notifications.warn(`${item.name} has already used 2 build checks this turn.`);
+      }
+    }
+
     const { stat, dc } = check;
     const state        = this.document.system.computeState(this.document.items.contents);
     const kingdomBonus = state.buildBonus[stat] ?? 0;
@@ -725,9 +738,10 @@ function buildUnitData(items, state, garrisonedUnitIds = new Set()) {
       isOver: Object.values(state.headroom).some(v => v < 0),
       provinceName: unit.system.location || items.find(i => i.id === unit.system.provinceId && i.system.assetType === "province")?.name || "—",
       isGM: state._isGM, canRoll: state._canRoll,
-      isBlocked: blockedIds.has(unit.id),
+      isBlocked:    blockedIds.has(unit.id),
       isGarrisoned: garrisonedUnitIds.has(unit.id),
-      isAgent: !!(unit.system.isAgent),
+      unitType:     unit.system.unitType ?? "army",
+      isAgent:      (unit.system.unitType ?? "army") !== "army",
       hasFeature: !!(unit.system.unitFeatureStat),
       featureStat: unit.system.unitFeatureStat ?? "",
       featureBonus: unit.system.unitFeatureBonus ?? 0,

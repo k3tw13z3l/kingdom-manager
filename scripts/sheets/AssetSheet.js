@@ -59,16 +59,7 @@ export class AssetSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
 
     const win = this.element.parentElement ?? this.element;
 
-    // Handle isAgent checkbox specifically — scoped to this sheet only
-    win.addEventListener("change", async (event) => {
-      const cb = event.target.closest("input[name='system.isAgent']");
-      if (!cb) return;
-      // Ensure the checkbox belongs to this sheet's element
-      if (!this.element?.contains(event.target)) return;
-      await this.item.update({ "system.isAgent": cb.checked });
-    });
-
-    // Native drop listener for journal entries
+// Native drop listener for journal entries
     win.addEventListener("dragover", (event) => {
       if (event.dataTransfer?.types?.includes("text/plain")) event.preventDefault();
     });
