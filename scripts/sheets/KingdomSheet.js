@@ -277,6 +277,8 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
         const terrain = CONFIG.KingdomManager.TERRAIN_TYPES[sys.terrainType] ?? { magicPotential: 0 };
         if (terrain.magicPotential > 0) checks.push({ stat: "magic", dc: baseDC + terrain.magicPotential, passed: false });
       }
+      // Always at least one check — province with no stats gets a base social check
+      if (checks.length === 0) checks.push({ stat: "social", dc: baseDC, passed: false });
       foundry.utils.setProperty(itemData, "system.buildState.checks", checks);
     }
 
