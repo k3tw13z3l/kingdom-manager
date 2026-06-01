@@ -7,7 +7,7 @@ export function registerHelpers() {
       assassin:   "fas fa-user-ninja",
       bodyguard:  "fas fa-shield-alt",
       diplomat:   "fas fa-handshake",
-      garrison:   "fas fa-fort-awesome",
+      garrison:   "fas fa-chess-rook",
       merchant:   "fas fa-coins",
       prophet:    "fas fa-eye",
       sage:       "fas fa-book",
