@@ -248,11 +248,19 @@
             </div>
             {{#if isBlocked}}<span class="km-badge km-badge-blocked"><i class="fas fa-ban" aria-hidden="true"></i> Blocked</span>
             {{else}}<span class="km-badge km-badge-active"><i class="fas fa-check" aria-hidden="true"></i> Active</span>{{/if}}
+            {{#if system.description}}
+            <span class="km-desc-toggle" data-target="desc-{{id}}" title="Toggle description">
+              <i class="fas fa-chevron-down" aria-hidden="true"></i>
+            </span>
+            {{/if}}
             {{#if isGM}}<div class="km-asset-actions">
               <button type="button" data-action="editItem"   data-item-id="{{id}}"><i class="fas fa-edit"  aria-hidden="true"></i></button>
               <button type="button" data-action="deleteItem" data-item-id="{{id}}"><i class="fas fa-trash" aria-hidden="true"></i></button>
             </div>{{/if}}
           </div>
+          {{#if system.description}}
+          <div class="km-asset-desc" id="desc-{{id}}">{{system.description}}</div>
+          {{/if}}
           {{/each}}
 
           {{#each wipAssets}}
