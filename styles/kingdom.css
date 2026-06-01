@@ -1122,3 +1122,22 @@
 .km-dark .km-stats-col-header            { color: #9a9690 !important; border-color: #404045 !important; }
 .km-dark .km-journal-input              { background: #222228 !important; color: #9a9690 !important; border-color: #404045 !important; }
 .km-dark .km-journal-input:hover        { background: #2a2a30 !important; }
+
+/* ── Stationed unit rows — Option C+D style ───────────────────────────────── */
+.km-unit-stationed {
+  background: #faf9f7;
+  border-left: 2px dashed #B4B2A9 !important;
+  padding-left: 10px !important;
+}
+.km-dark .km-unit-stationed {
+  background: #242428 !important;
+  border-left: 2px dashed #4a4a50 !important;
+}
+.km-unit-type-icon {
+  font-size: 13px;
+  color: #888780;
+  flex-shrink: 0;
+}
+.km-dark .km-unit-type-icon {
+  color: #6a6760;
+}

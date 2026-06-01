@@ -1,6 +1,21 @@
 // scripts/helpers.js — Handlebars helpers for Kingdom Manager
 
 export function registerHelpers() {
+  Handlebars.registerHelper("unitTypeIcon", (type) => {
+    const icons = {
+      army:       "ti-shield",
+      assassin:   "ti-skull",
+      bodyguard:  "ti-shield-half",
+      diplomat:   "ti-building-community",
+      garrison:   "ti-tower",
+      merchant:   "ti-coin",
+      prophet:    "ti-eye",
+      sage:       "ti-book",
+      spy:        "ti-spy",
+      warden:     "ti-trees",
+    };
+    return icons[type] ?? "ti-sword";
+  });
 
   // Math helpers
   Handlebars.registerHelper("add",   (...args) => args.slice(0,-1).reduce((s,v) => s + (Number(v)||0), 0));

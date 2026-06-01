@@ -234,7 +234,8 @@
 
           {{! Stationed units in this province}}
           {{#each stationedUnits}}
-          <div class="km-asset-row {{#if isBlocked}}km-asset-blocked{{/if}}" data-item-id="{{id}}">
+          <div class="km-asset-row km-unit-stationed {{#if isBlocked}}km-asset-blocked{{/if}}" data-item-id="{{id}}">
+            <i class="ti {{unitTypeIcon unitType}} km-unit-type-icon" aria-hidden="true"></i>
             <span class="km-asset-name {{#if journalId}}km-has-journal{{/if}}"
                   {{#if journalId}}data-journal-id="{{journalId}}" title="Open journal"{{/if}}>
               {{name}}

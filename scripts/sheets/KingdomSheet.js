@@ -720,12 +720,14 @@ function buildProvinceData(items, state) {
     });
 
     const statLabels = { military:"Mil", wealth:"Wea", social:"Soc", magic:"Mag" };
-    const stationedUnits = items.filter(i =>
-      i.type === "kingdom-manager.asset"
-      && i.system.assetType === "unit"
-      && i.system.buildState?.active
-      && (i.system.provinceId === prov.id || i.system.location === prov.name)
-    ).map(i => {
+    const stationedUnits = items.filter(i => {
+      if (i.type !== "kingdom-manager.asset") return false;
+      if (i.system.assetType !== "unit") return false;
+      if (!i.system.buildState?.active) return false;
+      // If location is set, it takes priority over provinceId
+      if (i.system.location) return i.system.location === prov.name;
+      return i.system.provinceId === prov.id;
+    }).map(i => {
       const pills = Object.entries(i.system.stats ?? {})
         .filter(([, v]) => v !== null && v !== undefined && v !== 0)
         .map(([stat, val]) => ({ stat, label: statLabels[stat], cost: Math.abs(val) }));
@@ -761,10 +763,9 @@ function buildUnitData(items, state, garrisonedUnitIds = new Set()) {
 
   return items.filter(i => {
     if (i.type !== "kingdom-manager.asset" || i.system.assetType !== "unit" || !i.system.buildState?.active) return false;
-    // Exclude units shown inside an active (claimed) province
-    if (activeProvinceIds.has(i.system.provinceId)) return false;
-    if (i.system.location && activeProvinceNames.has(i.system.location)) return false;
-    return true;
+    // If location is set, use only location; otherwise use provinceId
+    if (i.system.location) return !activeProvinceNames.has(i.system.location);
+    return !activeProvinceIds.has(i.system.provinceId);
   }).map(unit => {
     const stats  = unit.system.stats;
     const offset = (() => {
