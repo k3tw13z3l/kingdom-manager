@@ -232,6 +232,28 @@
           {{/if}}
           {{/each}}
 
+          {{! Stationed units in this province}}
+          {{#each stationedUnits}}
+          <div class="km-asset-row {{#if isBlocked}}km-asset-blocked{{/if}}" data-item-id="{{id}}">
+            <span class="km-asset-name {{#if journalId}}km-has-journal{{/if}}"
+                  {{#if journalId}}data-journal-id="{{journalId}}" title="Open journal"{{/if}}>
+              {{name}}
+              {{#if isAgent}}<span class="km-unit-agent-tag">{{capitalize unitType}}</span>{{/if}}
+              {{#if isGarrisoned}}<i class="fas fa-home km-garrison-icon" title="Upkeep covered by garrison" aria-hidden="true"></i>{{/if}}
+              {{#if hasFeature}}<span class="km-unit-feature km-pt-{{featureStat}}">{{capitalize featureStat}} +{{featureBonus}}</span>{{/if}}
+            </span>
+            <div class="km-asset-pills">
+              {{#each pills}}<span class="km-pill km-pill-upk">{{label}} -{{cost}}</span>{{/each}}
+            </div>
+            {{#if isBlocked}}<span class="km-badge km-badge-blocked"><i class="fas fa-ban" aria-hidden="true"></i> Blocked</span>
+            {{else}}<span class="km-badge km-badge-active"><i class="fas fa-check" aria-hidden="true"></i> Active</span>{{/if}}
+            {{#if isGM}}<div class="km-asset-actions">
+              <button type="button" data-action="editItem"   data-item-id="{{id}}"><i class="fas fa-edit"  aria-hidden="true"></i></button>
+              <button type="button" data-action="deleteItem" data-item-id="{{id}}"><i class="fas fa-trash" aria-hidden="true"></i></button>
+            </div>{{/if}}
+          </div>
+          {{/each}}
+
           {{#each wipAssets}}
           <div class="km-asset-row km-asset-wip" data-item-id="{{id}}">
             <span class="km-asset-name {{#if journalId}}km-has-journal{{/if}}" {{#if journalId}}data-journal-id="{{journalId}}" title="Open journal: {{name}}"{{/if}}>{{name}}{{#if journalId}} <i class="fas fa-book" style="font-size:10px;opacity:0.6;" aria-hidden="true"></i>{{/if}}</span>
