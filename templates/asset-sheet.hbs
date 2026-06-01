@@ -91,6 +91,14 @@
   </fieldset>
   {{/if}}
 
+  {{#if isAsset}}
+  <div class="km-form-row">
+    <label><i class="fas fa-dice-d20"></i> Base build DC</label>
+    <input type="number" name="system.buildBaseDC" value="{{system.buildBaseDC}}" min="1" style="width:60px;" />
+    <span class="km-stat-hint">DC per check = base + abs(stat) + upkeep</span>
+  </div>
+  {{/if}}
+
   {{! ── Stats — province, unit: single column; asset: two columns (contribution + upkeep) ── }}
   {{#unless isObstacle}}
   <fieldset class="km-fieldset">
@@ -187,11 +195,6 @@
       <input type="number" name="system.unitSlots" value="{{system.unitSlots}}" min="0" style="width:60px;" />
       <span class="km-stat-hint">Free garrison slots</span>
     </div>
-  </div>
-  <div class="km-form-row" style="margin-top:4px;">
-    <label><i class="fas fa-dice-d20"></i> Base build DC</label>
-    <input type="number" name="system.buildBaseDC" value="{{system.buildBaseDC}}" min="1" style="width:60px;" />
-    <span class="km-stat-hint">Default 12 — DC per check = base + abs(stat) + upkeep</span>
   </div>
   {{/if}}
 
