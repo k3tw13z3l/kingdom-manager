@@ -198,22 +198,5 @@ export class KingdomActorData extends foundry.abstract.TypeDataModel {
     return { ratings, upkeep, headroom, buildBonus, provinces: provinceList, garrisonedUnitIds };
   }
 
-  /**
-   * Build a flat ratingDisplay array for the ratings template.
-   * Called by KingdomSheet._prepareContext after computeState().
-   */
-  static buildRatingDisplay(state) {
-    return ["military","wealth","social","magic"].map(stat => {
-      const generated  = state.ratings[stat]    ?? 0;
-      const upkeep     = state.upkeep[stat]     ?? 0;
-      const headroom   = state.headroom[stat]   ?? 0;
-      const buildBonus = state.buildBonus[stat] ?? 0;
-      const over       = headroom < 0;
-      const barPct     = generated > 0
-        ? Math.min(100, Math.round((upkeep / generated) * 100))
-        : (upkeep > 0 ? 100 : 0);
-      return { stat, generated, upkeep, headroom, buildBonus, over, barPct };
-    });
-  }
 
 }

@@ -90,26 +90,15 @@ Hooks.once("setup", () => {
 });
 
 function applyDarkMode(enabled) {
-  // Find all open kingdom/asset sheets by looking for .km-sheet inside window-content
-  document.querySelectorAll(".window-content .km-sheet, .window-content .km-asset-form").forEach(el => {
-    const wc = el.closest(".window-content");
-    if (wc) wc.classList.toggle("km-dark", enabled);
-  });
+  // Re-render all open kingdom/asset sheets — _onRender applies the class
+  for (const app of Object.values(foundry.applications.instances ?? {})) {
+    if (app instanceof KingdomSheet || app instanceof AssetSheet) {
+      app.render();
+    }
+  }
 }
 
-// Apply dark mode when any Application renders — check for our sheet class inside
-Hooks.on("renderApplication", (app) => {
-  const wc = app.element;
-  if (!wc) return;
-  const isKingdom = wc.querySelector(".km-sheet");
-  const isAsset   = wc.querySelector(".km-asset-sheet-body");
-  if (!isKingdom && !isAsset) return;
-  const dark = game.settings.get("kingdom-manager", "darkMode");
-  wc.classList.toggle("km-dark", dark);
-});
-
 Hooks.once("ready", () => {
-  // Socket handler — GM proxies updates on behalf of players
   game.socket.on("module.kingdom-manager", async (data) => {
     if (!game.user.isGM) return;
     if (data.action === "updateItem") {

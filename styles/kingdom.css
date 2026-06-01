@@ -362,24 +362,24 @@
 }
 
 .kingdom-manager .km-unit-header {
-  background: #f7f5f2 !important;
-  border-radius: var(--km-radius) !important;
-  font-size: 10px !important;
-  font-weight: 600 !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.05em !important;
-  color: #666666 !important;
-  border: var(--km-border) !important;
+  background: var(--km-bg);
+  border-radius: var(--km-radius);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--km-text-muted);
+  border: var(--km-border);
 }
 
 .kingdom-manager .km-unit-row {
-  background: #ffffff !important;
-  color: #1a1a1a !important;
-  border: var(--km-border) !important;
-  border-radius: var(--km-radius) !important;
-  font-size: 12px !important;
+  background: var(--km-card-bg);
+  color: var(--km-text);
+  border: var(--km-border);
+  border-radius: var(--km-radius);
+  font-size: 12px;
 }
-.kingdom-manager .km-unit-row span { color: #1a1a1a !important; background: transparent !important; }
+.kingdom-manager .km-unit-row span { color: var(--km-text); background: transparent; }
 .km-unit-name { font-weight: 600; }
 .km-unit-loc  { color: #888888 !important; font-size: 11px; }
 
@@ -644,10 +644,6 @@
 .kingdom-sheet .window-content p {
   box-sizing: border-box;
 }
-
-/* Force all divs inside our unit list to be white/light */
-.kingdom-sheet .km-unit-header { background: #f7f5f2 !important; color: #666 !important; }
-.kingdom-sheet .km-unit-row    { background: #ffffff !important; color: #1a1a1a !important; }
 
 /* ── Obstacle upkeep tag ──────────────────────────────────────────────────── */
 .km-obstacle-upkeep {
