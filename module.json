@@ -1,15 +1,17 @@
 {
   "id": "kingdom-manager",
-  "title": "Kingdom Manager",
+  "title": "K3tw13z3l's Kingdom Manager",
   "description": "A domain-level kingdom management system inspired by An Echo Resounding, for D&D 5e homebrew.",
-  "version": "1.0.1",
+  "version": "#{VERSION}",
   "compatibility": {
     "minimum": "13",
     "verified": "13"
   },
   "authors": [
     {
-      "name": "You"
+      "name": "Pascal",
+      "discord": "k3tw13z3l",
+      "url": "https://github.com/k3tw13z3l"
     }
   ],
   "esmodules": [
@@ -39,5 +41,9 @@
       }
     }
   },
-  "socket": true
+  "socket": true,
+  "url": "#{URL}#",
+  "manifest": "#{MANIFEST}#",
+  "download": "#{DOWNLOAD}#",
+  "readme": "README.md"
 }
