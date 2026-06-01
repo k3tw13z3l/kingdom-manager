@@ -73,6 +73,8 @@ export class AssetSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       if (event.dataTransfer?.types?.includes("text/plain")) event.preventDefault();
     });
     win.addEventListener("drop", async (event) => {
+      // Only handle drops within this specific sheet's element
+      if (!this.element?.contains(event.target)) return;
       event.preventDefault();
       let data;
       try { data = JSON.parse(event.dataTransfer.getData("text/plain")); } catch(e) { return; }
