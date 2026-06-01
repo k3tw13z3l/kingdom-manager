@@ -3,18 +3,18 @@
 export function registerHelpers() {
   Handlebars.registerHelper("unitTypeIcon", (type) => {
     const icons = {
-      army:       "ti-shield",
-      assassin:   "ti-skull",
-      bodyguard:  "ti-shield-half",
-      diplomat:   "ti-building-community",
-      garrison:   "ti-tower",
-      merchant:   "ti-coin",
-      prophet:    "ti-eye",
-      sage:       "ti-book",
-      spy:        "ti-spy",
-      warden:     "ti-trees",
+      army:       "fas fa-shield-alt",
+      assassin:   "fas fa-user-ninja",
+      bodyguard:  "fas fa-shield-alt",
+      diplomat:   "fas fa-handshake",
+      garrison:   "fas fa-fort-awesome",
+      merchant:   "fas fa-coins",
+      prophet:    "fas fa-eye",
+      sage:       "fas fa-book",
+      spy:        "fas fa-user-secret",
+      warden:     "fas fa-leaf",
     };
-    return icons[type] ?? "ti-sword";
+    return icons[type] ?? "fas fa-shield-alt";
   });
 
   // Math helpers
