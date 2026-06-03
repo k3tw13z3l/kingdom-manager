@@ -275,7 +275,7 @@
 .km-province-terrain    { font-size: 11px; color: var(--km-text-muted); }
 .km-province-stats      { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .km-province-base-stats { display: flex; flex-wrap: wrap; gap: 2px; }
-.km-province-totals     { display: flex; flex-wrap: wrap; gap: 2px; margin-left: auto; }
+.km-province-totals     { display: flex; flex-wrap: wrap; gap: 2px; margin-left: auto; padding-left: 10px; border-left: 1px solid #d4cfc8; }
 .km-province-actions { display: flex; gap: 4px; margin-left: auto; }
 
 .km-dev-wrap  { display: flex; align-items: center; gap: 5px; }
@@ -948,6 +948,7 @@
 
 /* Province */
 .km-dark .km-province-block               { border-color: #404045 !important; }
+.km-dark .km-province-totals             { border-left-color: #404045 !important; }
 .km-dark .km-province-header              { background: #222228 !important; }
 .km-dark .km-prov-toggle:hover            { background: #2a2a32 !important; }
 .km-dark .km-prov-body                    { background: #1e1e22 !important; }
