@@ -24,7 +24,7 @@
       <i class="fas fa-chart-bar" aria-hidden="true"></i> Kingdom ratings
     </div>
     {{#each state.ratingDisplay}}
-    <div class="km-rating-box {{#if over}}km-over{{/if}}">
+    <div class="km-rating-box {{#if over}}km-over{{/if}}"{{#if tooltip}} title="{{tooltip}}"{{/if}}>
       <div class="km-rating-name">
         {{#if (eq stat "military")}}<i class="fas fa-shield-alt km-icon-mil" aria-hidden="true"></i> Military{{/if}}
         {{#if (eq stat "wealth"  )}}<i class="fas fa-coins km-icon-wea"    aria-hidden="true"></i> Wealth{{/if}}
@@ -48,9 +48,6 @@
         {{#if buildBonus}}<span class="km-build-bonus">+{{buildBonus}} on {{capitalize stat}} builds</span>
         {{else}}<span class="km-no-bonus">no build bonus</span>{{/if}}
       </div>
-      {{/if}}
-      {{#if (eq stat "magic")}}
-      <div class="km-magic-note">{{#each ../provinces}}<span>{{name}}: {{magicPotential}}-{{devLoad}}={{magicRemaining}}</span>{{/each}}</div>
       {{/if}}
     </div>
     {{/each}}

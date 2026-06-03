@@ -209,10 +209,6 @@
 .km-no-bonus    { color: var(--km-text-muted); }
 .km-rating-warn { font-size: 11px; color: #c0392b; display: flex; align-items: center; gap: 3px; }
 
-.km-magic-note {
-  font-size: 10px; color: var(--km-text-muted);
-  margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px;
-}
 .km-ratings-note { font-size: 11px; color: var(--km-text-muted); }
 
 /* ── Pills ────────────────────────────────────────────────────────────────── */

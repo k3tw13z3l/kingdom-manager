@@ -782,7 +782,10 @@ function buildRatingDisplay(state) {
     const headroom   = state.headroom[stat]   ?? 0;
     const buildBonus = state.buildBonus[stat] ?? 0;
     const barPct     = generated > 0 ? Math.min(100, Math.round((upkeep/generated)*100)) : (upkeep > 0 ? 100 : 0);
-    return { stat, generated, upkeep, headroom, buildBonus, over: headroom < 0, barPct };
+    const tooltip    = stat === "magic"
+      ? (state.provinces ?? []).map(p => `${p.name}: ${p.magicPotential} − ${p.devLoad} = ${p.magicRemaining}`).join("\n")
+      : "";
+    return { stat, generated, upkeep, headroom, buildBonus, over: headroom < 0, barPct, tooltip };
   });
 }
 
