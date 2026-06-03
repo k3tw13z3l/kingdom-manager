@@ -699,8 +699,11 @@ function buildProvinceData(items, state) {
       };
     });
 
-    // Sum asset stats for collapsed header display
+    // Sum province base + asset stats for collapsed header display
     const assetTotals = { military: 0, wealth: 0, social: 0, magic: 0 };
+    if (prov.item.system.buildState?.active !== false) {
+      for (const stat of ["military", "wealth", "social"]) assetTotals[stat] += prov.stats[stat] ?? 0;
+    }
     for (const a of (prov.assets ?? [])) {
       if (blockedIds.has(a.id)) continue;
       for (const stat of STATS) assetTotals[stat] += a.system.stats[stat] ?? 0;
