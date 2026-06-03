@@ -81,41 +81,42 @@
     </div>
   </div>
 
-  {{! ── Domain Turn Tracker ── }}
-  <div class="km-domain-turns">
-    <div class="km-domain-turns-header">
-      <span class="km-domain-turns-label"><i class="fas fa-flag" aria-hidden="true"></i> Domain Turns</span>
-      <span class="km-domain-turns-note">{{domainTurnCount}} turn{{#if (gt domainTurnCount 1)}}s{{/if}} — {{#if (gt domainTurnCount 1)}}player ruler present{{else}}NPC rulers only{{/if}}</span>
-    </div>
-    <div class="km-domain-turns-track">
-      {{#if isGM}}
-      <button type="button" data-action="toggleDomainTurn" data-turn="1"
-              class="km-domain-turn-btn {{#if domainTurn1Used}}km-dt-used{{/if}}">
-        <i class="fas {{#if domainTurn1Used}}fa-check-circle{{else}}fa-circle{{/if}}" aria-hidden="true"></i> Turn 1
-      </button>
-      {{#if (gt domainTurnCount 1)}}
-      <button type="button" data-action="toggleDomainTurn" data-turn="2"
-              class="km-domain-turn-btn {{#if domainTurn2Used}}km-dt-used{{/if}}">
-        <i class="fas {{#if domainTurn2Used}}fa-check-circle{{else}}fa-circle{{/if}}" aria-hidden="true"></i> Turn 2
-      </button>
-      {{/if}}
-      {{else}}
-      <span class="km-domain-turn-btn {{#if domainTurn1Used}}km-dt-used{{/if}}">
-        <i class="fas {{#if domainTurn1Used}}fa-check-circle{{else}}fa-circle{{/if}}" aria-hidden="true"></i> Turn 1
-      </span>
-      {{#if (gt domainTurnCount 1)}}
-      <span class="km-domain-turn-btn {{#if domainTurn2Used}}km-dt-used{{/if}}">
-        <i class="fas {{#if domainTurn2Used}}fa-check-circle{{else}}fa-circle{{/if}}" aria-hidden="true"></i> Turn 2
-      </span>
-      {{/if}}
-      {{/if}}
-    </div>
-  </div>
-
-  {{! ── Rulers — horizontal row inside ratings ── }}
-  {{#if rulers}}
+  {{! ── Rulers + Domain Turns ── }}
   <div class="km-rulers-row km-rulers">
-    <div class="km-rulers-label">Rulers</div>
+    <div class="km-rulers-label">Rulers &amp; Turns</div>
+
+    {{! Domain turn card — styled like a ruler card }}
+    <div class="km-ruler-card km-dt-card">
+      <div class="km-dt-icon"><i class="fas fa-flag" aria-hidden="true"></i></div>
+      <div class="km-rc-info">
+        <span class="km-rc-name">Domain Turns</span>
+        <span class="km-rc-class">{{domainTurnCount}} turn{{#if (gt domainTurnCount 1)}}s{{/if}} — {{#if (gt domainTurnCount 1)}}player present{{else}}NPC only{{/if}}</span>
+        <div class="km-rc-tags">
+          {{#if isGM}}
+          <button type="button" data-action="toggleDomainTurn" data-turn="1"
+                  class="km-domain-turn-btn {{#if domainTurn1Used}}km-dt-used{{/if}}">
+            <i class="fas {{#if domainTurn1Used}}fa-check-circle{{else}}fa-circle{{/if}}" aria-hidden="true"></i> Turn 1
+          </button>
+          {{#if (gt domainTurnCount 1)}}
+          <button type="button" data-action="toggleDomainTurn" data-turn="2"
+                  class="km-domain-turn-btn {{#if domainTurn2Used}}km-dt-used{{/if}}">
+            <i class="fas {{#if domainTurn2Used}}fa-check-circle{{else}}fa-circle{{/if}}" aria-hidden="true"></i> Turn 2
+          </button>
+          {{/if}}
+          {{else}}
+          <span class="km-domain-turn-btn {{#if domainTurn1Used}}km-dt-used{{/if}}">
+            <i class="fas {{#if domainTurn1Used}}fa-check-circle{{else}}fa-circle{{/if}}" aria-hidden="true"></i> Turn 1
+          </span>
+          {{#if (gt domainTurnCount 1)}}
+          <span class="km-domain-turn-btn {{#if domainTurn2Used}}km-dt-used{{/if}}">
+            <i class="fas {{#if domainTurn2Used}}fa-check-circle{{else}}fa-circle{{/if}}" aria-hidden="true"></i> Turn 2
+          </span>
+          {{/if}}
+          {{/if}}
+        </div>
+      </div>
+    </div>
+
     {{#each rulers}}
     <div class="km-ruler-card {{#if hasPersonalTurn}}{{#if personalTurnUsed}}km-ruler-done{{/if}}{{/if}}" data-ruler-id="{{id}}">
       <img class="km-rc-portrait" src="{{actorImg}}" title="{{name}}" />
@@ -144,10 +145,9 @@
       </div>
     </div>
     {{/each}}
+
+    {{#unless rulers}}<p class="km-empty" style="margin:0;">Drop character actors here to add rulers.</p>{{/unless}}
   </div>
-  {{else}}
-  <p class="km-empty" style="grid-column:1/-1;padding:4px 0;">Drop character actors here to add rulers.</p>
-  {{/if}}
 
   </section>
 
