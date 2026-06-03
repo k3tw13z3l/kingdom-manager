@@ -135,17 +135,19 @@
             <div class="km-province-identity">
               <span class="km-province-name">{{name}}</span>
               <span class="km-province-terrain">{{terrain.label}}{{#if @root.showMoveCost}} · move {{terrain.moveCost}}{{/if}}</span>
+            </div>
+            <div class="km-province-stats">
               <div class="km-province-base-stats">
                 {{#if item.system.stats.military}}<span class="km-pill km-pill-mil">Mil {{item.system.stats.military}}</span>{{/if}}
                 {{#if item.system.stats.wealth}}<span class="km-pill km-pill-wea">Wea {{item.system.stats.wealth}}</span>{{/if}}
                 {{#if item.system.stats.social}}<span class="km-pill km-pill-soc">Soc {{item.system.stats.social}}</span>{{/if}}
               </div>
-            </div>
-            <div class="km-province-stats">
-              {{#if assetTotals.military}}<span class="km-pill km-pill-mil km-pill-asset-total" title="Province total">{{assetTotals.military}}</span>{{/if}}
-              {{#if assetTotals.wealth}}<span class="km-pill km-pill-wea km-pill-asset-total" title="Province total">{{assetTotals.wealth}}</span>{{/if}}
-              {{#if assetTotals.social}}<span class="km-pill km-pill-soc km-pill-asset-total" title="Province total">{{assetTotals.social}}</span>{{/if}}
-              {{#if assetTotals.magic}}<span class="km-pill km-pill-mag km-pill-asset-total" title="Province total">{{assetTotals.magic}}</span>{{/if}}
+              <div class="km-province-totals">
+                {{#if assetTotals.military}}<span class="km-pill km-pill-mil km-pill-asset-total" title="Province total">{{assetTotals.military}}</span>{{/if}}
+                {{#if assetTotals.wealth}}<span class="km-pill km-pill-wea km-pill-asset-total" title="Province total">{{assetTotals.wealth}}</span>{{/if}}
+                {{#if assetTotals.social}}<span class="km-pill km-pill-soc km-pill-asset-total" title="Province total">{{assetTotals.social}}</span>{{/if}}
+                {{#if assetTotals.magic}}<span class="km-pill km-pill-mag km-pill-asset-total" title="Province total">{{assetTotals.magic}}</span>{{/if}}
+              </div>
             </div>
             <div class="km-dev-wrap">
               <span class="km-dev-label">Dev</span>
