@@ -277,10 +277,10 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       const prov = this.document.items.get(provinceId);
       if (prov) foundry.utils.setProperty(itemData, "system.location", prov.name);
     }
-    // Use the item's configured buildBaseDC, falling back to defaults
-    const baseDC = (itemData.system.buildBaseDC && itemData.system.buildBaseDC > 0)
-      ? itemData.system.buildBaseDC
-      : (assetType === "province" ? 10 : 12);
+    // Provinces always use base DC 10; other assets use their configured DC (default 12)
+    const baseDC = assetType === "province"
+      ? 10
+      : (itemData.system.buildBaseDC > 0 ? itemData.system.buildBaseDC : 12);
     itemData.system.buildBaseDC = baseDC;
 
     if (["province","asset","unit"].includes(assetType)) {
