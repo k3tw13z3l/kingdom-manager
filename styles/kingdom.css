@@ -157,12 +157,12 @@
 /* ── Ratings ──────────────────────────────────────────────────────────────── */
 .km-ratings {
   display: grid;
-  grid-template-columns: repeat(4, 1fr) 120px;
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
   align-items: start;
 }
-.km-ratings .km-card-label { grid-column: 1 / 5; margin-bottom: 4px; }
-.km-ratings p { grid-column: 1 / 5; }
+.km-ratings .km-card-label { grid-column: 1 / -1; margin-bottom: 4px; }
+.km-ratings p { grid-column: 1 / -1; }
 
 .km-rating-box {
   background: #f7f5f2;
@@ -397,7 +397,7 @@
   flex-wrap: wrap;
   align-items: flex-start;
   gap: 8px;
-  grid-column: 1 / 5;
+  grid-column: 1 / -1;
   margin-top: 4px;
 }
 
@@ -596,34 +596,31 @@
 }
 .km-kingdom-icon:hover { opacity: 0.8; }
 
-/* ── Heraldry inline (inside ratings grid) ────────────────────────────────── */
-.km-heraldry-inline {
-  grid-column: 5;
-  grid-row: 2;
-  align-self: stretch;
+/* ── Heraldry section ─────────────────────────────────────────────────────── */
+.km-heraldry-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  background: #f7f5f2;
-  border: 1px solid #e0ddd6;
-  border-radius: var(--km-radius);
-  padding: 6px;
+  gap: 10px;
 }
 
 .km-heraldry-img {
-  flex: 1;
-  min-height: 0;
-  width: 100%;
+  width: 140px;
+  height: 140px;
   object-fit: contain;
-  border-radius: 4px;
+  border-radius: var(--km-radius);
+  border: var(--km-border);
   cursor: pointer;
+  background: #f7f5f2;
+  padding: 4px;
   transition: opacity 0.15s, box-shadow 0.15s;
 }
 .km-heraldry-img:hover {
   opacity: 0.85;
   box-shadow: 0 0 0 2px #378ADD;
 }
+
+.km-heraldry-info { width: 100%; }
 
 .km-motto-input {
   width: 100%;
@@ -693,7 +690,7 @@
   grid-template-columns: 1fr 1fr;
   gap: 8px;
   margin-top: 8px;
-  grid-column: 1 / 5;
+  grid-column: 1 / -1;  /* span all 4 rating columns */
 }
 .km-ta-box {
   background: var(--km-card-bg);
@@ -789,7 +786,7 @@
 
 /* ── Domain Turn Tracker ──────────────────────────────────────────────────── */
 .km-domain-turns {
-  grid-column: 1 / 5;
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -853,7 +850,7 @@ button.km-domain-turn-btn:hover { background: #eceae5; }
 
 /* ── Rulers section label in divider ─────────────────────────────────────── */
 .km-rulers-label {
-  grid-column: 1 / 5;
+  grid-column: 1 / -1;
   width: 100%;
   font-size: 11px;
   font-weight: 600;
@@ -1025,6 +1022,7 @@ button.km-domain-turn-btn:hover { background: #eceae5; }
 .km-dark .km-card          { background: #28282e !important; border-color: #404045 !important; }
 .km-dark .km-rating-box    { background: #222228 !important; border-color: #404045 !important; color: #dddad4 !important; }
 .km-dark .km-ta-box        { background: #222228 !important; border-color: #404045 !important; }
+.km-dark .km-heraldry-wrap { background: #222228 !important; }
 .km-dark .km-log-entries   { background: #1a1a1e !important; }
 
 /* Province */
@@ -1054,6 +1052,7 @@ button.km-domain-turn-btn:hover { background: #eceae5; }
 .km-dark .km-ta-label                    { color: #9a9690 !important; }
 .km-dark .km-log-row                     { color: #9a9690 !important; border-color: #383840 !important; }
 .km-dark .km-log-turn                    { color: #5e5c58 !important; }
+.km-dark .km-heraldry-motto              { color: #9a9690 !important; }
 .km-dark .km-prov-icon                   { color: #5e5c58 !important; }
 .km-dark .km-dev-numbers                 { color: #9a9690 !important; }
 .km-dark .km-magic-good                  { color: #c4c0f0 !important; }
@@ -1142,8 +1141,9 @@ button.km-domain-turn-btn:hover { background: #eceae5; }
 .km-dark .km-header-motto                { color: #9a9690 !important; }
 .km-dark .km-turn-badge                  { background: #333338 !important; border-color: #404045 !important; color: #dddad4 !important; }
 .km-dark .km-rulers-row                  { background: transparent; }
-.km-dark .km-heraldry-inline             { background: #222228 !important; border-color: #404045 !important; }
 .km-dark .km-heraldry-img                { filter: brightness(0.85); }
+.km-dark .km-heraldry-wrap               { background: #222228 !important; border-color: #404045 !important; }
+.km-dark .km-heraldry-motto              { color: #9a9690 !important; background: #222228 !important; }
 .km-dark .km-log-entries                 { background: #1a1a1e !important; }
 .km-dark .km-log-row                     { color: #9a9690 !important; border-color: #383840 !important; }
 /* Rating value numbers and headroom text */

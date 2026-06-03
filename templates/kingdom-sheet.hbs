@@ -52,16 +52,6 @@
     </div>
     {{/each}}
 
-  {{! ── Heraldry — inline with rating boxes ── }}
-  <div class="km-heraldry-inline">
-    <img class="km-heraldry-img"
-         src="{{#if system.heraldry}}{{system.heraldry}}{{else}}icons/svg/shield.svg{{/if}}"
-         data-edit="system.heraldry"
-         title="{{#if isGM}}Click to change heraldry{{/if}}" />
-    <input type="text" name="system.motto" value="{{system.motto}}"
-           class="km-motto-input" placeholder="Kingdom motto…" />
-  </div>
-
   {{! Treasury and Atrocity — below the four rating boxes }}
   <div class="km-treasury-atrocity">
     <div class="km-ta-box km-ta-treasury">
@@ -510,6 +500,21 @@
     </div>
 
     <div class="km-col-side">
+
+      {{! ── Heraldry ── }}
+      <section class="km-card km-heraldry">
+        <div class="km-card-label"><i class="fas fa-shield-alt" aria-hidden="true"></i> Heraldry</div>
+        <div class="km-heraldry-wrap">
+          <img class="km-heraldry-img"
+               src="{{#if system.heraldry}}{{system.heraldry}}{{else}}icons/svg/shield.svg{{/if}}"
+               data-edit="system.heraldry"
+               title="Click to change heraldry" />
+          <div class="km-heraldry-info">
+            <input type="text" name="system.motto" value="{{system.motto}}"
+                   class="km-motto-input" placeholder="Kingdom motto…" />
+          </div>
+        </div>
+      </section>
 
       {{! ── Turn log ── }}
       <section class="km-card km-log">
