@@ -1,7 +1,13 @@
 // scripts/sheets/KingdomSheet.js
 
+import { STATS } from "../models/AssetItem.js";
+
 const { ActorSheetV2 }                        = foundry.applications.sheets;
 const { HandlebarsApplicationMixin, DialogV2 } = foundry.applications.api;
+
+const STAT_FULL  = { military: "Military", wealth: "Wealth", social: "Social", magic: "Magic" };
+const STAT_SHORT = { military: "Mil",      wealth: "Wea",    social: "Soc",    magic: "Mag"   };
+const zeroStats  = () => ({ military: 0, wealth: 0, social: 0, magic: 0 });
 
 export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
 
@@ -172,8 +178,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     const sys   = actor.system;
     const items = actor.items?.contents ?? [];
 
-    let state = { ratings: {military:0,wealth:0,social:0,magic:0}, upkeep: {military:0,wealth:0,social:0,magic:0},
-                  headroom: {military:0,wealth:0,social:0,magic:0}, buildBonus: {military:0,wealth:0,social:0,magic:0}, provinces: [] };
+    let state = { ratings: zeroStats(), upkeep: zeroStats(), headroom: zeroStats(), buildBonus: zeroStats(), provinces: [] };
     try { state = sys.computeState(items); } catch(e) { console.error("KM | computeState error:", e); }
     state.ratingDisplay = buildRatingDisplay(state);
 
@@ -369,7 +374,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     const checks = foundry.utils.deepClone(item.system.buildState.checks);
     checks[idx].passed = !checks[idx].passed;
     if (!checks[idx].passed) checks[idx].dc = Math.max(1, checks[idx].dc - 1);
-    const lbl = { military:"Mil", wealth:"Wea", social:"Soc", magic:"Mag" }[checks[idx].stat] ?? checks[idx].stat;
+    const lbl = STAT_SHORT[checks[idx].stat] ?? checks[idx].stat;
     const log = foundry.utils.deepClone(this.document.system.turn.log ?? []);
     log.push(`[T${this.document.system.turn.number}] ${item.name} ${lbl} — ${checks[idx].passed ? "passed" : `failed (DC→${checks[idx].dc})`}`);
     await item.update({ "system.buildState.checks": checks });
@@ -423,7 +428,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     const { stat, dc } = check;
     const state        = this.document.system.computeState(this.document.items.contents);
     const kingdomBonus = state.buildBonus[stat] ?? 0;
-    const statLabel    = { military:"Military", wealth:"Wealth", social:"Social", magic:"Magic" }[stat] ?? stat;
+    const statLabel    = STAT_FULL[stat] ?? stat;
     const checkVerb    = { province:"Claiming check", unit:"Muster check" }[item.system.assetType] ?? "Build check";
 
     const isGM  = game.user.isGM;
@@ -535,7 +540,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     checks[checkIdx].passed = passed;
     if (!passed) checks[checkIdx].dc = Math.max(1, dc - 1);
 
-    const lbl       = { military:"Mil", wealth:"Wea", social:"Social", magic:"Mag" }[stat] ?? stat;
+    const lbl       = STAT_SHORT[stat] ?? stat;
     const profPart  = profBonus > 0 ? `+${profBonus} prof` : "no prof";
     const resultTxt = passed ? `passed (${roll.total} vs DC ${dc})` : `failed (${roll.total} vs DC ${dc}, DC→${checks[checkIdx].dc})`;
     const log = foundry.utils.deepClone(this.document.system.turn.log ?? []);
@@ -556,7 +561,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     const state  = this.document.system.computeState(this.document.items.contents);
     const bonus  = state.buildBonus[stat] ?? 0;
     const turn   = this.document.system.turn.number;
-    const statLbl= { military:"Military", wealth:"Wealth", social:"Social", magic:"Magic" }[stat] ?? stat;
+    const statLbl = STAT_FULL[stat] ?? stat;
 
     const isGM  = game.user.isGM;
     const userId = game.userId;
@@ -652,8 +657,18 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
 
 // ── Module-level helpers ───────────────────────────────────────────────────────
 
+function buildBlockedIds(items) {
+  const blocked = new Set();
+  for (const i of items) {
+    if (i.type === "kingdom-manager.asset" && i.system.assetType === "obstacle"
+        && (i.system.obstacleScore ?? 0) > 0 && i.system.blockedAssetId)
+      blocked.add(i.system.blockedAssetId);
+  }
+  return blocked;
+}
+
 function buildRatingDisplay(state) {
-  return ["military","wealth","social","magic"].map(stat => {
+  return STATS.map(stat => {
     const generated  = state.ratings[stat]    ?? 0;
     const upkeep     = state.upkeep[stat]     ?? 0;
     const headroom   = state.headroom[stat]   ?? 0;
@@ -664,23 +679,16 @@ function buildRatingDisplay(state) {
 }
 
 function buildProvinceData(items, state) {
-  // Build set of blocked asset ids from active obstacles with score > 0
-  const blockedIds = new Set();
-  for (const i of items) {
-    if (i.type === "kingdom-manager.asset" && i.system.assetType === "obstacle"
-        && (i.system.obstacleScore ?? 0) > 0 && i.system.blockedAssetId)
-      blockedIds.add(i.system.blockedAssetId);
-  }
+  const blockedIds = buildBlockedIds(items);
 
   return state.provinces.map(prov => {
     const devPct   = prov.magicPotential > 0 ? Math.min(100, Math.round((prov.devLoad/prov.magicPotential)*100)) : 0;
     const devClass = devPct >= 100 ? "full" : devPct >= 60 ? "warn" : "safe";
 
-    const labels = { military:"Mil", wealth:"Wea", social:"Soc", magic:"Mag" };
     const assets = (prov.assets ?? []).map(i => {
-      const upkeepPills = ["military","wealth","social","magic"]
+      const upkeepPills = STATS
         .filter(s => (i.system.upkeep?.[s] ?? 0) > 0)
-        .map(s => ({ label: labels[s], cost: i.system.upkeep[s] }));
+        .map(s => ({ label: STAT_SHORT[s], cost: i.system.upkeep[s] }));
       return {
         id: i.id, name: i.name, system: i.system,
         isGM: state._isGM, canRoll: state._canRoll,
@@ -695,8 +703,7 @@ function buildProvinceData(items, state) {
     const assetTotals = { military: 0, wealth: 0, social: 0, magic: 0 };
     for (const a of (prov.assets ?? [])) {
       if (blockedIds.has(a.id)) continue;
-      for (const stat of ["military","wealth","social","magic"])
-        assetTotals[stat] += a.system.stats[stat] ?? 0;
+      for (const stat of STATS) assetTotals[stat] += a.system.stats[stat] ?? 0;
     }
 
     const wipAssets = items.filter(i =>
@@ -731,7 +738,6 @@ function buildProvinceData(items, state) {
       };
     });
 
-    const statLabels = { military:"Mil", wealth:"Wea", social:"Soc", magic:"Mag" };
     const stationedUnits = items.filter(i => {
       if (i.type !== "kingdom-manager.asset") return false;
       if (i.system.assetType !== "unit") return false;
@@ -742,7 +748,7 @@ function buildProvinceData(items, state) {
     }).map(i => {
       const pills = Object.entries(i.system.stats ?? {})
         .filter(([, v]) => v !== null && v !== undefined && v !== 0)
-        .map(([stat, val]) => ({ stat, label: statLabels[stat], cost: Math.abs(val) }));
+        .map(([stat, val]) => ({ stat, label: STAT_SHORT[stat], cost: Math.abs(val) }));
       return {
         id: i.id, name: i.name, system: i.system, pills,
         isGM:         state._isGM,
@@ -762,16 +768,15 @@ function buildProvinceData(items, state) {
 }
 
 function buildUnitData(items, state, garrisonedUnitIds = new Set()) {
-  const labels = { military:"Mil", wealth:"Wea", social:"Soc", magic:"Mag" };
-  const blockedIds = new Set(
-    items.filter(i => i.type === "kingdom-manager.asset" && i.system.assetType === "obstacle"
-      && (i.system.obstacleScore ?? 0) > 0 && i.system.blockedAssetId)
-    .map(i => i.system.blockedAssetId)
-  );
-  // Active province ids and names — units in these are shown inside the province
-  // active === true means claimed; active === false means pending claim
-  const activeProvinceIds   = new Set(items.filter(i => i.type === "kingdom-manager.asset" && i.system.assetType === "province" && i.system.buildState?.active === true).map(i => i.id));
-  const activeProvinceNames = new Set(items.filter(i => i.type === "kingdom-manager.asset" && i.system.assetType === "province" && i.system.buildState?.active === true).map(i => i.name));
+  const blockedIds = buildBlockedIds(items);
+  const activeProvinceIds   = new Set();
+  const activeProvinceNames = new Set();
+  for (const i of items) {
+    if (i.type === "kingdom-manager.asset" && i.system.assetType === "province" && i.system.buildState?.active === true) {
+      activeProvinceIds.add(i.id);
+      activeProvinceNames.add(i.name);
+    }
+  }
 
   return items.filter(i => {
     if (i.type !== "kingdom-manager.asset" || i.system.assetType !== "unit" || !i.system.buildState?.active) return false;
@@ -780,17 +785,14 @@ function buildUnitData(items, state, garrisonedUnitIds = new Set()) {
     return !activeProvinceIds.has(i.system.provinceId);
   }).map(unit => {
     const stats  = unit.system.stats;
-    const offset = (() => {
-      const o = { military:0, wealth:0, social:0, magic:0 };
-      for (const i of items) {
-        if (i.type !== "kingdom-manager.asset" || i.system.provinceId !== unit.system.provinceId || !i.system.buildState?.active) continue;
-        for (const s of ["military","wealth","social","magic"]) o[s] += i.system.upkeepOffset?.[s] ?? 0;
-      }
-      return o;
-    })();
+    const offset = zeroStats();
+    for (const i of items) {
+      if (i.type !== "kingdom-manager.asset" || i.system.provinceId !== unit.system.provinceId || !i.system.buildState?.active) continue;
+      for (const s of STATS) offset[s] += i.system.upkeepOffset?.[s] ?? 0;
+    }
     const pills = Object.entries(stats)
       .filter(([, v]) => v !== null && v !== undefined && v !== 0)
-      .map(([stat, val]) => ({ stat, label: labels[stat] ?? stat, cost: Math.abs(val), offset: offset[stat] ?? 0 }));
+      .map(([stat, val]) => ({ stat, label: STAT_SHORT[stat] ?? stat, cost: Math.abs(val), offset: offset[stat] ?? 0 }));
     return {
       id: unit.id, name: unit.name, system: unit.system, pills,
       isOver: Object.values(state.headroom).some(v => v < 0),

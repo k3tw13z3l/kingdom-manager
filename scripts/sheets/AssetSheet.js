@@ -1,6 +1,6 @@
 // scripts/sheets/AssetSheet.js
 
-import { TERRAIN_TYPES, ASSET_TYPES, OBSTACLE_STATS } from "../models/AssetItem.js";
+import { TERRAIN_TYPES, ASSET_TYPES, OBSTACLE_STATS, STATS } from "../models/AssetItem.js";
 
 const { ItemSheetV2 }               = foundry.applications.sheets;
 const { HandlebarsApplicationMixin } = foundry.applications.api;
@@ -27,7 +27,7 @@ export class AssetSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
 
     // Parse stat fields — "-" or empty → null, otherwise integer
     if (data.system?.stats) {
-      for (const stat of ["military","wealth","social","magic"]) {
+      for (const stat of STATS) {
         const raw = data.system.stats[stat];
         if (raw === "-" || raw === "" || raw === null || raw === undefined) {
           data.system.stats[stat] = null;
@@ -59,7 +59,6 @@ export class AssetSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
 
     const win = this.element.parentElement ?? this.element;
 
-// Native drop listener for journal entries
     win.addEventListener("dragover", (event) => {
       if (event.dataTransfer?.types?.includes("text/plain")) event.preventDefault();
     });

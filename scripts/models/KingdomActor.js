@@ -1,6 +1,6 @@
 // scripts/models/KingdomActor.js
 
-const STATS = ["military", "wealth", "social", "magic"];
+import { STATS } from "./AssetItem.js";
 
 function zeroStats() {
   return { military: 0, wealth: 0, social: 0, magic: 0 };

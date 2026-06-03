@@ -1,5 +1,7 @@
 // scripts/models/AssetItem.js
 
+export const STATS = ["military", "wealth", "social", "magic"];
+
 export const TERRAIN_TYPES = {
   desert:           { label: "Desert",            icon: "fa-sun",        moveCost: 3, magicPotential: 5 },
   glacier:          { label: "Glacier",            icon: "fa-snowflake",  moveCost: 4, magicPotential: 5 },
