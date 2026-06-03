@@ -180,8 +180,8 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     return (!t?.domainTurn1Used ? 1 : 0) + (dCount >= 2 && !t?.domainTurn2Used ? 1 : 0);
   }
 
-  _buildTurnConsumptionUpdates(dTurnsLeft, ruler) {
-    if (dTurnsLeft > 0) {
+  _buildTurnConsumptionUpdates(usePersonalTurn, ruler) {
+    if (!usePersonalTurn) {
       const t = this.document.system.turn;
       return !t?.domainTurn1Used
         ? { "system.turn.domainTurn1Used": true }
@@ -480,46 +480,43 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
 
     const dTurnsLeft = this._getDomainTurnsLeft();
 
-    const rulerOpts = eligible.map(r => {
+    const rulerOpts = eligible.flatMap(r => {
       const cls       = (r.rulerClass ?? "").toLowerCase().trim();
       const profStats = Object.entries(KingdomSheet.CLASS_STATS).filter(([, c]) => c.includes(cls)).map(([s]) => s);
-      const profLbl   = profStats.includes(stat) ? ` (Prof +${r.profBonus})` : "";
+      const profLbl   = profStats.includes(stat) ? ` (+${r.profBonus} prof)` : "";
       const linked    = game.actors?.find(a => a.name === r.name);
       const isPc      = linked?.type === "character";
       const lvl       = isPc ? (linked?.system?.details?.level ?? 0) : (linked?.system?.details?.cr ?? 0);
       const hasPT     = lvl >= 5;
-      const canRoll   = dTurnsLeft > 0 || (hasPT && !r.personalTurnUsed);
-      const turnNote  = !canRoll ? " — no turns left" : (dTurnsLeft === 0 ? " (uses personal turn)" : "");
-      return `<option value="${rulers.indexOf(r)}"${!canRoll ? " disabled" : ""}>${r.name} — ${r.rulerClass || "no class"}${profLbl}${turnNote}</option>`;
-    }).join("");
+      const rIdx      = rulers.indexOf(r);
+      const opts      = [];
+      if (dTurnsLeft > 0)
+        opts.push(`<option value="ruler-${rIdx}-domain">${r.name}${profLbl} (domain turn)</option>`);
+      if (hasPT && !r.personalTurnUsed)
+        opts.push(`<option value="ruler-${rIdx}-personal">${r.name}${profLbl} (personal turn)</option>`);
+      return opts;
+    }).join("") || `<option disabled>No turns available</option>`;
 
     const result = await DialogV2.prompt({
       window:  { title: `Accumulate Wealth — DC ${dc}` },
       content: `<p style="margin-bottom:8px;">DC <strong>${dc}</strong> (10 + Treasury ${treasury}) · Kingdom Wealth bonus +<strong>${kingdomBonus}</strong></p>
                 <div style="display:flex;flex-direction:column;gap:8px;">
-                  <label>Ruler<select name="rulerIdx" style="width:100%;margin-top:4px;">${rulerOpts}</select></label>
+                  <label>Ruler<select name="rulerSel" style="width:100%;margin-top:4px;">${rulerOpts}</select></label>
                   <label style="display:flex;align-items:center;gap:8px;font-size:12px;">
                     <input type="checkbox" name="advantage" style="width:16px;height:16px;" />
                     <span>Help action — another ruler assists (advantage: roll 2d20 take highest)</span>
                   </label>
                 </div>`,
       ok: { label: "Roll", callback: (e, btn) => ({
-        rulerIdx:  Number(btn.form.elements.rulerIdx.value),
+        rulerSel:  btn.form.elements.rulerSel.value,
         advantage: btn.form.elements.advantage?.checked ?? false,
       })}
     });
     if (result === null || result === undefined) return;
 
-    const ruler     = rulers[result.rulerIdx];
-    // Verify turn eligibility
-    {
-      const linked3 = game.actors?.find(a => a.name === ruler.name);
-      const isPc3   = linked3?.type === "character";
-      const lvl3    = isPc3 ? (linked3?.system?.details?.level ?? 0) : (linked3?.system?.details?.cr ?? 0);
-      const hasPT3  = lvl3 >= 5;
-      if (dTurnsLeft === 0 && !(hasPT3 && !ruler.personalTurnUsed))
-        return ui.notifications.warn(`${ruler.name} has no turns available this round.`);
-    }
+    const [, rIdxStr, turnType] = result.rulerSel.split("-");
+    const usePersonalTurn = turnType === "personal";
+    const ruler     = rulers[Number(rIdxStr)];
     const cls       = (ruler.rulerClass ?? "").toLowerCase().trim();
     const profStats = Object.entries(KingdomSheet.CLASS_STATS).filter(([, c]) => c.includes(cls)).map(([s]) => s);
     const profBonus = profStats.includes(stat) ? (ruler.profBonus ?? 2) : 0;
@@ -536,7 +533,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     });
 
     const log         = foundry.utils.deepClone(this.document.system.turn.log ?? []);
-    const turnUpdates = this._buildTurnConsumptionUpdates(dTurnsLeft, ruler);
+    const turnUpdates = this._buildTurnConsumptionUpdates(usePersonalTurn, ruler);
     if (roll.total >= dc) {
       const gainRoll = new Roll("1d4");
       await gainRoll.evaluate();
@@ -597,48 +594,44 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
 
     const dTurnsLeft = this._getDomainTurnsLeft();
 
-    const rulerOpts = eligible.map(r => {
+    const rulerOpts = eligible.flatMap(r => {
       const cls       = (r.rulerClass ?? "").toLowerCase().trim();
       const profStats = Object.entries(KingdomSheet.CLASS_STATS).filter(([, c]) => c.includes(cls)).map(([s]) => s);
-      const profLbl   = profStats.includes(stat) ? ` (Prof +${r.profBonus})` : "";
+      const profLbl   = profStats.includes(stat) ? ` (+${r.profBonus} prof)` : "";
       const linked    = game.actors?.find(a => a.name === r.name);
       const isPc      = linked?.type === "character";
       const lvl       = isPc ? (linked?.system?.details?.level ?? 0) : (linked?.system?.details?.cr ?? 0);
       const hasPT     = lvl >= 5;
-      const canRoll   = dTurnsLeft > 0 || (hasPT && !r.personalTurnUsed);
-      const turnNote  = !canRoll ? " — no turns left" : (dTurnsLeft === 0 ? " (uses personal turn)" : "");
-      return `<option value="${rulers.indexOf(r)}"${!canRoll ? " disabled" : ""}>${r.name} — ${r.rulerClass || "no class"}${profLbl}${turnNote}</option>`;
-    }).join("");
+      const rIdx      = rulers.indexOf(r);
+      const opts      = [];
+      if (dTurnsLeft > 0)
+        opts.push(`<option value="ruler-${rIdx}-domain">${r.name}${profLbl} (domain turn)</option>`);
+      if (hasPT && !r.personalTurnUsed)
+        opts.push(`<option value="ruler-${rIdx}-personal">${r.name}${profLbl} (personal turn)</option>`);
+      return opts;
+    }).join("") || `<option disabled>No turns available</option>`;
 
     const rulerResult = await DialogV2.prompt({
       window:  { title: `${checkVerb}: ${item.name} — ${statLabel}` },
       content: `<p style="margin-bottom:8px;">DC <strong>${dc}</strong> · Kingdom bonus +<strong>${kingdomBonus}</strong></p>
                 <div style="display:flex;flex-direction:column;gap:8px;">
-                  <label>Ruler<select name="rulerIdx" style="width:100%;margin-top:4px;">${rulerOpts}</select></label>
+                  <label>Ruler<select name="rulerSel" style="width:100%;margin-top:4px;">${rulerOpts}</select></label>
                   <label style="display:flex;align-items:center;gap:8px;font-size:12px;">
                     <input type="checkbox" name="advantage" style="width:16px;height:16px;" />
                     <span>Help action — another ruler assists (advantage: roll 2d20 take highest)</span>
                   </label>
                 </div>`,
       ok: { label: "Roll", callback: (e, btn) => ({
-        rulerIdx:  Number(btn.form.elements.rulerIdx.value),
+        rulerSel:  btn.form.elements.rulerSel.value,
         advantage: btn.form.elements.advantage?.checked ?? false,
       })}
     });
     if (rulerResult === null || rulerResult === undefined) return;
-    const rulerIdx  = rulerResult.rulerIdx;
+    const [, rIdxStr, turnType] = rulerResult.rulerSel.split("-");
+    const usePersonalTurn = turnType === "personal";
     const advantage = rulerResult.advantage ?? false;
 
-    const ruler     = rulers[rulerIdx];
-    // Verify turn eligibility
-    {
-      const linked3 = game.actors?.find(a => a.name === ruler.name);
-      const isPc3   = linked3?.type === "character";
-      const lvl3    = isPc3 ? (linked3?.system?.details?.level ?? 0) : (linked3?.system?.details?.cr ?? 0);
-      const hasPT3  = lvl3 >= 5;
-      if (dTurnsLeft === 0 && !(hasPT3 && !ruler.personalTurnUsed))
-        return ui.notifications.warn(`${ruler.name} has no turns available this round.`);
-    }
+    const ruler     = rulers[Number(rIdxStr)];
 
     const cls       = (ruler.rulerClass ?? "").toLowerCase().trim();
     const profStats = Object.entries(KingdomSheet.CLASS_STATS).filter(([, c]) => c.includes(cls)).map(([s]) => s);
@@ -717,7 +710,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     const log = foundry.utils.deepClone(this.document.system.turn.log ?? []);
     log.push(`[T${this.document.system.turn.number}] ${ruler.name} — ${checkVerb}: ${item.name} ${lbl} [${profPart}] — ${resultTxt}`);
 
-    const turnUpdates = this._buildTurnConsumptionUpdates(dTurnsLeft, ruler);
+    const turnUpdates = this._buildTurnConsumptionUpdates(usePersonalTurn, ruler);
     await this._updateBoth(freshItem, { "system.buildState.checks": checks }, { "system.turn.log": log, ...turnUpdates });
     if (passed) ui.notifications.info(`${ruler.name} passed the ${lbl} check!`);
     else        ui.notifications.warn(`${ruler.name} failed. DC reduced to ${checks[checkIdx].dc}.`);
@@ -760,8 +753,22 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       return sameById || sameByName;
     });
 
+    const dTurnsLeft = this._getDomainTurnsLeft();
+
     const rulerOpts = [
-      ...eligible.map(r => `<option value="ruler-${rulers.indexOf(r)}">${r.name} (ruler)</option>`),
+      ...eligible.flatMap(r => {
+        const linked = game.actors?.find(a => a.name === r.name);
+        const isPc   = linked?.type === "character";
+        const lvl    = isPc ? (linked?.system?.details?.level ?? 0) : (linked?.system?.details?.cr ?? 0);
+        const hasPT  = lvl >= 5;
+        const rIdx   = rulers.indexOf(r);
+        const opts   = [];
+        if (dTurnsLeft > 0)
+          opts.push(`<option value="ruler-${rIdx}-domain">${r.name} (domain turn)</option>`);
+        if (hasPT && !r.personalTurnUsed)
+          opts.push(`<option value="ruler-${rIdx}-personal">${r.name} (personal turn)</option>`);
+        return opts;
+      }),
       ...eligibleUnits.map(u => `<option value="unit-${u.id}">${u.name} (+${u.system.unitFeatureBonus ?? 0} feature)</option>`)
     ].join("") || `<option value="none">No eligible roller</option>`;
 
@@ -785,18 +792,20 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     const resolveAdvantage = resolveResult.advantage ?? false;
 
     // Determine roller and bonus
-    let rollerName, rollBonus;
+    let rollerName, rollBonus, resolveRuler = null, usePersonalTurn = false;
     if (selection.startsWith("unit-")) {
       const unit  = this.document.items.get(selection.replace("unit-", ""));
       rollerName  = unit?.name ?? "Unit";
       rollBonus   = unit?.system.unitFeatureBonus ?? 0;
     } else {
-      const idx   = Number(selection.replace("ruler-", ""));
-      const ruler = rulers[idx] ?? null;
-      rollerName  = ruler?.name ?? "Ruler";
-      const cls   = (ruler?.rulerClass ?? "").toLowerCase().trim();
+      const parts     = selection.split("-");
+      const idx       = Number(parts[1]);
+      usePersonalTurn = parts[2] === "personal";
+      resolveRuler    = rulers[idx] ?? null;
+      rollerName  = resolveRuler?.name ?? "Ruler";
+      const cls   = (resolveRuler?.rulerClass ?? "").toLowerCase().trim();
       const profs = Object.entries(KingdomSheet.CLASS_STATS).filter(([, c]) => c.includes(cls)).map(([s]) => s);
-      rollBonus   = ruler ? (profs.includes(stat) ? (ruler.profBonus ?? 2) : 0) : 0;
+      rollBonus   = resolveRuler ? (profs.includes(stat) ? (resolveRuler.profBonus ?? 2) : 0) : 0;
     }
 
     const parts = [];
@@ -808,7 +817,8 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     await roll.toMessage({ speaker: ChatMessage.getSpeaker({ actor: this.document }),
       flavor: `${rollerName} — Resolve: ${item.name} DC ${dc}${resolveAdvantage ? " [advantage]" : ""}` });
 
-    const log = foundry.utils.deepClone(this.document.system.turn.log ?? []);
+    const log         = foundry.utils.deepClone(this.document.system.turn.log ?? []);
+    const turnUpdates = resolveRuler ? this._buildTurnConsumptionUpdates(usePersonalTurn, resolveRuler) : {};
     if (roll.total >= dc) {
       const redRoll = new Roll("1d4");
       await redRoll.evaluate();
@@ -816,12 +826,12 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
         flavor: `Score reduction: ${item.name}` });
       const newScore = Math.max(0, score - redRoll.total);
       log.push(`[T${turn}] ${rollerName} resolved ${item.name} (${roll.total} vs DC ${dc}, -${redRoll.total}): score ${score}→${newScore}${newScore === 0 ? " RESOLVED!" : ""}`);
-      await this._updateBoth(item, { "system.obstacleScore": newScore }, { "system.turn.log": log });
+      await this._updateBoth(item, { "system.obstacleScore": newScore }, { "system.turn.log": log, ...turnUpdates });
       if (newScore === 0) ui.notifications.info(`${item.name} has been resolved!`);
       else                ui.notifications.info(`${item.name} score reduced to ${newScore}.`);
     } else {
       log.push(`[T${turn}] ${rollerName} failed to resolve ${item.name} (${roll.total} vs DC ${dc}): score unchanged at ${score}`);
-      await this._updateActor({ "system.turn.log": log });
+      await this._updateActor({ "system.turn.log": log, ...turnUpdates });
       ui.notifications.warn(`Failed to resolve ${item.name}.`);
     }
   }
