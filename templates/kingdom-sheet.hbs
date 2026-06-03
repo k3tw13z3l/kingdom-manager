@@ -60,9 +60,7 @@
     <div class="km-ta-box km-ta-treasury">
       <div class="km-ta-label"><i class="fas fa-coins" aria-hidden="true"></i> Treasury</div>
       <div class="km-ta-controls">
-        {{#if isGM}}<button type="button" class="km-ta-btn" data-action="adjustTreasury" data-delta="-1">-</button>{{/if}}
         <input type="number" name="system.treasury" value="{{system.treasury}}" min="0" class="km-ta-input" {{#unless isGM}}readonly{{/unless}} />
-        {{#if isGM}}<button type="button" class="km-ta-btn" data-action="adjustTreasury" data-delta="1">+</button>{{/if}}
       </div>
       <div class="km-ta-hint">1pt = +1 before roll (max 5) · 2pt = +1 after roll (max 4pt)</div>
       {{#if canRoll}}
@@ -74,9 +72,7 @@
     <div class="km-ta-box {{#if system.atrocity}}km-ta-atrocity-active{{else}}km-ta-atrocity{{/if}}">
       <div class="km-ta-label"><i class="fas fa-skull" aria-hidden="true"></i> Atrocity</div>
       <div class="km-ta-controls">
-        {{#if isGM}}<button type="button" class="km-ta-btn" data-action="adjustAtrocity" data-delta="-1">-</button>{{/if}}
         <input type="number" name="system.atrocity" value="{{system.atrocity}}" min="0" class="km-ta-input {{#if system.atrocity}}km-ta-input-danger{{/if}}" {{#unless isGM}}readonly{{/unless}} />
-        {{#if isGM}}<button type="button" class="km-ta-btn" data-action="adjustAtrocity" data-delta="1">+</button>{{/if}}
       </div>
       {{#if system.atrocity}}
       <div class="km-ta-hint km-ta-penalty">
