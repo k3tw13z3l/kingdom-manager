@@ -209,21 +209,19 @@
 .km-no-bonus    { color: var(--km-text-muted); }
 .km-rating-warn { font-size: 11px; color: #c0392b; display: flex; align-items: center; gap: 3px; }
 
-.km-ratings-note { font-size: 11px; color: var(--km-text-muted); }
-
 /* ── Pills ────────────────────────────────────────────────────────────────── */
 .km-pill {
   display: inline-block; font-size: 11px; padding: 1px 7px;
   border-radius: 99px; font-weight: 600; margin: 1px;
 }
-.km-pill-mil { background: var(--km-mil-bg); color: var(--km-mil-txt); }
-.km-pill-wea { background: var(--km-wea-bg); color: var(--km-wea-txt); }
-.km-pill-soc { background: var(--km-soc-bg); color: var(--km-soc-txt); }
-.km-pill-mag { background: var(--km-mag-bg); color: var(--km-mag-txt); }
-.km-pill-dev { background: var(--km-dev-bg); color: var(--km-dev-txt); }
-.km-pill-neg { background: var(--km-neg-bg); color: var(--km-neg-txt); }
-.km-pill-upk { background: #f0ede8; color: var(--km-text-secondary); border: var(--km-border); }
-.km-pill-offset { background: var(--km-soc-bg); color: var(--km-soc-txt); }
+.km-pill-mil     { background: var(--km-mil-bg); color: var(--km-mil-txt); }
+.km-pill-wea     { background: var(--km-wea-bg); color: var(--km-wea-txt); }
+.km-pill-soc     { background: var(--km-soc-bg); color: var(--km-soc-txt); }
+.km-pill-mag     { background: var(--km-mag-bg); color: var(--km-mag-txt); }
+.km-pill-dev     { background: var(--km-dev-bg); color: var(--km-dev-txt); }
+.km-pill-neg     { background: var(--km-neg-bg); color: var(--km-neg-txt); }
+.km-pill-upk     { background: #f0ede8; color: var(--km-text-secondary); border: var(--km-border); }
+.km-pill-generic { background: #f0ede8; color: var(--km-text-secondary); }
 
 /* ── Province blocks ──────────────────────────────────────────────────────── */
 .km-province-block {
@@ -491,10 +489,6 @@
 }
 .km-ruler-done .km-rc-checkbox { color: #0F6E56; font-weight: 500; }
 
-/* Remove old divider and bottom references */
-.km-rc-divider { display: none; }
-.km-rc-bottom  { display: none; }
-
 /* ── Log ──────────────────────────────────────────────────────────────────── */
 .km-log-entries { display: flex; flex-direction: column; }
 .km-log-row {
@@ -744,26 +738,6 @@
   gap: 8px;
   margin-bottom: 4px;
 }
-.km-ta-btn {
-  width: 24px; height: 24px;
-  border-radius: var(--km-radius);
-  border: var(--km-border);
-  background: #f7f5f2;
-  color: var(--km-text-secondary);
-  font-size: 14px; font-weight: 600;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  line-height: 1;
-}
-.km-ta-btn:hover { background: #eceae5; }
-.km-ta-value {
-  font-size: 22px;
-  font-weight: 600;
-  color: var(--km-text);
-  min-width: 32px;
-  text-align: center;
-}
-.km-ta-atrocity-active .km-ta-value { color: #c0392b; }
 .km-ta-hint { font-size: 11px; color: var(--km-text-muted); line-height: 1.4; }
 .km-ta-penalty { color: #c0392b; font-weight: 500; }
 .km-btn-accumulate {
@@ -809,19 +783,6 @@
 }
 
 /* ── Domain Turn card (sits in the rulers row) ────────────────────────────── */
-.km-dt-icon {
-  width: 64px;
-  height: 64px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: #f0ede8;
-  border: var(--km-border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  color: var(--km-text-muted);
-}
 .km-domain-turn-btn {
   display: flex;
   align-items: center;
@@ -892,16 +853,6 @@ button.km-domain-turn-btn:hover { background: #eceae5; }
   font-size: 10px; padding: 2px 8px;
   border-radius: var(--km-radius);
   display: inline-flex; align-items: center; gap: 3px;
-}
-
-/* ── Unit feature pill ────────────────────────────────────────────────────── */
-.km-pill-feature {
-  background: #FEF3C7;
-  color: #92400E;
-  font-size: 10px;
-  padding: 1px 7px;
-  border-radius: 99px;
-  font-weight: 500;
 }
 
 /* ── Unit feature tag (under name, like ruler prof tags) ──────────────────── */
@@ -987,23 +938,6 @@ button.km-domain-turn-btn:hover { background: #eceae5; }
   border-bottom: 0.5px solid #e0ddd6;
 }
 
-/* ── Asset sheet two-column stats layout ─────────────────────────────────── */
-.km-stats-two-col {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0 16px;
-}
-.km-stats-col-header {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--km-text-muted);
-  padding-bottom: 4px;
-  margin-bottom: 4px;
-  border-bottom: 0.5px solid #e0ddd6;
-}
-
 /* ── Dark theme ───────────────────────────────────────────────────────────── */
 /* Scoped from window-content.km-dark since that's what v13 gives us */
 
@@ -1057,20 +991,14 @@ button.km-domain-turn-btn:hover { background: #eceae5; }
 .km-dark .km-province-terrain            { color: #9a9690 !important; }
 .km-dark .km-asset-name                  { color: #dddad4 !important; }
 .km-dark .km-unit-name                   { color: #dddad4 !important; }
-.km-dark .km-rating-label                { color: #9a9690 !important; }
-.km-dark .km-rating-value                { color: #dddad4 !important; }
-.km-dark .km-rating-headroom             { color: #9a9690 !important; }
 .km-dark .km-ta-label                    { color: #9a9690 !important; }
-.km-dark .km-log-row                     { color: #9a9690 !important; border-color: #383840 !important; }
 .km-dark .km-log-turn                    { color: #5e5c58 !important; }
-.km-dark .km-heraldry-motto              { color: #9a9690 !important; }
 .km-dark .km-prov-icon                   { color: #5e5c58 !important; }
 .km-dark .km-dev-numbers                 { color: #9a9690 !important; }
 .km-dark .km-magic-good                  { color: #c4c0f0 !important; }
 .km-dark .km-magic-zero                  { color: #5e5c58 !important; }
 .km-dark .km-obstacle-name               { color: #dddad4 !important; }
 .km-dark .km-card-label                  { color: #9a9690 !important; }
-.km-dark .km-section-title               { color: #9a9690 !important; }
 .km-dark .km-empty                       { color: #5e5c58 !important; }
 .km-dark .km-rc-name                     { color: #dddad4 !important; }
 .km-dark .km-rc-class                    { color: #9a9690 !important; }
@@ -1091,8 +1019,6 @@ button.km-domain-turn-btn:hover { background: #eceae5; }
 .km-dark .km-pill-dev                    { background: #0f2d48 !important; color: #90c4e8 !important; }
 .km-dark .km-pill-upk                    { background: #3d1212 !important; color: #f0a0a0 !important; }
 .km-dark .km-pill-slots                  { background: #1e3010 !important; color: #a8d470 !important; }
-.km-dark .km-pill-feature                { background: #3d2e12 !important; color: #f5c97e !important; }
-
 /* Badges */
 .km-dark .km-badge-active                { background: #102418 !important; color: #4dbb88 !important; }
 .km-dark .km-badge-wip                   { background: #3d2e12 !important; color: #f5c97e !important; }
@@ -1121,8 +1047,6 @@ button.km-domain-turn-btn:hover { background: #eceae5; }
 .km-dark .km-asset-actions button:hover  { background: #3e3e46 !important; color: #dddad4 !important; }
 .km-dark .km-asset-actions button[data-action="deleteItem"]       { color: #f09090 !important; }
 .km-dark .km-asset-actions button[data-action="deleteItem"]:hover { background: #3d1212 !important; }
-.km-dark .km-ta-btn                      { background: #333338 !important; border-color: #4a4a50 !important; color: #dddad4 !important; }
-.km-dark .km-ta-btn:hover                { background: #3e3e46 !important; }
 .km-dark .km-ta-input                    { background: #1e1e22 !important; color: #dddad4 !important; border-color: #404045 !important; }
 .km-dark .km-btn-accumulate              { background: #2a1f10 !important; border-color: #5a3e1a !important; color: #c9a060 !important; }
 .km-dark .km-btn-accumulate:hover        { background: #3a2a15 !important; }
@@ -1137,8 +1061,6 @@ button.km-domain-turn-btn:hover { background: #eceae5; }
 .km-dark .km-dev-safe                    { background: #4dbb88 !important; }
 .km-dark .km-dev-warn                    { background: #e09020 !important; }
 .km-dark .km-dev-full                    { background: #c04040 !important; }
-.km-dark .km-rating-bar-bg               { background: #333338 !important; }
-
 /* Inputs */
 .km-dark input,
 .km-dark select,
@@ -1158,16 +1080,6 @@ button.km-domain-turn-btn:hover { background: #eceae5; }
 .km-dark .km-heraldry-motto              { color: #9a9690 !important; background: #222228 !important; }
 .km-dark .km-log-entries                 { background: #1a1a1e !important; }
 .km-dark .km-log-row                     { color: #9a9690 !important; border-color: #383840 !important; }
-/* Rating value numbers and headroom text */
-.km-dark .km-rating-value                { color: #dddad4 !important; }
-.km-dark .km-rating-headroom             { color: #9a9690 !important; }
-.km-dark .km-rating-bonus                { color: #a8d470 !important; }
-.km-dark .km-rating-upkeep               { color: #f0a0a0 !important; }
-.km-dark .km-rating-bar-bg               { background: #383840 !important; }
-.km-dark .km-rating-bar-fill             { background: #4dbb88 !important; }
-.km-dark .km-rating-bar-over             { background: #c04040 !important; }
-/* Province magic detail text */
-.km-dark .km-rating-detail               { color: #6a6760 !important; font-size: 11px; }
 /* Drop zones */
 .km-dark .km-drop-zone                   { background: #222228 !important; border-color: #404045 !important; color: #5e5c58 !important; }
 /* Wip dots */
@@ -1189,12 +1101,6 @@ button.km-domain-turn-btn:hover { background: #eceae5; }
 
 /* ── Dark theme — units table + scrollbar area ───────────────────────────── */
 .km-dark .km-units                       { background: #28282e !important; border-color: #404045 !important; }
-.km-dark .km-unit-table                  { background: transparent !important; }
-.km-dark .km-unit-table thead tr         { background: #222228 !important; border-color: #404045 !important; }
-.km-dark .km-unit-table th               { color: #9a9690 !important; border-color: #404045 !important; }
-.km-dark .km-unit-table td               { border-color: #383840 !important; color: #dddad4 !important; }
-.km-dark .km-unit-table tr:hover         { background: #262630 !important; }
-.km-dark .km-unit-table tr               { background: transparent !important; }
 
 /* Scrollbar track area */
 .km-dark.window-content                  { background: #1e1e22 !important; }
@@ -1212,7 +1118,6 @@ button.km-domain-turn-btn:hover { background: #eceae5; }
 }
 .km-dark .km-asset-form                  { background: #1e1e22 !important; color: #dddad4 !important; }
 .km-dark .km-asset-form label            { color: #9a9690 !important; }
-.km-dark .km-asset-img-wrap              { background: #222228 !important; }
 .km-dark .km-form-row                    { border-color: #383840 !important; }
 .km-dark .km-fieldset                    { border-color: #404045 !important; background: #222228 !important; }
 .km-dark .km-fieldset legend             { color: #9a9690 !important; background: #222228 !important; }

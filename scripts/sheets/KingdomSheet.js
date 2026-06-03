@@ -28,8 +28,6 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       deleteItem:       KingdomSheet._km_deleteItem,
       toggleBuildCheck: KingdomSheet._km_toggleBuildCheck,
       activateAsset:    KingdomSheet._km_activateAsset,
-      adjustTreasury:   KingdomSheet._km_adjustTreasury,
-      adjustAtrocity:   KingdomSheet._km_adjustAtrocity,
       accumulateWealth: KingdomSheet._km_accumulateWealth,
       toggleDomainTurn: KingdomSheet._km_toggleDomainTurn,
     }
@@ -461,17 +459,6 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     const cur   = turn === 1 ? (this.document.system.turn.domainTurn1Used ?? false)
                               : (this.document.system.turn.domainTurn2Used ?? false);
     await this._updateActor({ [field]: !cur });
-  }
-
-  static async _km_adjustTreasury(event, target) {
-    await this.document.update({ "system.treasury": Math.max(0, (this.document.system.treasury ?? 0) + Number(target.dataset.delta)) });
-  }
-
-  static async _km_adjustAtrocity(event, target) {
-    const val = Math.max(0, (this.document.system.atrocity ?? 0) + Number(target.dataset.delta));
-    await this.document.update({ "system.atrocity": val });
-    if (Number(target.dataset.delta) > 0)
-      ui.notifications.warn(`Atrocity is now ${val}. Upkeep penalty: ${2 + Math.floor(val / 4)} to all stats.`);
   }
 
   static async _km_accumulateWealth(event, target) {
