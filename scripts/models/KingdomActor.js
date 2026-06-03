@@ -1,5 +1,18 @@
 // scripts/models/KingdomActor.js
 
+const STATS = ["military", "wealth", "social", "magic"];
+
+function zeroStats() {
+  return { military: 0, wealth: 0, social: 0, magic: 0 };
+}
+
+function addStats(target, source, abs = false) {
+  for (const stat of STATS) {
+    const v = source[stat] ?? 0;
+    target[stat] += abs ? Math.abs(v) : v;
+  }
+}
+
 export class KingdomActorData extends foundry.abstract.TypeDataModel {
   static defineSchema() {
     const fields = foundry.data.fields;
@@ -41,55 +54,112 @@ export class KingdomActorData extends foundry.abstract.TypeDataModel {
    *   provinces     — array of province summaries with dev load and magic remaining
    */
   computeState(items) {
-    const provinces   = {};  // provinceItemId → { item, devLoad, assets, units }
-    const ratings     = { military: 0, wealth: 0, social: 0, magic: 0 };
-    const upkeep      = { military: 0, wealth: 0, social: 0, magic: 0 };
+    const provinces        = this._indexProvinces(items);
+    const blockedIds       = this._collectBlockedIds(items);
+    const provinceNameById = Object.fromEntries(
+      Object.entries(provinces).map(([id, p]) => [id, p.item.name])
+    );
+    const locationKey      = (sys) => sys.location || provinceNameById[sys.provinceId] || "";
+    const slotsByLocation  = this._collectUnitSlots(items, locationKey);
 
-    // First pass — index provinces
-    for (const item of items) {
-      if (item.type !== "kingdom-manager.asset") continue;
+    const ratings = zeroStats();
+    const upkeep  = zeroStats();
+
+    // Province base stats (active/legacy only)
+    for (const { item } of Object.values(provinces)) {
       const d = item.system;
-      if (d.assetType === "province") {
-        provinces[item.id] = {
-          item,
-          devLoad: 0,
-          magicPotential: d.magicPotential,
-          assets: [],
-          units:  [],
-        };
-        // Province base stats only count once claimed (buildState.active)
-        // Unclaimed provinces are being claimed and don't contribute yet
-        if (d.buildState?.active !== false) {  // active=true OR undefined (legacy)
-          for (const stat of ["military","wealth","social"]) {
-            ratings[stat] += d.stats[stat] ?? 0;
-          }
-        }
-        // Province magic is computed after dev load is known
+      if (d.buildState?.active !== false) {
+        for (const stat of ["military", "wealth", "social"]) ratings[stat] += d.stats[stat] ?? 0;
       }
     }
 
-    // Collect blocked asset ids from active obstacles with score > 0
+    const garrisonedUnitIds = new Set();
+
+    for (const item of items) {
+      if (item.type !== "kingdom-manager.asset") continue;
+      const d = item.system;
+      if (d.assetType === "province") continue;
+
+      const prov = provinces[d.provinceId];
+
+      if (d.isUnit) {
+        if (!d.buildState?.active) continue;
+        const key     = locationKey(d);
+        const hasSlot = d.unitType === "army" && key && (slotsByLocation[key] ?? 0) > 0;
+        if (hasSlot) {
+          slotsByLocation[key]--;
+          garrisonedUnitIds.add(item.id);
+        } else {
+          addStats(upkeep, d.stats, /* abs */ true);
+        }
+        if (prov) prov.units.push(item);
+      } else if (d.isObstacle) {
+        // Obstacle drains ceil(score/2) from all stats ONLY if not blocking a specific asset
+        if (!d.blockedAssetId) {
+          const drain = Math.ceil((d.obstacleScore ?? 0) / 2);
+          for (const stat of STATS) upkeep[stat] += drain;
+        }
+      } else if (d.buildState?.active) {
+        if (!blockedIds.has(item.id)) {
+          addStats(ratings, d.stats);
+          if (d.upkeep) addStats(upkeep, d.upkeep);
+          if (prov) prov.devLoad += d.devCost ?? 0;
+        }
+        if (prov) prov.assets.push(item);
+      }
+    }
+
+    const provinceList = this._buildProvinceList(provinces, ratings);
+
+    // Atrocity upkeep penalty: 2 + floor(atrocity/4) to all stats
+    const atrocity = this.parent?.system?.atrocity ?? 0;
+    if (atrocity > 0) {
+      const penalty = 2 + Math.floor(atrocity / 4);
+      for (const stat of STATS) upkeep[stat] += penalty;
+    }
+
+    for (const stat of STATS) ratings[stat] = Math.max(0, ratings[stat]);
+
+    const buildBonus = zeroStats();
+    const headroom   = zeroStats();
+    for (const stat of STATS) {
+      buildBonus[stat] = Math.floor(ratings[stat] / 5);
+      headroom[stat]   = ratings[stat] - upkeep[stat];
+    }
+
+    return { ratings, upkeep, headroom, buildBonus, provinces: provinceList, garrisonedUnitIds };
+  }
+
+  _indexProvinces(items) {
+    const provinces = {};
+    for (const item of items) {
+      if (item.type !== "kingdom-manager.asset") continue;
+      const d = item.system;
+      if (d.assetType !== "province") continue;
+      provinces[item.id] = {
+        item,
+        devLoad:        0,
+        magicPotential: d.magicPotential,
+        assets:         [],
+        units:          [],
+      };
+    }
+    return provinces;
+  }
+
+  _collectBlockedIds(items) {
     const blockedIds = new Set();
-    // Count available unit slots per province from active assets
-    const garrisonedUnitIds = new Set();  // unit ids whose upkeep is covered by a slot
     for (const item of items) {
       if (item.type !== "kingdom-manager.asset") continue;
       if (item.system.assetType !== "obstacle") continue;
       if ((item.system.obstacleScore ?? 0) > 0 && item.system.blockedAssetId)
         blockedIds.add(item.system.blockedAssetId);
     }
+    return blockedIds;
+  }
 
-    // Build province id → name lookup
-    const provinceNameById = {};
-    for (const item of items) {
-      if (item.type === "kingdom-manager.asset" && item.system.assetType === "province")
-        provinceNameById[item.id] = item.name;
-    }
-    // Helper: get location key for any asset/unit — location text preferred, province name fallback
-    const locationKey = (sys) => sys.location || provinceNameById[sys.provinceId] || "";
-
-    // Collect unit slots indexed by location key
-    const slotsByLocation = {};  // location name → slots remaining
+  _collectUnitSlots(items, locationKey) {
+    const slotsByLocation = {};
     for (const item of items) {
       if (item.type !== "kingdom-manager.asset") continue;
       const d = item.system;
@@ -97,65 +167,14 @@ export class KingdomActorData extends foundry.abstract.TypeDataModel {
       const key = locationKey(d);
       if (key) slotsByLocation[key] = (slotsByLocation[key] ?? 0) + d.unitSlots;
     }
+    return slotsByLocation;
+  }
 
-    // Second pass — built assets and units
-    for (const item of items) {
-      if (item.type !== "kingdom-manager.asset") continue;
-      const d = item.system;
-      if (d.assetType === "province") continue;
-      // Blocked assets/units still appear in the province list but don't contribute stats
-      const isBlocked = blockedIds.has(item.id);
-
-      const prov = provinces[d.provinceId];
-
-      if (d.isUnit) {
-        // Only mustered (active) units draw upkeep (blocked is cosmetic only)
-        if (d.buildState?.active) {
-          // Check if a slot covers this unit's location
-          const key     = locationKey(d);
-          const hasSlot = d.unitType === "army" && key && (slotsByLocation[key] ?? 0) > 0;
-          if (hasSlot) {
-            slotsByLocation[key]--;
-            garrisonedUnitIds.add(item.id);
-          } else {
-            for (const stat of ["military","wealth","social","magic"]) {
-              const cost = Math.abs(d.stats[stat] ?? 0);
-              upkeep[stat] += cost;
-            }
-          }
-          if (prov) prov.units.push(item);
-        }
-      } else if (d.isObstacle) {
-        // Obstacle drains ceil(score/2) from ALL four stats ONLY if not blocking a specific asset
-        if (!d.blockedAssetId) {
-          const drain = Math.ceil((d.obstacleScore ?? 0) / 2);
-          for (const stat of ["military","wealth","social","magic"]) {
-            upkeep[stat] += drain;
-          }
-        }
-      } else if (d.buildState?.active) {
-        // Active built asset contributes stats and upkeep (unless blocked)
-        if (!isBlocked) {
-          for (const stat of ["military","wealth","social","magic"]) {
-            ratings[stat] += d.stats[stat] ?? 0;
-          }
-          if (d.upkeep) {
-            for (const stat of ["military","wealth","social","magic"]) {
-              upkeep[stat] += d.upkeep[stat] ?? 0;
-            }
-          }
-          prov && (prov.devLoad += d.devCost ?? 0);
-        }
-        if (prov) prov.assets.push(item);
-      }
-    }
-
-    // Compute magic remaining per province, add to kingdom magic rating
-    const provinceList = [];
-    for (const [id, prov] of Object.entries(provinces)) {
+  _buildProvinceList(provinces, ratings) {
+    return Object.entries(provinces).map(([id, prov]) => {
       const magicRemaining = Math.max(0, prov.magicPotential - prov.devLoad);
       ratings.magic += magicRemaining;
-      provinceList.push({
+      return {
         id,
         item:           prov.item,
         name:           prov.item.name,
@@ -166,37 +185,7 @@ export class KingdomActorData extends foundry.abstract.TypeDataModel {
         magicRemaining,
         assets:         prov.assets,
         units:          prov.units,
-      });
-    }
-
-    // Atrocity upkeep penalty: 2 + floor(atrocity/4) to all stats
-    const atrocity = this.parent?.system?.atrocity ?? 0;
-    if (atrocity > 0) {
-      const penalty = 2 + Math.floor(atrocity / 4);
-      for (const stat of ["military","wealth","social","magic"]) {
-        upkeep[stat] += penalty;
-      }
-    }
-
-    // Floor ratings at 0
-    for (const stat of ["military","wealth","social","magic"]) {
-      ratings[stat] = Math.max(0, ratings[stat]);
-    }
-
-    // Build bonus: every 5 rating points = +1
-    const buildBonus = {};
-    for (const stat of ["military","wealth","social","magic"]) {
-      buildBonus[stat] = Math.floor(ratings[stat] / 5);
-    }
-
-    // Headroom
-    const headroom = {};
-    for (const stat of ["military","wealth","social","magic"]) {
-      headroom[stat] = ratings[stat] - upkeep[stat];
-    }
-
-    return { ratings, upkeep, headroom, buildBonus, provinces: provinceList, garrisonedUnitIds };
+      };
+    });
   }
-
-
 }
