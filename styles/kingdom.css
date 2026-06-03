@@ -395,10 +395,15 @@
 .km-rulers-row {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 8px;
   grid-column: 1 / -1;
   margin-top: 4px;
+}
+.km-dt-card .km-rc-tags {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .km-ruler-card {
