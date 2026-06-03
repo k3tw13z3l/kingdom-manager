@@ -21,6 +21,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       editImage:        KingdomSheet._km_editImage,
       editHeraldry:     KingdomSheet._km_editHeraldry,
       removeRuler:      KingdomSheet._km_removeRuler,
+      refreshRuler:     KingdomSheet._km_refreshRuler,
       addLogEntry:      KingdomSheet._km_addLogEntry,
       removeLogEntry:   KingdomSheet._km_removeLogEntry,
       editItem:         KingdomSheet._km_editItem,
@@ -379,6 +380,20 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
   static async _km_removeRuler(event, target) {
     const rulers = this.document.system.rulers.filter(r => r.id !== target.dataset.rulerId);
     await this.document.update({ "system.rulers": rulers });
+  }
+
+  static async _km_refreshRuler(event, target) {
+    const rulers = foundry.utils.deepClone(this.document.system.rulers);
+    const ruler  = rulers.find(r => r.id === target.dataset.rulerId);
+    if (!ruler) return;
+    const linked = game.actors?.find(a => a.name === ruler.name);
+    if (!linked) return ui.notifications.warn(`No actor found named "${ruler.name}".`);
+    ruler.profBonus  = linked.system?.attributes?.prof ?? ruler.profBonus;
+    ruler.rulerClass = linked.items?.find(i => i.type === "class")?.name
+      ?? linked.system?.details?.class
+      ?? ruler.rulerClass;
+    await this.document.update({ "system.rulers": rulers });
+    ui.notifications.info(`${ruler.name} refreshed from actor.`);
   }
 
   static async _km_addLogEntry(event, target) {

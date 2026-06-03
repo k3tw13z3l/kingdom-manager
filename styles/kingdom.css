@@ -441,8 +441,13 @@
   background: #f7f5f2;
 }
 
-.km-rc-delete {
+.km-rc-left-actions {
+  display: flex;
+  gap: 2px;
   width: 100%;
+}
+.km-rc-action-btn {
+  flex: 1;
   justify-content: center;
   padding: 2px 0;
   font-size: 11px;

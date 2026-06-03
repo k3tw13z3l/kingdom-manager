@@ -120,8 +120,14 @@
     <div class="km-ruler-card {{#if hasPersonalTurn}}{{#if personalTurnUsed}}km-ruler-done{{/if}}{{/if}}" data-ruler-id="{{id}}">
       <div class="km-rc-left">
         <img class="km-rc-portrait" src="{{actorImg}}" title="{{name}}" />
-        {{#if isGM}}<button type="button" data-action="removeRuler" data-ruler-id="{{id}}"
-                class="km-btn-icon km-btn-danger km-rc-delete"><i class="fas fa-trash" aria-hidden="true"></i></button>{{/if}}
+        {{#if isGM}}
+        <div class="km-rc-left-actions">
+          <button type="button" data-action="refreshRuler" data-ruler-id="{{id}}"
+                  class="km-btn-icon km-rc-action-btn" title="Sync prof &amp; class from actor"><i class="fas fa-sync" aria-hidden="true"></i></button>
+          <button type="button" data-action="removeRuler" data-ruler-id="{{id}}"
+                  class="km-btn-icon km-btn-danger km-rc-action-btn"><i class="fas fa-trash" aria-hidden="true"></i></button>
+        </div>
+        {{/if}}
       </div>
       <div class="km-rc-info">
         <span class="km-rc-name">{{name}}</span>
@@ -137,7 +143,7 @@
           {{#if hasPersonalTurn}}
           <label class="km-rc-checkbox">
             <input type="checkbox" data-ruler-id="{{id}}" {{#if personalTurnUsed}}checked{{/if}} />
-            Personal turn done
+            Turn
           </label>
           {{else}}
           <span class="km-rc-no-personal">No personal turn</span>
