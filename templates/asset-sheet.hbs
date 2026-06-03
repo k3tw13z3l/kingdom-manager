@@ -46,10 +46,12 @@
   </div>
   {{/if}}
 
+  {{#unless isProvince}}
   <div class="km-form-row">
     <label>Location</label>
     <input type="text" name="system.location" value="{{system.location}}" placeholder="Region or territory…" />
   </div>
+  {{/unless}}
 
   {{! ── Obstacle fields ── }}
   {{#if isObstacle}}
@@ -230,9 +232,11 @@
     {{#if system.journalId}}<button type="button" data-action="clearJournal" class="km-btn-xs km-btn-danger" style="flex-shrink:0;"><i class="fas fa-times" aria-hidden="true"></i></button>{{/if}}
   </div>
 
+  {{#unless isProvince}}
   <div class="km-form-row km-form-desc">
     <label>Notes</label>
     <textarea name="system.description" placeholder="Description or notes…">{{system.description}}</textarea>
   </div>
+  {{/unless}}
 
 </div>

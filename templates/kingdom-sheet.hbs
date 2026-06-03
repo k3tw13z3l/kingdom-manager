@@ -133,7 +133,8 @@
             <i class="fas fa-chevron-down km-prov-chevron km-prov-chevron-open" aria-hidden="true"></i>
             <i class="fas {{terrain.icon}} km-prov-icon" aria-hidden="true"></i>
             <div class="km-province-identity">
-              <span class="km-province-name">{{name}}</span>
+              <span class="km-province-name {{#if item.system.journalId}}km-has-journal{{/if}}"
+                    {{#if item.system.journalId}}data-journal-id="{{item.system.journalId}}"{{/if}}>{{name}}</span>
               <span class="km-province-terrain">{{terrain.label}}{{#if @root.showMoveCost}} · move {{terrain.moveCost}}{{/if}}</span>
             </div>
             <div class="km-province-stats">

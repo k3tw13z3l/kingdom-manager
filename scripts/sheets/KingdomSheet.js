@@ -86,8 +86,8 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
         return;
       }
 
-      // Asset name click → open linked journal
-      const assetName = event.target.closest(".km-asset-name[data-journal-id]");
+      // Asset or province name click → open linked journal
+      const assetName = event.target.closest(".km-asset-name[data-journal-id], .km-province-name[data-journal-id]");
       if (assetName) {
         const journal = game.journal?.get(assetName.dataset.journalId);
         if (journal) journal.sheet.render({ force: true });
