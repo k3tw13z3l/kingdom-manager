@@ -864,13 +864,15 @@
   border: 0.5px dashed currentColor;
 }
 
-/* ── Journal linked asset name ────────────────────────────────────────────── */
-.km-has-journal {
+/* ── Journal book-icon link ───────────────────────────────────────────────── */
+.km-journal-link {
   cursor: pointer;
-  text-decoration: underline dotted;
-  text-underline-offset: 3px;
+  opacity: 0.45;
+  font-size: 11px;
+  margin-left: 4px;
+  transition: opacity 0.15s;
 }
-.km-has-journal:hover { color: #0C447C; }
+.km-journal-link:hover { opacity: 1; color: #0C447C; }
 
 .km-journal-input {
   flex: 1;
@@ -1125,6 +1127,7 @@
 .km-dark .km-stats-col-header            { color: #9a9690 !important; border-color: #404045 !important; }
 .km-dark .km-journal-input              { background: #222228 !important; color: #9a9690 !important; border-color: #404045 !important; }
 .km-dark .km-journal-input:hover        { background: #2a2a30 !important; }
+.km-dark .km-journal-link:hover         { color: #6aa5d8 !important; }
 
 /* ── Stationed unit rows — Option C+D style ───────────────────────────────── */
 .km-unit-stationed {

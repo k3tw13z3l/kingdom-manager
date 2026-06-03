@@ -72,9 +72,9 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     const win = this.element.parentElement ?? this.element;
 
     win.addEventListener("click", async (event) => {
-      // Province collapse toggle — skip if clicking action buttons
+      // Province collapse toggle — skip if clicking action buttons or journal links
       const provToggle = event.target.closest(".km-prov-toggle");
-      if (provToggle && !event.target.closest(".km-prov-actions")) {
+      if (provToggle && !event.target.closest(".km-prov-actions") && !event.target.closest(".km-journal-link")) {
         const provId  = provToggle.dataset.provId;
         const body    = win.querySelector(`#provbody-${provId}`);
         const chevron = provToggle.querySelector(".km-prov-chevron");
@@ -86,10 +86,10 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
         return;
       }
 
-      // Asset or province name click → open linked journal
-      const assetName = event.target.closest(".km-asset-name[data-journal-id], .km-province-name[data-journal-id]");
-      if (assetName) {
-        const journal = game.journal?.get(assetName.dataset.journalId);
+      // Book icon click → open linked journal
+      const journalLink = event.target.closest(".km-journal-link[data-journal-id]");
+      if (journalLink) {
+        const journal = game.journal?.get(journalLink.dataset.journalId);
         if (journal) journal.sheet.render({ force: true });
         return;
       }
