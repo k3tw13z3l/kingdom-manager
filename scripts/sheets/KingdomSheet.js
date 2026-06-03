@@ -29,6 +29,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       activateAsset:    KingdomSheet._km_activateAsset,
       adjustTreasury:   KingdomSheet._km_adjustTreasury,
       adjustAtrocity:   KingdomSheet._km_adjustAtrocity,
+      accumulateWealth: KingdomSheet._km_accumulateWealth,
     }
   };
 
@@ -404,6 +405,85 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     await this.document.update({ "system.atrocity": val });
     if (Number(target.dataset.delta) > 0)
       ui.notifications.warn(`Atrocity is now ${val}. Upkeep penalty: ${2 + Math.floor(val / 4)} to all stats.`);
+  }
+
+  static async _km_accumulateWealth(event, target) {
+    const treasury    = this.document.system.treasury ?? 0;
+    const dc          = 10 + treasury;
+    const stat        = "wealth";
+    const state       = this.document.system.computeState(this.document.items.contents);
+    const kingdomBonus = state.buildBonus[stat] ?? 0;
+    const turn        = this.document.system.turn.number;
+
+    const isGM   = game.user.isGM;
+    const userId = game.userId;
+    const rulers = this.document.system.rulers ?? [];
+    if (!rulers.length) return ui.notifications.warn("No rulers defined.");
+
+    const eligible = isGM ? rulers : rulers.filter(r => {
+      const a = game.actors?.find(a => a.name === r.name);
+      return a && (a.ownership[userId] ?? a.ownership.default ?? 0) >= 3;
+    });
+    if (!eligible.length) return ui.notifications.warn("You don't own any eligible rulers.");
+
+    const rulerOpts = eligible.map(r => {
+      const cls       = (r.rulerClass ?? "").toLowerCase().trim();
+      const profStats = Object.entries(KingdomSheet.CLASS_STATS).filter(([, c]) => c.includes(cls)).map(([s]) => s);
+      const profLbl   = profStats.includes(stat) ? ` (Prof +${r.profBonus})` : "";
+      return `<option value="${rulers.indexOf(r)}">${r.name} — ${r.rulerClass || "no class"}${profLbl}</option>`;
+    }).join("");
+
+    const result = await DialogV2.prompt({
+      window:  { title: `Accumulate Wealth — DC ${dc}` },
+      content: `<p style="margin-bottom:8px;">DC <strong>${dc}</strong> (10 + Treasury ${treasury}) · Kingdom Wealth bonus +<strong>${kingdomBonus}</strong></p>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  <label>Ruler<select name="rulerIdx" style="width:100%;margin-top:4px;">${rulerOpts}</select></label>
+                  <label style="display:flex;align-items:center;gap:8px;font-size:12px;">
+                    <input type="checkbox" name="advantage" style="width:16px;height:16px;" />
+                    <span>Help action — another ruler assists (advantage: roll 2d20 take highest)</span>
+                  </label>
+                </div>`,
+      ok: { label: "Roll", callback: (e, btn) => ({
+        rulerIdx:  Number(btn.form.elements.rulerIdx.value),
+        advantage: btn.form.elements.advantage?.checked ?? false,
+      })}
+    });
+    if (result === null || result === undefined) return;
+
+    const ruler     = rulers[result.rulerIdx];
+    const cls       = (ruler.rulerClass ?? "").toLowerCase().trim();
+    const profStats = Object.entries(KingdomSheet.CLASS_STATS).filter(([, c]) => c.includes(cls)).map(([s]) => s);
+    const profBonus = profStats.includes(stat) ? (ruler.profBonus ?? 2) : 0;
+
+    const parts = [];
+    if (profBonus)    parts.push(`${profBonus}[prof]`);
+    if (kingdomBonus) parts.push(`${kingdomBonus}[kingdom]`);
+    const diceExpr = result.advantage ? "2d20kh" : "1d20";
+    const roll = new Roll(parts.length ? `${diceExpr} + ${parts.join(" + ")}` : diceExpr);
+    await roll.evaluate();
+    await roll.toMessage({
+      speaker: ChatMessage.getSpeaker({ actor: this.document }),
+      flavor:  `${ruler.name} — Accumulate Wealth DC ${dc}`
+    });
+
+    const log = foundry.utils.deepClone(this.document.system.turn.log ?? []);
+    if (roll.total >= dc) {
+      const gainRoll = new Roll("1d4");
+      await gainRoll.evaluate();
+      await gainRoll.toMessage({
+        speaker: ChatMessage.getSpeaker({ actor: this.document }),
+        flavor:  `Treasure accumulated`
+      });
+      const gained     = gainRoll.total;
+      const newTreasury = treasury + gained;
+      log.push(`[T${turn}] ${ruler.name} — Accumulate Wealth: passed (${roll.total} vs DC ${dc}), +${gained} Treasury → ${newTreasury}`);
+      await this._updateActor({ "system.treasury": newTreasury, "system.turn.log": log });
+      ui.notifications.info(`${ruler.name} accumulated ${gained} Treasure! Treasury: ${newTreasury}.`);
+    } else {
+      log.push(`[T${turn}] ${ruler.name} — Accumulate Wealth: failed (${roll.total} vs DC ${dc})`);
+      await this._updateActor({ "system.turn.log": log });
+      ui.notifications.warn(`${ruler.name} failed to accumulate Wealth (${roll.total} vs DC ${dc}).`);
+    }
   }
 
   static async _km_rollBuildCheck(event, target) {

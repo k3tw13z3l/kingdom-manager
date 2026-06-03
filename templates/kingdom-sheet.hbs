@@ -65,6 +65,11 @@
         {{#if isGM}}<button type="button" class="km-ta-btn" data-action="adjustTreasury" data-delta="1">+</button>{{/if}}
       </div>
       <div class="km-ta-hint">1pt = +1 before roll (max 5) · 2pt = +1 after roll (max 4pt)</div>
+      {{#if canRoll}}
+      <button type="button" data-action="accumulateWealth" class="km-btn-accumulate">
+        <i class="fas fa-dice-d20" aria-hidden="true"></i> Accumulate Wealth (DC {{add 10 system.treasury}})
+      </button>
+      {{/if}}
     </div>
     <div class="km-ta-box {{#if system.atrocity}}km-ta-atrocity-active{{else}}km-ta-atrocity{{/if}}">
       <div class="km-ta-label"><i class="fas fa-skull" aria-hidden="true"></i> Atrocity</div>

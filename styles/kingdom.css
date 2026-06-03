@@ -746,6 +746,23 @@
 .km-ta-atrocity-active .km-ta-value { color: #c0392b; }
 .km-ta-hint { font-size: 11px; color: var(--km-text-muted); line-height: 1.4; }
 .km-ta-penalty { color: #c0392b; font-weight: 500; }
+.km-btn-accumulate {
+  margin-top: 6px;
+  width: 100%;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #633806;
+  background: var(--km-wea-bg, #FAEEDA);
+  border: 1px solid #d4a96a;
+  border-radius: var(--km-radius);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+.km-btn-accumulate:hover { background: #f5e2c0; }
 
 .km-ta-input {
   width: 56px;
@@ -1031,6 +1048,8 @@
 .km-dark .km-ta-btn                      { background: #333338 !important; border-color: #4a4a50 !important; color: #dddad4 !important; }
 .km-dark .km-ta-btn:hover                { background: #3e3e46 !important; }
 .km-dark .km-ta-input                    { background: #1e1e22 !important; color: #dddad4 !important; border-color: #404045 !important; }
+.km-dark .km-btn-accumulate              { background: #2a1f10 !important; border-color: #5a3e1a !important; color: #c9a060 !important; }
+.km-dark .km-btn-accumulate:hover        { background: #3a2a15 !important; }
 
 /* Desc + misc */
 .km-dark .km-desc-toggle                 { background: #333338 !important; border-color: #4a4a50 !important; color: #9a9690 !important; }
