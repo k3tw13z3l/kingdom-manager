@@ -172,6 +172,27 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     game.socket.emit("module.kingdom-manager", { action: "updateBoth", actorId: this.document.id, itemId: item.id, itemUpdates, actorUpdates });
   }
 
+  _getDomainTurnsLeft() {
+    const sys    = this.document.system;
+    const rulers = sys.rulers ?? [];
+    const dCount = rulers.some(r => game.actors?.find(a => a.name === r.name)?.type === "character") ? 2 : 1;
+    const t      = sys.turn;
+    return (!t?.domainTurn1Used ? 1 : 0) + (dCount >= 2 && !t?.domainTurn2Used ? 1 : 0);
+  }
+
+  _buildTurnConsumptionUpdates(dTurnsLeft, ruler) {
+    if (dTurnsLeft > 0) {
+      const t = this.document.system.turn;
+      return !t?.domainTurn1Used
+        ? { "system.turn.domainTurn1Used": true }
+        : { "system.turn.domainTurn2Used": true };
+    }
+    const rulers = foundry.utils.deepClone(this.document.system.rulers);
+    const r = rulers.find(x => x.id === ruler.id);
+    if (r) r.personalTurnUsed = true;
+    return { "system.rulers": rulers };
+  }
+
   // ── Context ────────────────────────────────────────────────────────────────
 
   async _prepareContext(options) {
@@ -214,6 +235,11 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     });
 
     const domainTurnCount = rulers.some(r => r.isPlayerCharacter) ? 2 : 1;
+    const domainTurnsLeft = (!sys.turn?.domainTurn1Used ? 1 : 0) +
+      (domainTurnCount >= 2 && !sys.turn?.domainTurn2Used ? 1 : 0);
+    for (const r of rulers) {
+      r.canRollCheck = domainTurnsLeft > 0 || (r.hasPersonalTurn && !r.personalTurnUsed);
+    }
 
     // Items with no province assigned and not yet active
     const activeProvinceIds2 = new Set(items.filter(i =>
@@ -234,6 +260,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       showMoveCost: game.settings.get("kingdom-manager", "showMoveCost"),
       turnLog: [...(sys.turn?.log ?? [])].reverse(),
       domainTurnCount,
+      domainTurnsLeft,
       domainTurn1Used: sys.turn?.domainTurn1Used ?? false,
       domainTurn2Used: sys.turn?.domainTurn2Used ?? false,
     };
@@ -451,11 +478,19 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     });
     if (!eligible.length) return ui.notifications.warn("You don't own any eligible rulers.");
 
+    const dTurnsLeft = this._getDomainTurnsLeft();
+
     const rulerOpts = eligible.map(r => {
       const cls       = (r.rulerClass ?? "").toLowerCase().trim();
       const profStats = Object.entries(KingdomSheet.CLASS_STATS).filter(([, c]) => c.includes(cls)).map(([s]) => s);
       const profLbl   = profStats.includes(stat) ? ` (Prof +${r.profBonus})` : "";
-      return `<option value="${rulers.indexOf(r)}">${r.name} — ${r.rulerClass || "no class"}${profLbl}</option>`;
+      const linked    = game.actors?.find(a => a.name === r.name);
+      const isPc      = linked?.type === "character";
+      const lvl       = isPc ? (linked?.system?.details?.level ?? 0) : (linked?.system?.details?.cr ?? 0);
+      const hasPT     = lvl >= 5;
+      const canRoll   = dTurnsLeft > 0 || (hasPT && !r.personalTurnUsed);
+      const turnNote  = !canRoll ? " — no turns left" : (dTurnsLeft === 0 ? " (uses personal turn)" : "");
+      return `<option value="${rulers.indexOf(r)}"${!canRoll ? " disabled" : ""}>${r.name} — ${r.rulerClass || "no class"}${profLbl}${turnNote}</option>`;
     }).join("");
 
     const result = await DialogV2.prompt({
@@ -476,6 +511,15 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     if (result === null || result === undefined) return;
 
     const ruler     = rulers[result.rulerIdx];
+    // Verify turn eligibility
+    {
+      const linked3 = game.actors?.find(a => a.name === ruler.name);
+      const isPc3   = linked3?.type === "character";
+      const lvl3    = isPc3 ? (linked3?.system?.details?.level ?? 0) : (linked3?.system?.details?.cr ?? 0);
+      const hasPT3  = lvl3 >= 5;
+      if (dTurnsLeft === 0 && !(hasPT3 && !ruler.personalTurnUsed))
+        return ui.notifications.warn(`${ruler.name} has no turns available this round.`);
+    }
     const cls       = (ruler.rulerClass ?? "").toLowerCase().trim();
     const profStats = Object.entries(KingdomSheet.CLASS_STATS).filter(([, c]) => c.includes(cls)).map(([s]) => s);
     const profBonus = profStats.includes(stat) ? (ruler.profBonus ?? 2) : 0;
@@ -491,7 +535,8 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       flavor:  `${ruler.name} — Accumulate Wealth DC ${dc}`
     });
 
-    const log = foundry.utils.deepClone(this.document.system.turn.log ?? []);
+    const log         = foundry.utils.deepClone(this.document.system.turn.log ?? []);
+    const turnUpdates = this._buildTurnConsumptionUpdates(dTurnsLeft, ruler);
     if (roll.total >= dc) {
       const gainRoll = new Roll("1d4");
       await gainRoll.evaluate();
@@ -499,14 +544,14 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
         speaker: ChatMessage.getSpeaker({ actor: this.document }),
         flavor:  `Treasure accumulated`
       });
-      const gained     = gainRoll.total;
+      const gained      = gainRoll.total;
       const newTreasury = treasury + gained;
       log.push(`[T${turn}] ${ruler.name} — Accumulate Wealth: passed (${roll.total} vs DC ${dc}), +${gained} Treasury → ${newTreasury}`);
-      await this._updateActor({ "system.treasury": newTreasury, "system.turn.log": log });
+      await this._updateActor({ "system.treasury": newTreasury, "system.turn.log": log, ...turnUpdates });
       ui.notifications.info(`${ruler.name} accumulated ${gained} Treasure! Treasury: ${newTreasury}.`);
     } else {
       log.push(`[T${turn}] ${ruler.name} — Accumulate Wealth: failed (${roll.total} vs DC ${dc})`);
-      await this._updateActor({ "system.turn.log": log });
+      await this._updateActor({ "system.turn.log": log, ...turnUpdates });
       ui.notifications.warn(`${ruler.name} failed to accumulate Wealth (${roll.total} vs DC ${dc}).`);
     }
   }
@@ -550,11 +595,19 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     });
     if (!eligible.length) return ui.notifications.warn("You don't own any eligible rulers.");
 
+    const dTurnsLeft = this._getDomainTurnsLeft();
+
     const rulerOpts = eligible.map(r => {
       const cls       = (r.rulerClass ?? "").toLowerCase().trim();
       const profStats = Object.entries(KingdomSheet.CLASS_STATS).filter(([, c]) => c.includes(cls)).map(([s]) => s);
       const profLbl   = profStats.includes(stat) ? ` (Prof +${r.profBonus})` : "";
-      return `<option value="${rulers.indexOf(r)}">${r.name} — ${r.rulerClass || "no class"}${profLbl}</option>`;
+      const linked    = game.actors?.find(a => a.name === r.name);
+      const isPc      = linked?.type === "character";
+      const lvl       = isPc ? (linked?.system?.details?.level ?? 0) : (linked?.system?.details?.cr ?? 0);
+      const hasPT     = lvl >= 5;
+      const canRoll   = dTurnsLeft > 0 || (hasPT && !r.personalTurnUsed);
+      const turnNote  = !canRoll ? " — no turns left" : (dTurnsLeft === 0 ? " (uses personal turn)" : "");
+      return `<option value="${rulers.indexOf(r)}"${!canRoll ? " disabled" : ""}>${r.name} — ${r.rulerClass || "no class"}${profLbl}${turnNote}</option>`;
     }).join("");
 
     const rulerResult = await DialogV2.prompt({
@@ -577,6 +630,16 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     const advantage = rulerResult.advantage ?? false;
 
     const ruler     = rulers[rulerIdx];
+    // Verify turn eligibility
+    {
+      const linked3 = game.actors?.find(a => a.name === ruler.name);
+      const isPc3   = linked3?.type === "character";
+      const lvl3    = isPc3 ? (linked3?.system?.details?.level ?? 0) : (linked3?.system?.details?.cr ?? 0);
+      const hasPT3  = lvl3 >= 5;
+      if (dTurnsLeft === 0 && !(hasPT3 && !ruler.personalTurnUsed))
+        return ui.notifications.warn(`${ruler.name} has no turns available this round.`);
+    }
+
     const cls       = (ruler.rulerClass ?? "").toLowerCase().trim();
     const profStats = Object.entries(KingdomSheet.CLASS_STATS).filter(([, c]) => c.includes(cls)).map(([s]) => s);
     const profBonus = profStats.includes(stat) ? (ruler.profBonus ?? 2) : 0;
@@ -654,7 +717,8 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     const log = foundry.utils.deepClone(this.document.system.turn.log ?? []);
     log.push(`[T${this.document.system.turn.number}] ${ruler.name} — ${checkVerb}: ${item.name} ${lbl} [${profPart}] — ${resultTxt}`);
 
-    await this._updateBoth(freshItem, { "system.buildState.checks": checks }, { "system.turn.log": log });
+    const turnUpdates = this._buildTurnConsumptionUpdates(dTurnsLeft, ruler);
+    await this._updateBoth(freshItem, { "system.buildState.checks": checks }, { "system.turn.log": log, ...turnUpdates });
     if (passed) ui.notifications.info(`${ruler.name} passed the ${lbl} check!`);
     else        ui.notifications.warn(`${ruler.name} failed. DC reduced to ${checks[checkIdx].dc}.`);
   }

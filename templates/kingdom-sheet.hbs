@@ -139,6 +139,10 @@
           {{else}}
           <span class="km-rc-no-personal">No personal turn</span>
           {{/if}}
+          <span class="km-turn-status {{#if canRollCheck}}km-turn-can{{else}}km-turn-blocked{{/if}}">
+            <i class="fas {{#if canRollCheck}}fa-check-circle{{else}}fa-ban{{/if}}" aria-hidden="true"></i>
+            {{#if canRollCheck}}Can roll{{else}}No turns{{/if}}
+          </span>
           {{#if isGM}}<button type="button" data-action="removeRuler" data-ruler-id="{{id}}"
                   class="km-btn-icon km-btn-danger"><i class="fas fa-trash" aria-hidden="true"></i></button>{{/if}}
         </div>

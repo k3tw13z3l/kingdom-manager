@@ -830,6 +830,16 @@ button.km-domain-turn-btn:hover { background: #eceae5; }
   font-style: italic;
 }
 
+.km-turn-status {
+  font-size: 10px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.km-turn-can    { color: #1c7c3e; }
+.km-turn-blocked { color: var(--km-text-muted); font-style: italic; }
+
 /* ── Rulers section label in divider ─────────────────────────────────────── */
 .km-rulers-label {
   grid-column: 1 / -1;
@@ -1076,6 +1086,8 @@ button.km-domain-turn-btn:hover { background: #eceae5; }
 .km-dark .km-ruler-card.km-ruler-done    { background: #102418 !important; border-color: #1D9E75 !important; }
 .km-dark .km-rc-bottom                   { border-color: #404045 !important; }
 .km-dark .km-rulers-label                { color: #5e5c58 !important; }
+.km-dark .km-turn-can                    { color: #5dbb7e !important; }
+.km-dark .km-turn-blocked                { color: #5e5c58 !important; }
 .km-dark .km-rulers-label::before,
 .km-dark .km-rulers-label::after         { background: #404045 !important; }
 
