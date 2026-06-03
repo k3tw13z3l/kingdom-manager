@@ -59,7 +59,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       }
     } catch(e) {}
 
-    const LISTENER_VERSION = 5;
+    const LISTENER_VERSION = 6;
     if (this._listenersAttached === LISTENER_VERSION) return;
     this._listenersAttached = LISTENER_VERSION;
 
@@ -224,8 +224,11 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       const isPlayerCharacter = linked?.type === "character";
       const level             = isPlayerCharacter ? (linked?.system?.details?.level ?? 0) : 0;
       const cr                = !isPlayerCharacter ? (linked?.system?.details?.cr ?? 0) : 0;
-      const hasPersonalTurn   = (isPlayerCharacter ? level : cr) >= 5;
-      const rankLabel         = isPlayerCharacter ? `Lv ${level}` : `CR ${cr}`;
+      // prof ≥ 3 ⟺ level/CR ≥ 5 in D&D 5e; use stored profBonus so actors without a match still work
+      const hasPersonalTurn   = (r.profBonus ?? 0) >= 3;
+      const rankLabel         = linked
+        ? (isPlayerCharacter ? `Lv ${level}` : `CR ${cr}`)
+        : `Prof +${r.profBonus ?? 0}`;
       return { ...r, actorImg: linked?.img ?? "icons/svg/mystery-man.svg", profStats,
         hasMil: profStats.includes("military"), hasWea: profStats.includes("wealth"),
         hasSoc: profStats.includes("social"),   hasMag: profStats.includes("magic"),
@@ -486,10 +489,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       const cls       = (r.rulerClass ?? "").toLowerCase().trim();
       const profStats = Object.entries(KingdomSheet.CLASS_STATS).filter(([, c]) => c.includes(cls)).map(([s]) => s);
       const profLbl   = profStats.includes(stat) ? ` (+${r.profBonus} prof)` : "";
-      const linked    = game.actors?.find(a => a.name === r.name);
-      const isPc      = linked?.type === "character";
-      const lvl       = isPc ? (linked?.system?.details?.level ?? 0) : (linked?.system?.details?.cr ?? 0);
-      const hasPT     = lvl >= 5;
+      const hasPT     = (r.profBonus ?? 0) >= 3;
       const rIdx      = rulers.indexOf(r);
       const opts      = [];
       if (dTurnsLeft > 0)
@@ -600,10 +600,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       const cls       = (r.rulerClass ?? "").toLowerCase().trim();
       const profStats = Object.entries(KingdomSheet.CLASS_STATS).filter(([, c]) => c.includes(cls)).map(([s]) => s);
       const profLbl   = profStats.includes(stat) ? ` (+${r.profBonus} prof)` : "";
-      const linked    = game.actors?.find(a => a.name === r.name);
-      const isPc      = linked?.type === "character";
-      const lvl       = isPc ? (linked?.system?.details?.level ?? 0) : (linked?.system?.details?.cr ?? 0);
-      const hasPT     = lvl >= 5;
+      const hasPT     = (r.profBonus ?? 0) >= 3;
       const rIdx      = rulers.indexOf(r);
       const opts      = [];
       if (dTurnsLeft > 0)
@@ -759,10 +756,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
 
     const rulerOpts = [
       ...eligible.flatMap(r => {
-        const linked = game.actors?.find(a => a.name === r.name);
-        const isPc   = linked?.type === "character";
-        const lvl    = isPc ? (linked?.system?.details?.level ?? 0) : (linked?.system?.details?.cr ?? 0);
-        const hasPT  = lvl >= 5;
+        const hasPT  = (r.profBonus ?? 0) >= 3;
         const rIdx   = rulers.indexOf(r);
         const opts   = [];
         if (dTurnsLeft > 0)
