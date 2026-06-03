@@ -133,7 +133,7 @@
             <i class="fas fa-chevron-down km-prov-chevron km-prov-chevron-open" aria-hidden="true"></i>
             <i class="fas {{terrain.icon}} km-prov-icon" aria-hidden="true"></i>
             <div class="km-province-identity">
-              <span class="km-province-name">{{name}}</span>{{#if item.system.journalId}}<i class="fas fa-book km-journal-link" data-journal-id="{{item.system.journalId}}" title="Open journal" aria-hidden="true"></i>{{/if}}
+              <span class="km-province-name">{{name}}</span>{{#if item.system.journalId}}<i class="fas fa-book-open km-journal-link" data-journal-id="{{item.system.journalId}}" title="Open journal" aria-hidden="true"></i>{{/if}}
               <span class="km-province-terrain">{{terrain.label}}{{#if @root.showMoveCost}} · move {{terrain.moveCost}}{{/if}}</span>
             </div>
             <div class="km-province-stats">
@@ -206,7 +206,7 @@
 
           {{#each assets}}
           <div class="km-asset-row {{#if isBlocked}}km-asset-blocked{{/if}}" data-item-id="{{id}}">
-            <span class="km-asset-name">{{name}}{{#if journalId}} <i class="fas fa-book km-journal-link" data-journal-id="{{journalId}}" title="Open journal" aria-hidden="true"></i>{{/if}}</span>
+            <span class="km-asset-name">{{name}}{{#if journalId}} <i class="fas fa-book-open km-journal-link" data-journal-id="{{journalId}}" title="Open journal" aria-hidden="true"></i>{{/if}}</span>
             <div class="km-asset-pills">
               {{#each (statPills system.stats)}}<span class="km-pill {{cssClass}}">{{label}}</span>{{/each}}
               {{#if system.devCost}}<span class="km-pill km-pill-dev">Dev {{system.devCost}}</span>{{/if}}
@@ -238,7 +238,7 @@
           <div class="km-asset-row km-unit-stationed {{#if isBlocked}}km-asset-blocked{{/if}}" data-item-id="{{id}}">
             <i class="{{unitTypeIcon unitType}} km-unit-type-icon" aria-hidden="true"></i>
             <span class="km-asset-name">
-              {{name}}{{#if journalId}} <i class="fas fa-book km-journal-link" data-journal-id="{{journalId}}" title="Open journal" aria-hidden="true"></i>{{/if}}
+              {{name}}{{#if journalId}} <i class="fas fa-book-open km-journal-link" data-journal-id="{{journalId}}" title="Open journal" aria-hidden="true"></i>{{/if}}
               {{#if isAgent}}<span class="km-unit-agent-tag">{{capitalize unitType}}</span>{{/if}}
               {{#if isGarrisoned}}<i class="fas fa-home km-garrison-icon" title="Upkeep covered by garrison" aria-hidden="true"></i>{{/if}}
               {{#if hasFeature}}<span class="km-unit-feature km-pt-{{featureStat}}">{{capitalize featureStat}} +{{featureBonus}}</span>{{/if}}
@@ -265,7 +265,7 @@
 
           {{#each wipAssets}}
           <div class="km-asset-row km-asset-wip" data-item-id="{{id}}">
-            <span class="km-asset-name">{{name}}{{#if journalId}} <i class="fas fa-book km-journal-link" data-journal-id="{{journalId}}" title="Open journal" aria-hidden="true"></i>{{/if}}</span>
+            <span class="km-asset-name">{{name}}{{#if journalId}} <i class="fas fa-book-open km-journal-link" data-journal-id="{{journalId}}" title="Open journal" aria-hidden="true"></i>{{/if}}</span>
             <div class="km-asset-pills">
               {{#each (statPills system.stats)}}<span class="km-pill {{cssClass}}">{{label}}</span>{{/each}}
               {{#if system.devCost}}<span class="km-pill km-pill-dev">Dev {{system.devCost}}</span>{{/if}}
