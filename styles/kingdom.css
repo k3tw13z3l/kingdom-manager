@@ -424,6 +424,14 @@
   background: #f0faf6;
 }
 
+.km-rc-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
 .km-rc-portrait {
   width: 64px;
   height: 64px;
@@ -431,7 +439,13 @@
   object-fit: cover;
   border: var(--km-border);
   background: #f7f5f2;
-  flex-shrink: 0;
+}
+
+.km-rc-delete {
+  width: 100%;
+  justify-content: center;
+  padding: 2px 0;
+  font-size: 11px;
 }
 
 .km-rc-info {
@@ -1056,7 +1070,6 @@ button.km-domain-turn-btn:hover { background: #eceae5; }
 .km-dark .km-rc-name                     { color: #dddad4 !important; }
 .km-dark .km-rc-class                    { color: #9a9690 !important; }
 .km-dark .km-rc-checkbox                 { color: #9a9690 !important; }
-.km-dark .km-dt-icon                     { background: #2a2a30 !important; border-color: #404045 !important; color: #9a9690 !important; }
 .km-dark .km-domain-turn-btn             { background: #2a2a30 !important; border-color: #404045 !important; color: #9a9690 !important; }
 .km-dark button.km-domain-turn-btn:hover { background: #333338 !important; }
 .km-dark .km-domain-turn-btn.km-dt-used  { background: #1a2e14 !important; border-color: #3d6b2a !important; color: #7ec850 !important; }

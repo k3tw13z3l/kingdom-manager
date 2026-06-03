@@ -87,7 +87,6 @@
 
     {{! Domain turn card — styled like a ruler card }}
     <div class="km-ruler-card km-dt-card">
-      <div class="km-dt-icon"><i class="fas fa-flag" aria-hidden="true"></i></div>
       <div class="km-rc-info">
         <span class="km-rc-name">Domain Turns</span>
         <span class="km-rc-class">{{domainTurnCount}} turn{{#if (gt domainTurnCount 1)}}s{{/if}} — {{#if (gt domainTurnCount 1)}}player present{{else}}NPC only{{/if}}</span>
@@ -119,7 +118,11 @@
 
     {{#each rulers}}
     <div class="km-ruler-card {{#if hasPersonalTurn}}{{#if personalTurnUsed}}km-ruler-done{{/if}}{{/if}}" data-ruler-id="{{id}}">
-      <img class="km-rc-portrait" src="{{actorImg}}" title="{{name}}" />
+      <div class="km-rc-left">
+        <img class="km-rc-portrait" src="{{actorImg}}" title="{{name}}" />
+        {{#if isGM}}<button type="button" data-action="removeRuler" data-ruler-id="{{id}}"
+                class="km-btn-icon km-btn-danger km-rc-delete"><i class="fas fa-trash" aria-hidden="true"></i></button>{{/if}}
+      </div>
       <div class="km-rc-info">
         <span class="km-rc-name">{{name}}</span>
         <span class="km-rc-class">{{rulerClass}} · {{rankLabel}} · Prof +{{profBonus}}</span>
@@ -143,8 +146,6 @@
             <i class="fas {{#if canRollCheck}}fa-check-circle{{else}}fa-ban{{/if}}" aria-hidden="true"></i>
             {{#if canRollCheck}}Can roll{{else}}No turns{{/if}}
           </span>
-          {{#if isGM}}<button type="button" data-action="removeRuler" data-ruler-id="{{id}}"
-                  class="km-btn-icon km-btn-danger"><i class="fas fa-trash" aria-hidden="true"></i></button>{{/if}}
         </div>
       </div>
     </div>
