@@ -25,8 +25,10 @@ export class KingdomActorData extends foundry.abstract.TypeDataModel {
 
       // Domain turn state
       turn: new fields.SchemaField({
-        number: new fields.NumberField({ initial: 1, integer: true, min: 1 }),
-        log:    new fields.ArrayField(new fields.StringField())
+        number:          new fields.NumberField({ initial: 1, integer: true, min: 1 }),
+        log:             new fields.ArrayField(new fields.StringField()),
+        domainTurn1Used: new fields.BooleanField({ initial: false }),
+        domainTurn2Used: new fields.BooleanField({ initial: false }),
       }),
 
       // Rulers: { id, name, class, profBonus, personalTurnUsed }

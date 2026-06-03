@@ -30,6 +30,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       adjustTreasury:   KingdomSheet._km_adjustTreasury,
       adjustAtrocity:   KingdomSheet._km_adjustAtrocity,
       accumulateWealth: KingdomSheet._km_accumulateWealth,
+      toggleDomainTurn: KingdomSheet._km_toggleDomainTurn,
     }
   };
 
@@ -197,14 +198,22 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     try { units     = buildUnitData(items, state, state.garrisonedUnitIds ?? new Set()); } catch(e) { console.error("KM | buildUnitData error:", e); }
 
     const rulers = (sys.rulers ?? []).map(r => {
-      const linked    = game.actors?.find(a => a.name === r.name);
-      const cls       = (r.rulerClass ?? "").toLowerCase().trim();
-      const profStats = Object.entries(KingdomSheet.CLASS_STATS).filter(([, c]) => c.includes(cls)).map(([s]) => s);
+      const linked            = game.actors?.find(a => a.name === r.name);
+      const cls               = (r.rulerClass ?? "").toLowerCase().trim();
+      const profStats         = Object.entries(KingdomSheet.CLASS_STATS).filter(([, c]) => c.includes(cls)).map(([s]) => s);
+      const isPlayerCharacter = linked?.type === "character";
+      const level             = isPlayerCharacter ? (linked?.system?.details?.level ?? 0) : 0;
+      const cr                = !isPlayerCharacter ? (linked?.system?.details?.cr ?? 0) : 0;
+      const hasPersonalTurn   = (isPlayerCharacter ? level : cr) >= 5;
+      const rankLabel         = isPlayerCharacter ? `Lv ${level}` : `CR ${cr}`;
       return { ...r, actorImg: linked?.img ?? "icons/svg/mystery-man.svg", profStats,
         hasMil: profStats.includes("military"), hasWea: profStats.includes("wealth"),
         hasSoc: profStats.includes("social"),   hasMag: profStats.includes("magic"),
-        noneProf: profStats.length === 0, isGM };
+        noneProf: profStats.length === 0, isGM,
+        isPlayerCharacter, level, cr, hasPersonalTurn, rankLabel };
     });
+
+    const domainTurnCount = rulers.some(r => r.isPlayerCharacter) ? 2 : 1;
 
     // Items with no province assigned and not yet active
     const activeProvinceIds2 = new Set(items.filter(i =>
@@ -224,6 +233,9 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       canRoll, isGM,
       showMoveCost: game.settings.get("kingdom-manager", "showMoveCost"),
       turnLog: [...(sys.turn?.log ?? [])].reverse(),
+      domainTurnCount,
+      domainTurn1Used: sys.turn?.domainTurn1Used ?? false,
+      domainTurn2Used: sys.turn?.domainTurn2Used ?? false,
     };
   }
 
@@ -328,7 +340,12 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
   static async _km_nextTurn(event, target) {
     const num    = this.document.system.turn.number;
     const rulers = foundry.utils.deepClone(this.document.system.rulers).map(r => ({ ...r, personalTurnUsed: false }));
-    await this.document.update({ "system.turn.number": num + 1, "system.rulers": rulers });
+    await this.document.update({
+      "system.turn.number":          num + 1,
+      "system.rulers":               rulers,
+      "system.turn.domainTurn1Used": false,
+      "system.turn.domainTurn2Used": false,
+    });
     ui.notifications.info(`Domain turn ${num + 1} has begun.`);
   }
 
@@ -394,6 +411,14 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     log.push(`[T${this.document.system.turn.number}] ${item.name} ${verb}.`);
     await this.document.update({ "system.turn.log": log });
     ui.notifications.info(`${item.name} is now ${verb}.`);
+  }
+
+  static async _km_toggleDomainTurn(event, target) {
+    const turn  = Number(target.dataset.turn);
+    const field = `system.turn.domainTurn${turn}Used`;
+    const cur   = turn === 1 ? (this.document.system.turn.domainTurn1Used ?? false)
+                              : (this.document.system.turn.domainTurn2Used ?? false);
+    await this._updateActor({ [field]: !cur });
   }
 
   static async _km_adjustTreasury(event, target) {

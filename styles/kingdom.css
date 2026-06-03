@@ -788,6 +788,70 @@
   border-top: 0.5px solid #e0ddd6;
 }
 
+/* ── Domain Turn Tracker ──────────────────────────────────────────────────── */
+.km-domain-turns {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 10px;
+  background: var(--km-card-bg);
+  border: var(--km-border);
+  border-radius: var(--km-radius);
+  flex-wrap: wrap;
+}
+.km-domain-turns-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.km-domain-turns-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--km-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.km-domain-turns-note {
+  font-size: 11px;
+  color: var(--km-text-muted);
+}
+.km-domain-turns-track {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.km-domain-turn-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border: var(--km-border);
+  border-radius: var(--km-radius);
+  background: #f7f5f2;
+  color: var(--km-text-secondary);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+button.km-domain-turn-btn:hover { background: #eceae5; }
+.km-domain-turn-btn.km-dt-used {
+  background: #EAF3DE;
+  border-color: #7ab648;
+  color: #27500A;
+  font-weight: 600;
+}
+.km-rc-no-personal {
+  font-size: 11px;
+  color: var(--km-text-muted);
+  font-style: italic;
+}
+
 /* ── Rulers section label in divider ─────────────────────────────────────── */
 .km-rulers-label {
   grid-column: 1 / -1;
@@ -1004,6 +1068,10 @@
 .km-dark .km-rc-name                     { color: #dddad4 !important; }
 .km-dark .km-rc-class                    { color: #9a9690 !important; }
 .km-dark .km-rc-checkbox                 { color: #9a9690 !important; }
+.km-dark .km-domain-turns                { background: #222228 !important; border-color: #404045 !important; }
+.km-dark .km-domain-turn-btn             { background: #2a2a30 !important; border-color: #404045 !important; color: #9a9690 !important; }
+.km-dark button.km-domain-turn-btn:hover { background: #333338 !important; }
+.km-dark .km-domain-turn-btn.km-dt-used  { background: #1a2e14 !important; border-color: #3d6b2a !important; color: #7ec850 !important; }
 .km-dark .km-ruler-done .km-rc-checkbox  { color: #4dbb88 !important; }
 .km-dark .km-wip-title                   { color: #9a9690 !important; }
 .km-dark .km-wip-stat                    { color: #dddad4 !important; }
