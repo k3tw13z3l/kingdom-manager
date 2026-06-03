@@ -170,6 +170,14 @@
             <div class="km-wip-title">
               <i class="fas fa-flag" aria-hidden="true"></i> {{name}} — claiming checks (base DC 10)
             </div>
+            {{#if claimingProv.system.skipChecks}}
+            <div class="km-wip-complete">
+              <i class="fas fa-forward" aria-hidden="true"></i> Checks bypassed —
+              <button type="button" data-action="activateAsset" data-item-id="{{item.id}}" class="km-btn-primary km-btn-xs">
+                <i class="fas fa-flag" aria-hidden="true"></i> Claim province
+              </button>
+            </div>
+            {{else}}
             {{#each claimingProv.checks}}
             <div class="km-wip-row">
               <div class="km-wip-dot {{#if passed}}km-dot-pass{{else}}km-dot-pend{{/if}}"></div>
@@ -200,6 +208,7 @@
                 <i class="fas fa-flag" aria-hidden="true"></i> Claim province
               </button>
             </div>
+            {{/if}}
             {{/if}}
           </div>
           {{/if}}
@@ -296,6 +305,14 @@
               {{#if system.devCost}}<span class="km-wip-dev-note">· Dev {{system.devCost}} on completion</span>{{/if}}
               {{/if}}
             </div>
+            {{#if system.skipChecks}}
+            <div class="km-wip-complete">
+              <i class="fas fa-forward" aria-hidden="true"></i> Checks bypassed —
+              <button type="button" data-action="activateAsset" data-item-id="{{id}}" class="km-btn-primary km-btn-xs">
+                {{#if isMuster}}<i class="fas fa-drum" aria-hidden="true"></i> Muster unit{{else}}<i class="fas fa-check-circle" aria-hidden="true"></i> Activate{{/if}}
+              </button>
+            </div>
+            {{else}}
             {{#each checks}}
             <div class="km-wip-row">
               <div class="km-wip-dot {{#if passed}}km-dot-pass{{else}}km-dot-pend{{/if}}"></div>
@@ -326,6 +343,7 @@
                 {{#if isMuster}}<i class="fas fa-drum" aria-hidden="true"></i> Muster unit{{else}}<i class="fas fa-check-circle" aria-hidden="true"></i> Activate{{/if}}
               </button>
             </div>
+            {{/if}}
             {{/if}}
           </div>
           {{/each}}

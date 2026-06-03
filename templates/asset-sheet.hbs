@@ -53,6 +53,14 @@
   </div>
   {{/unless}}
 
+  {{#unless isObstacle}}
+  <div class="km-form-row">
+    <label>Skip checks</label>
+    <input type="checkbox" name="system.skipChecks" {{#if system.skipChecks}}checked{{/if}} />
+    <span class="km-stat-hint">Activate directly without build / claim / muster checks</span>
+  </div>
+  {{/unless}}
+
   {{! ── Obstacle fields ── }}
   {{#if isObstacle}}
   <fieldset class="km-fieldset">

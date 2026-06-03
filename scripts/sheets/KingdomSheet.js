@@ -284,22 +284,25 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     itemData.system.buildBaseDC = baseDC;
 
     if (["province","asset","unit"].includes(assetType)) {
-      foundry.utils.setProperty(itemData, "system.buildState.active", false);
-      const sys    = itemData.system;
-      const checks = [];
-      for (const [stat, val] of Object.entries(sys.stats ?? {})) {
-        if (val === null || val === undefined) continue;
-        if (assetType === "province" && stat === "magic") continue;
-        const upkeepCost = assetType === "asset" ? (sys.upkeep?.[stat] ?? 0) : 0;
-        checks.push({ stat, dc: baseDC + Math.abs(val) + upkeepCost, passed: false });
+      const sys = itemData.system;
+      if (sys.skipChecks) {
+        foundry.utils.setProperty(itemData, "system.buildState.active", true);
+      } else {
+        foundry.utils.setProperty(itemData, "system.buildState.active", false);
+        const checks = [];
+        for (const [stat, val] of Object.entries(sys.stats ?? {})) {
+          if (val === null || val === undefined) continue;
+          if (assetType === "province" && stat === "magic") continue;
+          const upkeepCost = assetType === "asset" ? (sys.upkeep?.[stat] ?? 0) : 0;
+          checks.push({ stat, dc: baseDC + Math.abs(val) + upkeepCost, passed: false });
+        }
+        if (assetType === "province") {
+          const terrain = CONFIG.KingdomManager.TERRAIN_TYPES[sys.terrainType] ?? { magicPotential: 0 };
+          if (terrain.magicPotential > 0) checks.push({ stat: "magic", dc: baseDC + terrain.magicPotential, passed: false });
+        }
+        if (checks.length === 0) checks.push({ stat: "social", dc: baseDC, passed: false });
+        foundry.utils.setProperty(itemData, "system.buildState.checks", checks);
       }
-      if (assetType === "province") {
-        const terrain = CONFIG.KingdomManager.TERRAIN_TYPES[sys.terrainType] ?? { magicPotential: 0 };
-        if (terrain.magicPotential > 0) checks.push({ stat: "magic", dc: baseDC + terrain.magicPotential, passed: false });
-      }
-      // Always at least one check — province with no stats gets a base social check
-      if (checks.length === 0) checks.push({ stat: "social", dc: baseDC, passed: false });
-      foundry.utils.setProperty(itemData, "system.buildState.checks", checks);
     }
 
     return this.document.createEmbeddedDocuments("Item", [itemData]);
