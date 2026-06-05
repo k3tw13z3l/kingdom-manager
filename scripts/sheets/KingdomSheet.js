@@ -274,9 +274,16 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     const data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
 
     if (data?.type === "Actor") {
-      if (!event.target.closest(".km-rulers") && !event.target.closest(".km-ratings")) return;
       const actor = await Actor.fromDropData(data);
       if (!actor) return;
+
+      // knw-army warfare unit → create a kingdom unit asset on a province
+      if (actor.type === "knw-army.warfare") {
+        return this._onDropWarfareUnit(event, actor);
+      }
+
+      // All other actors → ruler drop (only in rulers/ratings area)
+      if (!event.target.closest(".km-rulers") && !event.target.closest(".km-ratings")) return;
       const rulers = foundry.utils.deepClone(this.document.system.rulers ?? []);
       rulers.push({
         id: foundry.utils.randomID(), name: actor.name,
@@ -346,6 +353,80 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
         foundry.utils.setProperty(itemData, "system.buildState.checks", checks);
       }
     }
+
+    return this.document.createEmbeddedDocuments("Item", [itemData]);
+  }
+
+  async _onDropWarfareUnit(event, actor) {
+    // Resolve target province
+    let provinceId = event.target.closest("[data-province-id]")?.dataset.provinceId ?? "";
+    if (!provinceId) {
+      const provs = this.document.items.filter(i =>
+        i.type === "kingdom-manager.asset" && i.system.assetType === "province"
+      );
+      if (provs.length === 0) return ui.notifications.warn("No provinces on this kingdom to assign the unit to.");
+      if (provs.length === 1) {
+        provinceId = provs[0].id;
+      } else {
+        const opts = provs.map(p => `<option value="${p.id}">${p.name}</option>`).join("");
+        provinceId = await DialogV2.prompt({
+          window:  { title: "Assign unit to province" },
+          content: `<label>Which province?<br><select name="prov" style="width:100%;margin-top:4px;">${opts}</select></label>`,
+          ok:      { label: "Assign", callback: (e, btn) => btn.form.elements.prov.value }
+        });
+        if (!provinceId) return;
+      }
+    }
+
+    const sys      = actor.system;
+    const tier     = sys.tier ?? 1;
+    const ancestry = (sys.ancestry ?? "human").toLowerCase();
+
+    // Check whether any ruler's race matches the unit's ancestry (case-insensitive substring)
+    const rulers    = this.document.system.rulers ?? [];
+    const raceMatch = rulers.some(ruler => {
+      const linked = game.actors?.find(a => a.name === ruler.name);
+      if (!linked) return false;
+      const race = (
+        linked.system?.details?.race ??
+        linked.system?.details?.raceOrType ??
+        linked.items?.find(i => i.type === "race")?.name ?? ""
+      ).toLowerCase();
+      return race.length > 0 && (race.includes(ancestry) || ancestry.includes(race));
+    });
+
+    // Muster DCs
+    const militaryDC = 10 + 2 * tier;
+    const socialDC   = 9 + Math.ceil(tier / 2) + (raceMatch ? 0 : 2);
+
+    // Default upkeep (stored in stats for units — see computeState)
+    const province = this.document.items.get(provinceId);
+    const itemData = {
+      name: actor.name,
+      type: "kingdom-manager.asset",
+      img:  actor.img,
+      system: {
+        assetType:   "unit",
+        unitType:    "army",
+        provinceId,
+        location:    province?.name ?? "",
+        stats: {
+          military: Math.ceil(tier / 2),
+          wealth:   tier,
+          social:   raceMatch ? null : 2,
+          magic:    null,
+        },
+        upkeep:      { military: 0, wealth: 0, social: 0, magic: 0 },
+        buildBaseDC: militaryDC,
+        buildState: {
+          active: false,
+          checks: [
+            { stat: "military", dc: militaryDC, passed: false },
+            { stat: "social",   dc: socialDC,   passed: false },
+          ]
+        },
+      }
+    };
 
     return this.document.createEmbeddedDocuments("Item", [itemData]);
   }
