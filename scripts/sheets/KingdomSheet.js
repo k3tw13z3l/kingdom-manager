@@ -387,11 +387,8 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     const raceMatch = rulers.some(ruler => {
       const linked = game.actors?.find(a => a.name === ruler.name);
       if (!linked) return false;
-      const race = (
-        linked.system?.details?.race ??
-        linked.system?.details?.raceOrType ??
-        linked.items?.find(i => i.type === "race")?.name ?? ""
-      ).toLowerCase();
+      const raceRaw = linked.system?.details?.race ?? linked.system?.details?.raceOrType ?? linked.items?.find(i => i.type === "race")?.name ?? "";
+      const race = (typeof raceRaw === "string" ? raceRaw : (raceRaw?.name ?? raceRaw?.value ?? "")).toLowerCase();
       return race.length > 0 && (race.includes(ancestry) || ancestry.includes(race));
     });
 
