@@ -265,8 +265,8 @@
 .km-prov-body.km-collapsed { display: none; }
 
 .km-province-identity   { flex: 1; min-width: 80px; }
-.km-province-name       { font-size: 13px; font-weight: 600; display: block; color: var(--km-text); }
-.km-province-terrain    { font-size: 11px; color: var(--km-text-muted); }
+.km-province-name       { font-size: 13px; font-weight: 600; color: var(--km-text); }
+.km-province-terrain    { font-size: 11px; color: var(--km-text-muted); display: block; }
 .km-province-stats      { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .km-province-base-stats { display: flex; flex-wrap: wrap; gap: 2px; }
 .km-province-totals     { display: flex; flex-wrap: wrap; gap: 2px; margin-left: auto; padding-left: 10px; border-left: 1px solid #d4cfc8; }
