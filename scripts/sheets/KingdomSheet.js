@@ -64,21 +64,14 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       el.setAttribute("draggable", "true");
     }
 
-    // Always remove stale hooks before re-registering — prevents duplicates when the
-    // sheet re-renders (e.g. after a version bump left orphaned hooks in the registry).
-    if (this._itemUpdateHook)  Hooks.off("updateItem",  this._itemUpdateHook);
-    if (this._itemDeleteHook)  Hooks.off("deleteItem",  this._itemDeleteHook);
-    if (this._itemCreateHook)  Hooks.off("createItem",  this._itemCreateHook);
-    if (this._actorUpdateHook) Hooks.off("updateActor", this._actorUpdateHook);
+    // Hooks and DOM listeners only need to be attached once — guard with a flag.
+    if (this._listenersAttached) return;
+    this._listenersAttached = true;
+
     this._itemUpdateHook  = Hooks.on("updateItem",  (item)  => { if (item.parent?.id  === this.document.id) this.render(); });
     this._itemDeleteHook  = Hooks.on("deleteItem",  (item)  => { if (item.parent?.id  === this.document.id) this.render(); });
     this._itemCreateHook  = Hooks.on("createItem",  (item)  => { if (item.parent?.id  === this.document.id) this.render(); });
     this._actorUpdateHook = Hooks.on("updateActor", (actor) => { if (actor.id         === this.document.id) this.render(); });
-
-    // Win event listeners only need to be attached once — the outer window element
-    // is persistent across re-renders, so a boolean flag is enough.
-    if (this._listenersAttached) return;
-    this._listenersAttached = true;
 
     // Attach delegated listeners to the persistent outer window (survives re-renders)
     const win = this.element.parentElement ?? this.element;
