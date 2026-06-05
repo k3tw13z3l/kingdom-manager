@@ -206,15 +206,27 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       const tgtIsProvince = target.system.assetType === "province";
       if (srcIsProvince !== tgtIsProvince) return;
 
-      const siblings = this.document.items.filter(i => {
-        if (i.type !== "kingdom-manager.asset" || i.id === sortId) return false;
-        return srcIsProvince
-          ? i.system.assetType === "province"
-          : i.system.assetType !== "province" && i.system.provinceId === source.system.provinceId;
-      });
+      // All items in the same sort group, ordered by current sort value
+      const group = this.document.items.filter(i =>
+        i.type === "kingdom-manager.asset" && (
+          srcIsProvince
+            ? i.system.assetType === "province"
+            : i.system.assetType !== "province" && i.system.provinceId === source.system.provinceId
+        )
+      ).sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
 
-      const sorted = foundry.utils.performIntegerSort(source, { target, siblings, sortBefore });
-      for (const { target: t, update } of sorted) await t.update(update);
+      // Re-insert source before or after target
+      const reordered = group.filter(i => i.id !== sortId);
+      const targetIdx = reordered.findIndex(i => i.id === target.id);
+      if (targetIdx === -1) return;
+      reordered.splice(sortBefore ? targetIdx : targetIdx + 1, 0, source);
+
+      // Update sort values for any item that changed position
+      const updates = reordered
+        .map((item, idx) => ({ item, sort: (idx + 1) * 100000 }))
+        .filter(({ item, sort }) => (item.sort ?? 0) !== sort);
+
+      await this.document.updateEmbeddedDocuments("Item", updates.map(({ item, sort }) => ({ _id: item.id, sort })));
     });
   }
 
