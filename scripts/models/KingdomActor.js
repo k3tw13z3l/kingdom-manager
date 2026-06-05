@@ -173,7 +173,7 @@ export class KingdomActorData extends foundry.abstract.TypeDataModel {
   }
 
   _buildProvinceList(provinces, ratings) {
-    return Object.entries(provinces).map(([id, prov]) => {
+    return Object.entries(provinces).sort((a, b) => (a[1].item.sort ?? 0) - (b[1].item.sort ?? 0)).map(([id, prov]) => {
       const magicRemaining = Math.max(0, prov.magicPotential - prov.devLoad);
       if (prov.item.system.buildState?.active !== false) ratings.magic += magicRemaining;
       return {

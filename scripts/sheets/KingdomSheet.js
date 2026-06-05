@@ -1031,7 +1031,7 @@ function buildProvinceData(items, state) {
     const devPct   = prov.magicPotential > 0 ? Math.min(100, Math.round((prov.devLoad/prov.magicPotential)*100)) : 0;
     const devClass = devPct >= 100 ? "full" : devPct >= 60 ? "warn" : "safe";
 
-    const assets = (prov.assets ?? []).map(i => {
+    const assets = (prov.assets ?? []).sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0)).map(i => {
       const upkeepPills = STATS
         .filter(s => (i.system.upkeep?.[s] ?? 0) > 0)
         .map(s => ({ label: STAT_SHORT[s], cost: i.system.upkeep[s] }));
@@ -1058,7 +1058,7 @@ function buildProvinceData(items, state) {
     const wipAssets = items.filter(i =>
       i.type === "kingdom-manager.asset" && i.system.provinceId === prov.id
       && ["asset","unit"].includes(i.system.assetType) && !i.system.buildState?.active
-    ).map(i => ({
+    ).sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0)).map(i => ({
       id: i.id, name: i.name, system: i.system,
       isMuster: i.system.assetType === "unit",
       canRoll: state._canRoll, isGM: state._isGM,
@@ -1094,7 +1094,7 @@ function buildProvinceData(items, state) {
       // If location is set, it takes priority over provinceId
       if (i.system.location) return i.system.location === prov.name;
       return i.system.provinceId === prov.id;
-    }).map(i => {
+    }).sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0)).map(i => {
       const pills = Object.entries(i.system.stats ?? {})
         .filter(([, v]) => v !== null && v !== undefined && v !== 0)
         .map(([stat, val]) => ({ stat, label: STAT_SHORT[stat], cost: Math.abs(val) }));
@@ -1132,7 +1132,7 @@ function buildUnitData(items, state, garrisonedUnitIds = new Set()) {
     // If location is set, use only location; otherwise use provinceId
     if (i.system.location) return !activeProvinceNames.has(i.system.location);
     return !activeProvinceIds.has(i.system.provinceId);
-  }).map(unit => {
+  }).sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0)).map(unit => {
     const stats  = unit.system.stats;
     const offset = zeroStats();
     for (const i of items) {
