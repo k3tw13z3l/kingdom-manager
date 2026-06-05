@@ -287,6 +287,46 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     return { "system.rulers": rulers };
   }
 
+  // ── Ruler helpers ─────────────────────────────────────────────────────────
+
+  _getRulerProfStats(ruler) {
+    const cls = (ruler.rulerClass ?? "").toLowerCase().trim();
+    return Object.entries(KingdomSheet.CLASS_STATS).filter(([, c]) => c.includes(cls)).map(([s]) => s);
+  }
+
+  _getRulerProfBonus(ruler, stat) {
+    return this._getRulerProfStats(ruler).includes(stat) ? (ruler.profBonus ?? 2) : 0;
+  }
+
+  _getEligibleRulers() {
+    const rulers = this.document.system.rulers ?? [];
+    if (game.user.isGM) return rulers;
+    const userId = game.userId;
+    return rulers.filter(r => {
+      const a = game.actors?.find(a => a.name === r.name);
+      return a && (a.ownership[userId] ?? a.ownership.default ?? 0) >= 3;
+    });
+  }
+
+  _buildRulerOptions(eligible, rulers, dTurnsLeft, stat = null) {
+    return eligible.flatMap(r => {
+      const profLbl = stat ? (this._getRulerProfStats(r).includes(stat) ? ` (+${r.profBonus} prof)` : "") : "";
+      const hasPT   = (r.profBonus ?? 0) >= 3;
+      const rIdx    = rulers.indexOf(r);
+      const opts    = [];
+      if (dTurnsLeft > 0)
+        opts.push(`<option value="ruler-${rIdx}-domain">${r.name}${profLbl} (domain turn)</option>`);
+      if (hasPT && !r.personalTurnUsed)
+        opts.push(`<option value="ruler-${rIdx}-personal">${r.name}${profLbl} (personal turn)</option>`);
+      return opts;
+    }).join("");
+  }
+
+  _parseRulerSelection(sel, rulers) {
+    const [, rIdxStr, turnType] = sel.split("-");
+    return { ruler: rulers[Number(rIdxStr)], usePersonalTurn: turnType === "personal" };
+  }
+
   // ── Context ────────────────────────────────────────────────────────────────
 
   async _prepareContext(options) {
@@ -314,8 +354,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
 
     const rulers = (sys.rulers ?? []).map(r => {
       const linked            = game.actors?.find(a => a.name === r.name);
-      const cls               = (r.rulerClass ?? "").toLowerCase().trim();
-      const profStats         = Object.entries(KingdomSheet.CLASS_STATS).filter(([, c]) => c.includes(cls)).map(([s]) => s);
+      const profStats         = this._getRulerProfStats(r);
       const isPlayerCharacter = linked?.type === "character";
       const level             = isPlayerCharacter ? (linked?.system?.details?.level ?? 0) : 0;
       const cr                = !isPlayerCharacter ? (linked?.system?.details?.cr ?? 0) : 0;
@@ -332,8 +371,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     });
 
     const domainTurnCount = rulers.some(r => r.isPlayerCharacter) ? 2 : 1;
-    const domainTurnsLeft = (!sys.turn?.domainTurn1Used ? 1 : 0) +
-      (domainTurnCount >= 2 && !sys.turn?.domainTurn2Used ? 1 : 0);
+    const domainTurnsLeft = this._getDomainTurnsLeft();
     for (const r of rulers) {
       r.canRollCheck = domainTurnsLeft > 0 || (r.hasPersonalTurn && !r.personalTurnUsed);
     }
@@ -645,32 +683,13 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     const kingdomBonus = state.buildBonus[stat] ?? 0;
     const turn        = this.document.system.turn.number;
 
-    const isGM   = game.user.isGM;
-    const userId = game.userId;
-    const rulers = this.document.system.rulers ?? [];
+    const rulers   = this.document.system.rulers ?? [];
     if (!rulers.length) return ui.notifications.warn("No rulers defined.");
-
-    const eligible = isGM ? rulers : rulers.filter(r => {
-      const a = game.actors?.find(a => a.name === r.name);
-      return a && (a.ownership[userId] ?? a.ownership.default ?? 0) >= 3;
-    });
+    const eligible = this._getEligibleRulers();
     if (!eligible.length) return ui.notifications.warn("You don't own any eligible rulers.");
 
     const dTurnsLeft = this._getDomainTurnsLeft();
-
-    const rulerOpts = eligible.flatMap(r => {
-      const cls       = (r.rulerClass ?? "").toLowerCase().trim();
-      const profStats = Object.entries(KingdomSheet.CLASS_STATS).filter(([, c]) => c.includes(cls)).map(([s]) => s);
-      const profLbl   = profStats.includes(stat) ? ` (+${r.profBonus} prof)` : "";
-      const hasPT     = (r.profBonus ?? 0) >= 3;
-      const rIdx      = rulers.indexOf(r);
-      const opts      = [];
-      if (dTurnsLeft > 0)
-        opts.push(`<option value="ruler-${rIdx}-domain">${r.name}${profLbl} (domain turn)</option>`);
-      if (hasPT && !r.personalTurnUsed)
-        opts.push(`<option value="ruler-${rIdx}-personal">${r.name}${profLbl} (personal turn)</option>`);
-      return opts;
-    }).join("") || `<option disabled>No turns available</option>`;
+    const rulerOpts  = this._buildRulerOptions(eligible, rulers, dTurnsLeft, stat) || `<option disabled>No turns available</option>`;
 
     const result = await DialogV2.prompt({
       window:  { title: `Accumulate Wealth — DC ${dc}` },
@@ -689,12 +708,8 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     });
     if (result === null || result === undefined) return;
 
-    const [, rIdxStr, turnType] = result.rulerSel.split("-");
-    const usePersonalTurn = turnType === "personal";
-    const ruler     = rulers[Number(rIdxStr)];
-    const cls       = (ruler.rulerClass ?? "").toLowerCase().trim();
-    const profStats = Object.entries(KingdomSheet.CLASS_STATS).filter(([, c]) => c.includes(cls)).map(([s]) => s);
-    const profBonus = profStats.includes(stat) ? (ruler.profBonus ?? 2) : 0;
+    const { ruler, usePersonalTurn } = this._parseRulerSelection(result.rulerSel, rulers);
+    const profBonus = this._getRulerProfBonus(ruler, stat);
 
     const parts = [];
     if (profBonus)    parts.push(`${profBonus}[prof]`);
@@ -756,32 +771,13 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     const statLabel    = STAT_FULL[stat] ?? stat;
     const checkVerb    = { province:"Claiming check", unit:"Muster check" }[item.system.assetType] ?? "Build check";
 
-    const isGM  = game.user.isGM;
-    const userId = game.userId;
-    const rulers = this.document.system.rulers ?? [];
+    const rulers   = this.document.system.rulers ?? [];
     if (!rulers.length) return ui.notifications.warn("No rulers defined.");
-
-    const eligible = isGM ? rulers : rulers.filter(r => {
-      const a = game.actors?.find(a => a.name === r.name);
-      return a && (a.ownership[userId] ?? a.ownership.default ?? 0) >= 3;
-    });
+    const eligible = this._getEligibleRulers();
     if (!eligible.length) return ui.notifications.warn("You don't own any eligible rulers.");
 
     const dTurnsLeft = this._getDomainTurnsLeft();
-
-    const rulerOpts = eligible.flatMap(r => {
-      const cls       = (r.rulerClass ?? "").toLowerCase().trim();
-      const profStats = Object.entries(KingdomSheet.CLASS_STATS).filter(([, c]) => c.includes(cls)).map(([s]) => s);
-      const profLbl   = profStats.includes(stat) ? ` (+${r.profBonus} prof)` : "";
-      const hasPT     = (r.profBonus ?? 0) >= 3;
-      const rIdx      = rulers.indexOf(r);
-      const opts      = [];
-      if (dTurnsLeft > 0)
-        opts.push(`<option value="ruler-${rIdx}-domain">${r.name}${profLbl} (domain turn)</option>`);
-      if (hasPT && !r.personalTurnUsed)
-        opts.push(`<option value="ruler-${rIdx}-personal">${r.name}${profLbl} (personal turn)</option>`);
-      return opts;
-    }).join("") || `<option disabled>No turns available</option>`;
+    const rulerOpts  = this._buildRulerOptions(eligible, rulers, dTurnsLeft, stat) || `<option disabled>No turns available</option>`;
 
     const rulerResult = await DialogV2.prompt({
       window:  { title: `${checkVerb}: ${item.name} — ${statLabel}` },
@@ -799,15 +795,9 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       })}
     });
     if (rulerResult === null || rulerResult === undefined) return;
-    const [, rIdxStr, turnType] = rulerResult.rulerSel.split("-");
-    const usePersonalTurn = turnType === "personal";
+    const { ruler, usePersonalTurn } = this._parseRulerSelection(rulerResult.rulerSel, rulers);
     const advantage = rulerResult.advantage ?? false;
-
-    const ruler     = rulers[Number(rIdxStr)];
-
-    const cls       = (ruler.rulerClass ?? "").toLowerCase().trim();
-    const profStats = Object.entries(KingdomSheet.CLASS_STATS).filter(([, c]) => c.includes(cls)).map(([s]) => s);
-    const profBonus = profStats.includes(stat) ? (ruler.profBonus ?? 2) : 0;
+    const profBonus = this._getRulerProfBonus(ruler, stat);
 
     // Pre-roll treasury
     const treasury = this.document.system.treasury ?? 0;
@@ -900,13 +890,8 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     const turn   = this.document.system.turn.number;
     const statLbl = STAT_FULL[stat] ?? stat;
 
-    const isGM  = game.user.isGM;
-    const userId = game.userId;
-    const rulers = this.document.system.rulers ?? [];
-    const eligible = isGM ? rulers : rulers.filter(r => {
-      const a = game.actors?.find(a => a.name === r.name);
-      return a && (a.ownership[userId] ?? a.ownership.default ?? 0) >= 3;
-    });
+    const rulers   = this.document.system.rulers ?? [];
+    const eligible = this._getEligibleRulers();
 
     // Units with a matching feature stat can resolve if they are in the same province
     // Match by provinceId or by location matching the obstacle's province name
@@ -927,19 +912,10 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
 
     const dTurnsLeft = this._getDomainTurnsLeft();
 
-    const rulerOpts = [
-      ...eligible.flatMap(r => {
-        const hasPT  = (r.profBonus ?? 0) >= 3;
-        const rIdx   = rulers.indexOf(r);
-        const opts   = [];
-        if (dTurnsLeft > 0)
-          opts.push(`<option value="ruler-${rIdx}-domain">${r.name} (domain turn)</option>`);
-        if (hasPT && !r.personalTurnUsed)
-          opts.push(`<option value="ruler-${rIdx}-personal">${r.name} (personal turn)</option>`);
-        return opts;
-      }),
-      ...eligibleUnits.map(u => `<option value="unit-${u.id}">${u.name} (+${u.system.unitFeatureBonus ?? 0} feature)</option>`)
-    ].join("") || `<option value="none">No eligible roller</option>`;
+    const rulerOpts = (
+      this._buildRulerOptions(eligible, rulers, dTurnsLeft) +
+      eligibleUnits.map(u => `<option value="unit-${u.id}">${u.name} (+${u.system.unitFeatureBonus ?? 0} feature)</option>`).join("")
+    ) || `<option value="none">No eligible roller</option>`;
 
     const resolveResult = await DialogV2.prompt({
       window:  { title: `Resolve: ${item.name}` },
@@ -967,14 +943,9 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       rollerName  = unit?.name ?? "Unit";
       rollBonus   = unit?.system.unitFeatureBonus ?? 0;
     } else {
-      const parts     = selection.split("-");
-      const idx       = Number(parts[1]);
-      usePersonalTurn = parts[2] === "personal";
-      resolveRuler    = rulers[idx] ?? null;
-      rollerName  = resolveRuler?.name ?? "Ruler";
-      const cls   = (resolveRuler?.rulerClass ?? "").toLowerCase().trim();
-      const profs = Object.entries(KingdomSheet.CLASS_STATS).filter(([, c]) => c.includes(cls)).map(([s]) => s);
-      rollBonus   = resolveRuler ? (profs.includes(stat) ? (resolveRuler.profBonus ?? 2) : 0) : 0;
+      ({ ruler: resolveRuler, usePersonalTurn } = this._parseRulerSelection(selection, rulers));
+      rollerName = resolveRuler?.name ?? "Ruler";
+      rollBonus  = resolveRuler ? this._getRulerProfBonus(resolveRuler, stat) : 0;
     }
 
     const parts = [];
