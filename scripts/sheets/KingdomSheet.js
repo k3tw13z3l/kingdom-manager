@@ -59,7 +59,12 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       }
     } catch(e) {}
 
-    const LISTENER_VERSION = 6;
+    // Make sortable rows draggable on every render (DOM is recreated each render)
+    for (const el of this.element.querySelectorAll(".km-asset-row[data-item-id], .km-province-block[data-item-id]")) {
+      el.setAttribute("draggable", "true");
+    }
+
+    const LISTENER_VERSION = 7;
     if (this._listenersAttached === LISTENER_VERSION) return;
     this._listenersAttached = LISTENER_VERSION;
 
@@ -140,6 +145,76 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       const ruler  = rulers.find(r => r.id === cb.dataset.rulerId);
       if (ruler) ruler.personalTurnUsed = cb.checked;
       await this.document.update({ "system.rulers": rulers });
+    });
+
+    this._attachSortListeners(win);
+  }
+
+  _attachSortListeners(win) {
+    let _dragId = null;
+
+    win.addEventListener("dragstart", (ev) => {
+      if (ev.target.closest("button, a, input, [data-action], [data-km-action]")) return;
+      const row = ev.target.closest(".km-asset-row[data-item-id], .km-province-block[data-item-id]");
+      if (!row) return;
+      _dragId = row.dataset.itemId;
+      ev.dataTransfer.setData("application/x-km-sort", _dragId);
+      ev.dataTransfer.effectAllowed = "move";
+      row.classList.add("km-drag-source");
+    });
+
+    win.addEventListener("dragend", () => {
+      _dragId = null;
+      for (const el of win.querySelectorAll(".km-drag-source, .km-drop-above, .km-drop-below")) {
+        el.classList.remove("km-drag-source", "km-drop-above", "km-drop-below");
+      }
+    });
+
+    win.addEventListener("dragover", (ev) => {
+      if (!_dragId) return;
+      const target = ev.target.closest(".km-asset-row[data-item-id], .km-province-block[data-item-id]");
+      if (!target || target.dataset.itemId === _dragId) return;
+      ev.preventDefault();
+      for (const el of win.querySelectorAll(".km-drop-above, .km-drop-below")) {
+        el.classList.remove("km-drop-above", "km-drop-below");
+      }
+      const rect = target.getBoundingClientRect();
+      target.classList.add(ev.clientY < rect.top + rect.height / 2 ? "km-drop-above" : "km-drop-below");
+    });
+
+    win.addEventListener("dragleave", (ev) => {
+      const target = ev.target.closest?.(".km-asset-row[data-item-id], .km-province-block[data-item-id]");
+      if (target) target.classList.remove("km-drop-above", "km-drop-below");
+    });
+
+    win.addEventListener("drop", async (ev) => {
+      const sortId = ev.dataTransfer.getData("application/x-km-sort");
+      if (!sortId) return;
+      ev.preventDefault();
+
+      const targetEl = ev.target.closest(".km-asset-row[data-item-id], .km-province-block[data-item-id]");
+      if (!targetEl || targetEl.dataset.itemId === sortId) return;
+
+      const rect = targetEl.getBoundingClientRect();
+      const sortBefore = ev.clientY < rect.top + rect.height / 2;
+
+      const source = this.document.items.get(sortId);
+      const target = this.document.items.get(targetEl.dataset.itemId);
+      if (!source || !target) return;
+
+      const srcIsProvince = source.system.assetType === "province";
+      const tgtIsProvince = target.system.assetType === "province";
+      if (srcIsProvince !== tgtIsProvince) return;
+
+      const siblings = this.document.items.filter(i => {
+        if (i.type !== "kingdom-manager.asset" || i.id === sortId) return false;
+        return srcIsProvince
+          ? i.system.assetType === "province"
+          : i.system.assetType !== "province" && i.system.provinceId === source.system.provinceId;
+      });
+
+      const sorted = foundry.utils.SortingHelpers.performIntegerSort(source, { target, siblings, sortBefore });
+      for (const { target: t, update } of sorted) await t.update(update);
     });
   }
 

@@ -1147,3 +1147,14 @@ button.km-domain-turn-btn:hover { background: #eceae5; }
 .km-dark .km-unit-type-icon {
   color: #6a6760;
 }
+
+/* ── Drag-to-sort ─────────────────────────────────────────────────────────── */
+.km-asset-row[draggable],
+.km-province-block[draggable] { cursor: grab; }
+.km-asset-row[draggable]:active,
+.km-province-block[draggable]:active { cursor: grabbing; }
+.km-drag-source { opacity: 0.4; }
+.km-drop-above  { border-top: 2px solid #185FA5 !important; }
+.km-drop-below  { border-bottom: 2px solid #185FA5 !important; }
+.km-dark .km-drop-above  { border-top: 2px solid #4a90d9 !important; }
+.km-dark .km-drop-below  { border-bottom: 2px solid #4a90d9 !important; }
