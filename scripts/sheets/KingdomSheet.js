@@ -64,15 +64,21 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       el.setAttribute("draggable", "true");
     }
 
-    const LISTENER_VERSION = 7;
-    if (this._listenersAttached === LISTENER_VERSION) return;
-    this._listenersAttached = LISTENER_VERSION;
+    // Always remove stale hooks before re-registering — prevents duplicates when the
+    // sheet re-renders (e.g. after a version bump left orphaned hooks in the registry).
+    if (this._itemUpdateHook)  Hooks.off("updateItem",  this._itemUpdateHook);
+    if (this._itemDeleteHook)  Hooks.off("deleteItem",  this._itemDeleteHook);
+    if (this._itemCreateHook)  Hooks.off("createItem",  this._itemCreateHook);
+    if (this._actorUpdateHook) Hooks.off("updateActor", this._actorUpdateHook);
+    this._itemUpdateHook  = Hooks.on("updateItem",  (item)  => { if (item.parent?.id  === this.document.id) this.render(); });
+    this._itemDeleteHook  = Hooks.on("deleteItem",  (item)  => { if (item.parent?.id  === this.document.id) this.render(); });
+    this._itemCreateHook  = Hooks.on("createItem",  (item)  => { if (item.parent?.id  === this.document.id) this.render(); });
+    this._actorUpdateHook = Hooks.on("updateActor", (actor) => { if (actor.id         === this.document.id) this.render(); });
 
-    // Re-render on document/item changes (propagated to all clients by Foundry)
-    this._itemUpdateHook = Hooks.on("updateItem",  (item)  => { if (item.parent?.id  === this.document.id) this.render(); });
-    this._itemDeleteHook = Hooks.on("deleteItem",  (item)  => { if (item.parent?.id  === this.document.id) this.render(); });
-    this._itemCreateHook = Hooks.on("createItem",  (item)  => { if (item.parent?.id  === this.document.id) this.render(); });
-    this._actorUpdateHook= Hooks.on("updateActor", (actor) => { if (actor.id         === this.document.id) this.render(); });
+    // Win event listeners only need to be attached once — the outer window element
+    // is persistent across re-renders, so a boolean flag is enough.
+    if (this._listenersAttached) return;
+    this._listenersAttached = true;
 
     // Attach delegated listeners to the persistent outer window (survives re-renders)
     const win = this.element.parentElement ?? this.element;
@@ -154,6 +160,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     let _dragId = null;
 
     win.addEventListener("dragstart", (ev) => {
+      if (!game.user.isGM) return;
       if (ev.target.closest("button, a, input, [data-action], [data-km-action]")) return;
       const row = ev.target.closest(".km-asset-row[data-item-id], .km-province-block[data-item-id]");
       if (!row) return;
@@ -232,11 +239,12 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
 
   async _onClose(options) {
     await super._onClose(options);
-    if (this._itemUpdateHook)  { Hooks.off("updateItem",  this._itemUpdateHook);  }
-    if (this._itemDeleteHook)  { Hooks.off("deleteItem",  this._itemDeleteHook);  }
-    if (this._itemCreateHook)  { Hooks.off("createItem",  this._itemCreateHook);  }
-    if (this._actorUpdateHook) { Hooks.off("updateActor", this._actorUpdateHook); }
-    this._listenersAttached = 0;
+    if (this._itemUpdateHook)  Hooks.off("updateItem",  this._itemUpdateHook);
+    if (this._itemDeleteHook)  Hooks.off("deleteItem",  this._itemDeleteHook);
+    if (this._itemCreateHook)  Hooks.off("createItem",  this._itemCreateHook);
+    if (this._actorUpdateHook) Hooks.off("updateActor", this._actorUpdateHook);
+    this._itemUpdateHook = this._itemDeleteHook = this._itemCreateHook = this._actorUpdateHook = null;
+    this._listenersAttached = false;
   }
 
   _redirectKeys() {}  // no-op — prevents dnd5e ready hook crash
@@ -331,14 +339,14 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     }
 
     // Items with no province assigned and not yet active
-    const activeProvinceIds2 = new Set(items.filter(i =>
+    const activeProvinceIds = new Set(items.filter(i =>
       i.type === "kingdom-manager.asset" && i.system.assetType === "province"
     ).map(i => i.id));
 
     const orphanedWip = items.filter(i =>
       i.type === "kingdom-manager.asset"
       && !i.system.buildState?.active
-      && !activeProvinceIds2.has(i.system.provinceId)
+      && !activeProvinceIds.has(i.system.provinceId)
       && !i.system.provinceId
     ).map(i => ({ id: i.id, name: i.name, system: i.system, isGM }));
 

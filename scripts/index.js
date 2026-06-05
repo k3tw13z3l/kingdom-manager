@@ -10,6 +10,7 @@ const STUB = Object.freeze({
   _redirectKeys() {},
   get() { return null; },
   has() { return false; },
+  set() {},
   forEach() {},
 });
 
