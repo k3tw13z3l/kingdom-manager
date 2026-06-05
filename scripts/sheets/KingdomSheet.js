@@ -327,6 +327,48 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     return { ruler: rulers[Number(rIdxStr)], usePersonalTurn: turnType === "personal" };
   }
 
+  // bonuses: [[value, label], ...] — zero/falsy entries are skipped
+  async _rollD20(bonuses, advantage, flavor) {
+    const parts    = bonuses.filter(([v]) => v).map(([v, lbl]) => `${v}[${lbl}]`);
+    const diceExpr = advantage ? "2d20kh" : "1d20";
+    const roll     = new Roll(parts.length ? `${diceExpr} + ${parts.join(" + ")}` : diceExpr);
+    await roll.evaluate();
+    await roll.toMessage({ speaker: ChatMessage.getSpeaker({ actor: this.document }), flavor });
+    return roll;
+  }
+
+  async _postRollRecovery(rollTotal, dc) {
+    const shortfall   = dc - rollTotal;
+    const curTreasury = this.document.system.treasury ?? 0;
+    const atrocity    = this.document.system.atrocity ?? 0;
+    const maxPost     = Math.min(4, curTreasury);
+    const recovery = await DialogV2.prompt({
+      window:  { title: `Failed by ${shortfall} — recover?` },
+      content: `<div style="display:flex;flex-direction:column;gap:10px;">
+        <p>Rolled <strong>${rollTotal}</strong> vs DC <strong>${dc}</strong> — failed by <strong>${shortfall}</strong>.</p>
+        ${curTreasury > 0
+          ? `<label>Treasury post-roll (2pts=+1, max 4pts, ${curTreasury} available)<input type="number" name="postTreasury" value="0" min="0" max="${maxPost}" style="width:100%;margin-top:3px;" /></label>`
+          : `<p style="color:#888;font-size:12px;">No treasury available.</p>`}
+        <label>Atrocity to spend (+1 per pt)<input type="number" name="atrocitySpend" value="0" min="0" max="${shortfall}" style="width:100%;margin-top:3px;" /></label>
+      </div>`,
+      ok: { label: "Apply", callback: (e, btn) => ({
+        postTreasury:  Math.min(maxPost, Math.max(0, Number(btn.form.elements.postTreasury?.value ?? 0))),
+        atrocitySpend: Math.max(0, Number(btn.form.elements.atrocitySpend?.value ?? 0)),
+      })}
+    });
+    let total = rollTotal;
+    if (recovery) {
+      total += Math.floor((recovery.postTreasury ?? 0) / 2) + (recovery.atrocitySpend ?? 0);
+      if (recovery.postTreasury > 0)
+        await this._updateActor({ "system.treasury": Math.max(0, curTreasury - recovery.postTreasury) });
+      if ((recovery.atrocitySpend ?? 0) > 0) {
+        await this._updateActor({ "system.atrocity": atrocity + recovery.atrocitySpend });
+        ui.notifications.warn(`${recovery.atrocitySpend} Atrocity added.`);
+      }
+    }
+    return { total, passed: total >= dc };
+  }
+
   // ── Context ────────────────────────────────────────────────────────────────
 
   async _prepareContext(options) {
@@ -711,16 +753,11 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     const { ruler, usePersonalTurn } = this._parseRulerSelection(result.rulerSel, rulers);
     const profBonus = this._getRulerProfBonus(ruler, stat);
 
-    const parts = [];
-    if (profBonus)    parts.push(`${profBonus}[prof]`);
-    if (kingdomBonus) parts.push(`${kingdomBonus}[kingdom]`);
-    const diceExpr = result.advantage ? "2d20kh" : "1d20";
-    const roll = new Roll(parts.length ? `${diceExpr} + ${parts.join(" + ")}` : diceExpr);
-    await roll.evaluate();
-    await roll.toMessage({
-      speaker: ChatMessage.getSpeaker({ actor: this.document }),
-      flavor:  `${ruler.name} — Accumulate Wealth DC ${dc}`
-    });
+    const roll = await this._rollD20(
+      [[profBonus, "prof"], [kingdomBonus, "kingdom"]],
+      result.advantage,
+      `${ruler.name} — Accumulate Wealth DC ${dc}`
+    );
 
     const log         = foundry.utils.deepClone(this.document.system.turn.log ?? []);
     const turnUpdates = this._buildTurnConsumptionUpdates(usePersonalTurn, ruler);
@@ -812,51 +849,17 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       }) ?? 0;
     }
 
-    // Roll
-    const parts = [];
-    if (profBonus)    parts.push(`${profBonus}[prof]`);
-    if (kingdomBonus) parts.push(`${kingdomBonus}[kingdom]`);
-    if (preTreasury)  parts.push(`${preTreasury}[treasury]`);
-    const diceExpr = advantage ? "2d20kh" : "1d20";
-    const roll = new Roll(parts.length ? `${diceExpr} + ${parts.join(" + ")}` : diceExpr);
-    await roll.evaluate();
+    // Pre-treasury deduction committed; roll
     if (preTreasury > 0) await this._updateActor({ "system.treasury": Math.max(0, treasury - preTreasury) });
-    await roll.toMessage({ speaker: ChatMessage.getSpeaker({ actor: this.document }),
-      flavor: `${ruler.name} — ${checkVerb}: ${item.name} (${statLabel}) DC ${dc}` });
+    const roll = await this._rollD20(
+      [[profBonus, "prof"], [kingdomBonus, "kingdom"], [preTreasury, "treasury"]],
+      advantage,
+      `${ruler.name} — ${checkVerb}: ${item.name} (${statLabel}) DC ${dc}`
+    );
 
-    let total  = roll.total;
-    let passed = total >= dc;
-
-    // Post-roll recovery
-    if (!passed) {
-      const shortfall   = dc - total;
-      const curTreasury = this.document.system.treasury ?? 0;
-      const atrocity    = this.document.system.atrocity ?? 0;
-      const maxPost     = Math.min(4, curTreasury);
-      const recovery = await DialogV2.prompt({
-        window:  { title: `Failed by ${shortfall} — recover?` },
-        content: `<div style="display:flex;flex-direction:column;gap:10px;">
-          <p>Rolled <strong>${total}</strong> vs DC <strong>${dc}</strong> — failed by <strong>${shortfall}</strong>.</p>
-          ${curTreasury > 0
-            ? `<label>Treasury post-roll (2pts=+1, max 4pts, ${curTreasury} available)<input type="number" name="postTreasury" value="0" min="0" max="${maxPost}" style="width:100%;margin-top:3px;" /></label>`
-            : `<p style="color:#888;font-size:12px;">No treasury available.</p>`}
-          <label>Atrocity to spend (+1 per pt)<input type="number" name="atrocitySpend" value="0" min="0" max="${shortfall}" style="width:100%;margin-top:3px;" /></label>
-        </div>`,
-        ok: { label: "Apply", callback: (e, btn) => ({
-          postTreasury:  Math.min(maxPost, Math.max(0, Number(btn.form.elements.postTreasury?.value ?? 0))),
-          atrocitySpend: Math.max(0, Number(btn.form.elements.atrocitySpend?.value ?? 0)),
-        })}
-      });
-      if (recovery) {
-        total  += Math.floor((recovery.postTreasury ?? 0) / 2) + (recovery.atrocitySpend ?? 0);
-        passed  = total >= dc;
-        if (recovery.postTreasury > 0) await this._updateActor({ "system.treasury": Math.max(0, curTreasury - recovery.postTreasury) });
-        if ((recovery.atrocitySpend ?? 0) > 0) {
-          await this._updateActor({ "system.atrocity": atrocity + recovery.atrocitySpend });
-          ui.notifications.warn(`${recovery.atrocitySpend} Atrocity added.`);
-        }
-      }
-    }
+    let { total, passed } = roll.total >= dc
+      ? { total: roll.total, passed: true }
+      : await this._postRollRecovery(roll.total, dc);
 
     // Save
     const freshItem = this.document.items.get(itemId);
@@ -948,14 +951,11 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       rollBonus  = resolveRuler ? this._getRulerProfBonus(resolveRuler, stat) : 0;
     }
 
-    const parts = [];
-    if (rollBonus) parts.push(`${rollBonus}[bonus]`);
-    if (bonus)     parts.push(`${bonus}[kingdom]`);
-    const diceExpr = resolveAdvantage ? "2d20kh" : "1d20";
-    const roll = new Roll(parts.length ? `${diceExpr} + ${parts.join(" + ")}` : diceExpr);
-    await roll.evaluate();
-    await roll.toMessage({ speaker: ChatMessage.getSpeaker({ actor: this.document }),
-      flavor: `${rollerName} — Resolve: ${item.name} DC ${dc}${resolveAdvantage ? " [advantage]" : ""}` });
+    const roll = await this._rollD20(
+      [[rollBonus, "bonus"], [bonus, "kingdom"]],
+      resolveAdvantage,
+      `${rollerName} — Resolve: ${item.name} DC ${dc}${resolveAdvantage ? " [advantage]" : ""}`
+    );
 
     const log         = foundry.utils.deepClone(this.document.system.turn.log ?? []);
     const turnUpdates = resolveRuler ? this._buildTurnConsumptionUpdates(usePersonalTurn, resolveRuler) : {};
