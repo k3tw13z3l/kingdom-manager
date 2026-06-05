@@ -213,7 +213,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
           : i.system.assetType !== "province" && i.system.provinceId === source.system.provinceId;
       });
 
-      const sorted = foundry.utils.SortingHelpers.performIntegerSort(source, { target, siblings, sortBefore });
+      const sorted = foundry.utils.performIntegerSort(source, { target, siblings, sortBefore });
       for (const { target: t, update } of sorted) await t.update(update);
     });
   }
