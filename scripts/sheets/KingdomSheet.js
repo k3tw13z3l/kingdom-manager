@@ -68,10 +68,11 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     if (this._listenersAttached) return;
     this._listenersAttached = true;
 
-    this._itemUpdateHook  = Hooks.on("updateItem",  (item)  => { if (item.parent?.id  === this.document.id) this.render(); });
-    this._itemDeleteHook  = Hooks.on("deleteItem",  (item)  => { if (item.parent?.id  === this.document.id) this.render(); });
-    this._itemCreateHook  = Hooks.on("createItem",  (item)  => { if (item.parent?.id  === this.document.id) this.render(); });
-    this._actorUpdateHook = Hooks.on("updateActor", (actor) => { if (actor.id         === this.document.id) this.render(); });
+    const debouncedRender = foundry.utils.debounce(() => this.render(), 50);
+    this._itemUpdateHook  = Hooks.on("updateItem",  (item)  => { if (item.parent?.id  === this.document.id) debouncedRender(); });
+    this._itemDeleteHook  = Hooks.on("deleteItem",  (item)  => { if (item.parent?.id  === this.document.id) debouncedRender(); });
+    this._itemCreateHook  = Hooks.on("createItem",  (item)  => { if (item.parent?.id  === this.document.id) debouncedRender(); });
+    this._actorUpdateHook = Hooks.on("updateActor", (actor) => { if (actor.id         === this.document.id) debouncedRender(); });
 
     // Attach delegated listeners to the persistent outer window (survives re-renders)
     const win = this.element.parentElement ?? this.element;
@@ -376,19 +377,23 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
 
     const isGM   = game.user.isGM;
     const userId = game.userId;
+
+    // Build a name→actor map for all ruler names in one pass — avoids O(n) find() per ruler.
+    const rulerNames  = new Set((sys.rulers ?? []).map(r => r.name));
+    const actorByName = new Map();
+    for (const a of game.actors?.contents ?? []) {
+      if (rulerNames.has(a.name)) actorByName.set(a.name, a);
+    }
+
     const myLinkedActors = isGM ? [] : (sys.rulers ?? [])
-      .map(r => game.actors?.find(a => a.name === r.name))
+      .map(r => actorByName.get(r.name))
       .filter(a => a && (a.ownership[userId] ?? a.ownership.default ?? 0) >= 3);
     const canRoll = isGM || myLinkedActors.length > 0;
     state._canRoll = canRoll;
     state._isGM   = isGM;
 
-    let provinces = [], units = [];
-    try { provinces = buildProvinceData(items, state); } catch(e) { console.error("KM | buildProvinceData error:", e); }
-    try { units     = buildUnitData(items, state, state.garrisonedUnitIds ?? new Set()); } catch(e) { console.error("KM | buildUnitData error:", e); }
-
     const rulers = (sys.rulers ?? []).map(r => {
-      const linked            = game.actors?.find(a => a.name === r.name);
+      const linked            = actorByName.get(r.name);
       const profStats         = this._getRulerProfStats(r);
       const isPlayerCharacter = linked?.type === "character";
       const level             = isPlayerCharacter ? (linked?.system?.details?.level ?? 0) : 0;
@@ -405,8 +410,16 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
         isPlayerCharacter, level, cr, hasPersonalTurn, rankLabel };
     });
 
+    // Compute domainTurnsLeft from already-built ruler data — no extra actor scans.
     const domainTurnCount = rulers.some(r => r.isPlayerCharacter) ? 2 : 1;
-    const domainTurnsLeft = this._getDomainTurnsLeft();
+    const t = sys.turn;
+    const domainTurnsLeft = (!t?.domainTurn1Used ? 1 : 0) + (domainTurnCount >= 2 && !t?.domainTurn2Used ? 1 : 0);
+
+    const blockedIds = buildBlockedIds(items);
+    const itemIndex  = buildItemIndex(items);
+    let provinces = [], units = [];
+    try { provinces = buildProvinceData(items, state, blockedIds, itemIndex); } catch(e) { console.error("KM | buildProvinceData error:", e); }
+    try { units     = buildUnitData(items, state, state.garrisonedUnitIds ?? new Set(), blockedIds, itemIndex); } catch(e) { console.error("KM | buildUnitData error:", e); }
     for (const r of rulers) {
       r.canRollCheck = domainTurnsLeft > 0 || (r.hasPersonalTurn && !r.personalTurnUsed);
     }
@@ -996,12 +1009,40 @@ function buildRatingDisplay(state) {
   });
 }
 
-function buildProvinceData(items, state) {
-  const blockedIds = buildBlockedIds(items);
+function buildItemIndex(items) {
+  const byId                  = new Map();
+  const byProvince            = new Map(); // provinceId → item[]
+  const unitsByLocation       = new Map(); // locationName → active unit[]
+  const upkeepOffsetByProvince = new Map(); // provinceId → stat totals
+
+  for (const i of items) {
+    byId.set(i.id, i);
+    if (i.type !== "kingdom-manager.asset") continue;
+    const pid = i.system.provinceId;
+    if (pid) {
+      if (!byProvince.has(pid)) byProvince.set(pid, []);
+      byProvince.get(pid).push(i);
+      if (i.system.buildState?.active) {
+        if (!upkeepOffsetByProvince.has(pid)) upkeepOffsetByProvince.set(pid, zeroStats());
+        const o = upkeepOffsetByProvince.get(pid);
+        for (const s of STATS) o[s] += i.system.upkeepOffset?.[s] ?? 0;
+      }
+    }
+    if (i.system.assetType === "unit" && i.system.buildState?.active && i.system.location) {
+      if (!unitsByLocation.has(i.system.location)) unitsByLocation.set(i.system.location, []);
+      unitsByLocation.get(i.system.location).push(i);
+    }
+  }
+  return { byId, byProvince, unitsByLocation, upkeepOffsetByProvince };
+}
+
+function buildProvinceData(items, state, blockedIds, itemIndex) {
+  const { byId, byProvince, unitsByLocation } = itemIndex;
 
   return state.provinces.map(prov => {
-    const devPct   = prov.magicPotential > 0 ? Math.min(100, Math.round((prov.devLoad/prov.magicPotential)*100)) : 0;
-    const devClass = devPct >= 100 ? "full" : devPct >= 60 ? "warn" : "safe";
+    const provItems = byProvince.get(prov.id) ?? [];
+    const devPct    = prov.magicPotential > 0 ? Math.min(100, Math.round((prov.devLoad/prov.magicPotential)*100)) : 0;
+    const devClass  = devPct >= 100 ? "full" : devPct >= 60 ? "warn" : "safe";
 
     const assets = (prov.assets ?? []).sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0)).map(i => {
       const upkeepPills = STATS
@@ -1027,15 +1068,15 @@ function buildProvinceData(items, state) {
       for (const stat of STATS) assetTotals[stat] += a.system.stats[stat] ?? 0;
     }
 
-    const wipAssets = items.filter(i =>
-      i.type === "kingdom-manager.asset" && i.system.provinceId === prov.id
-      && ["asset","unit"].includes(i.system.assetType) && !i.system.buildState?.active
-    ).sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0)).map(i => ({
-      id: i.id, name: i.name, system: i.system,
-      isMuster: i.system.assetType === "unit",
-      canRoll: state._canRoll, isGM: state._isGM,
-      checks: (i.system.buildState?.checks ?? []).map(c => ({ ...c, buildBonus: state.buildBonus[c.stat] ?? 0 }))
-    }));
+    const wipAssets = provItems
+      .filter(i => ["asset","unit"].includes(i.system.assetType) && !i.system.buildState?.active)
+      .sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0))
+      .map(i => ({
+        id: i.id, name: i.name, system: i.system,
+        isMuster: i.system.assetType === "unit",
+        canRoll: state._canRoll, isGM: state._isGM,
+        checks: (i.system.buildState?.checks ?? []).map(c => ({ ...c, buildBonus: state.buildBonus[c.stat] ?? 0 }))
+      }));
 
     const claimingProv = prov.item.system.buildState?.active === false ? {
       id: prov.id, name: prov.name, system: prov.item.system, isClaiming: true,
@@ -1043,30 +1084,25 @@ function buildProvinceData(items, state) {
       checks: (prov.item.system.buildState?.checks ?? []).map(c => ({ ...c, buildBonus: state.buildBonus[c.stat] ?? 0 }))
     } : null;
 
-    const obstacles = items.filter(i =>
-      i.type === "kingdom-manager.asset" && i.system.provinceId === prov.id && i.system.assetType === "obstacle"
-    ).map(i => {
-      const blockedAsset = i.system.blockedAssetId
-        ? items.find(a => a.id === i.system.blockedAssetId)
-        : null;
-      return {
-        id: i.id, name: i.name, system: i.system,
-        dc: i.system.obstacleDC, bonus: state.buildBonus[i.system.obstacleStat] ?? 0,
-        stat: i.system.obstacleStat,
-        upkeepDrain: blockedAsset ? null : Math.ceil((i.system.obstacleScore ?? 0) / 2),
-        blockedAssetName: blockedAsset?.name ?? null,
-        isGM: state._isGM, canRoll: state._canRoll,
-      };
-    });
+    const obstacles = provItems
+      .filter(i => i.system.assetType === "obstacle")
+      .map(i => {
+        const blockedAsset = i.system.blockedAssetId ? byId.get(i.system.blockedAssetId) : null;
+        return {
+          id: i.id, name: i.name, system: i.system,
+          dc: i.system.obstacleDC, bonus: state.buildBonus[i.system.obstacleStat] ?? 0,
+          stat: i.system.obstacleStat,
+          upkeepDrain: blockedAsset ? null : Math.ceil((i.system.obstacleScore ?? 0) / 2),
+          blockedAssetName: blockedAsset?.name ?? null,
+          isGM: state._isGM, canRoll: state._canRoll,
+        };
+      });
 
-    const stationedUnits = items.filter(i => {
-      if (i.type !== "kingdom-manager.asset") return false;
-      if (i.system.assetType !== "unit") return false;
-      if (!i.system.buildState?.active) return false;
-      // If location is set, it takes priority over provinceId
-      if (i.system.location) return i.system.location === prov.name;
-      return i.system.provinceId === prov.id;
-    }).sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0)).map(i => {
+    // Units stationed here: those indexed by location name + those by provinceId with no location set
+    const stationedUnits = [
+      ...(unitsByLocation.get(prov.name) ?? []),
+      ...provItems.filter(i => i.system.assetType === "unit" && i.system.buildState?.active && !i.system.location),
+    ].sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0)).map(i => {
       const pills = Object.entries(i.system.stats ?? {})
         .filter(([, v]) => v !== null && v !== undefined && v !== 0)
         .map(([stat, val]) => ({ stat, label: STAT_SHORT[stat], cost: Math.abs(val) }));
@@ -1088,8 +1124,8 @@ function buildProvinceData(items, state) {
   });
 }
 
-function buildUnitData(items, state, garrisonedUnitIds = new Set()) {
-  const blockedIds = buildBlockedIds(items);
+function buildUnitData(items, state, garrisonedUnitIds = new Set(), blockedIds, itemIndex) {
+  const { byId, upkeepOffsetByProvince } = itemIndex;
   const activeProvinceIds   = new Set();
   const activeProvinceNames = new Set();
   for (const i of items) {
@@ -1101,30 +1137,26 @@ function buildUnitData(items, state, garrisonedUnitIds = new Set()) {
 
   return items.filter(i => {
     if (i.type !== "kingdom-manager.asset" || i.system.assetType !== "unit" || !i.system.buildState?.active) return false;
-    // If location is set, use only location; otherwise use provinceId
     if (i.system.location) return !activeProvinceNames.has(i.system.location);
     return !activeProvinceIds.has(i.system.provinceId);
   }).sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0)).map(unit => {
     const stats  = unit.system.stats;
-    const offset = zeroStats();
-    for (const i of items) {
-      if (i.type !== "kingdom-manager.asset" || i.system.provinceId !== unit.system.provinceId || !i.system.buildState?.active) continue;
-      for (const s of STATS) offset[s] += i.system.upkeepOffset?.[s] ?? 0;
-    }
+    const offset = upkeepOffsetByProvince.get(unit.system.provinceId) ?? zeroStats();
     const pills = Object.entries(stats)
       .filter(([, v]) => v !== null && v !== undefined && v !== 0)
       .map(([stat, val]) => ({ stat, label: STAT_SHORT[stat] ?? stat, cost: Math.abs(val), offset: offset[stat] ?? 0 }));
+    const provinceItem = byId.get(unit.system.provinceId);
     return {
       id: unit.id, name: unit.name, system: unit.system, pills,
       isOver: Object.values(state.headroom).some(v => v < 0),
-      provinceName: unit.system.location || items.find(i => i.id === unit.system.provinceId && i.system.assetType === "province")?.name || "—",
+      provinceName: unit.system.location || (provinceItem?.system.assetType === "province" ? provinceItem.name : null) || "—",
       isGM: state._isGM, canRoll: state._canRoll,
       isBlocked:    blockedIds.has(unit.id),
       isGarrisoned: garrisonedUnitIds.has(unit.id),
       unitType:     unit.system.unitType ?? "army",
       isAgent:      (unit.system.unitType ?? "army") !== "army",
-      hasFeature: !!(unit.system.unitFeatureStat),
-      featureStat: unit.system.unitFeatureStat ?? "",
+      hasFeature:   !!(unit.system.unitFeatureStat),
+      featureStat:  unit.system.unitFeatureStat ?? "",
       featureBonus: unit.system.unitFeatureBonus ?? 0,
     };
   });
