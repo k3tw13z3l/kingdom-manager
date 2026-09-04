@@ -848,13 +848,32 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     }
 
     const itemData = worldItem.toObject();
-    itemData.system.provinceId = item.system.provinceId || "";
-    itemData.system.location   = item.system.location   || "";
+    itemData.system.provinceId      = item.system.provinceId || "";
+    itemData.system.location        = item.system.location   || "";
+    itemData.system.upgradeTargetId = item.id; // WIP → active (for buildProvinceData)
     itemData.sort = (item.sort ?? 0) + 100;
+
+    // Initialize build checks from stats, same logic as _onDrop
+    const sys    = itemData.system;
+    const baseDC = (sys.buildBaseDC > 0) ? sys.buildBaseDC : 12;
+    itemData.system.buildBaseDC = baseDC;
+    if (sys.skipChecks) {
+      itemData.system.buildState = { active: true, checks: [] };
+    } else {
+      const checks = [];
+      for (const [stat, val] of Object.entries(sys.stats ?? {})) {
+        if (val === null || val === undefined) continue;
+        const upkeepCost = sys.upkeep?.[stat] ?? 0;
+        checks.push({ stat, dc: baseDC + Math.abs(val) + upkeepCost, passed: false });
+      }
+      if (checks.length === 0) checks.push({ stat: "social", dc: baseDC, passed: false });
+      itemData.system.buildState = { active: false, checks };
+    }
 
     const [created] = await this.document.createEmbeddedDocuments("Item", [itemData]);
     if (!created) return;
 
+    // Active asset → WIP (for _km_activateAsset predecessor deletion)
     await item.update({ "system.upgradeTargetId": created.id });
     ui.notifications.info(`${created.name} added as an upgrade-in-progress for ${item.name}.`);
   }

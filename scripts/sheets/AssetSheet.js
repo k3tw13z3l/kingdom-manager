@@ -72,56 +72,34 @@ export class AssetSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       if (event.target.closest(".km-upgrade-input")) {
         const kmId = event.dataTransfer.getData("application/x-km-sort");
         if (kmId) {
-          // Kingdom-sheet drag — silently ignore if not a valid asset (likely a mis-drag)
+          // Kingdom-sheet drag — link an already-embedded WIP as upgrade target
           const dropped = this.item.parent?.items?.get(kmId);
           if (!dropped || dropped.system.assetType !== "asset" || dropped.id === this.item.id) return;
-          await this.item.update({ "system.upgradeTargetId": kmId });
+          // Set both directions so buildProvinceData and _km_activateAsset both work
+          await this.item.update({ "system.upgradeTargetId": dropped.id });
+          if (!dropped.system.buildState?.active) {
+            await dropped.update({ "system.upgradeTargetId": this.item.id });
+          }
           ui.notifications.info(`Upgrade target set to ${dropped.name}.`);
           return;
         }
-        // Sidebar / compendium item drag (text/plain)
+        // Sidebar / compendium item drag — store as potential-upgrade reference only.
+        // Actual WIP creation with proper build checks happens via "Begin Build" in the kingdom sheet.
         let data;
         try { data = JSON.parse(event.dataTransfer.getData("text/plain")); } catch(e) { return; }
         if (data?.type !== "Item") return;
         const uuid = data.uuid;
         if (!uuid) return;
 
-        // Check if it's already an embedded item in this actor
-        const embeddedId = uuid.split(".").pop();
-        let dropped = this.item.parent?.items?.get(embeddedId);
-
-        if (!dropped) {
-          // World / compendium item — fetch it
-          let source;
-          try { source = await fromUuid(uuid); } catch(e) { return; }
-          if (!source || source.type !== "kingdom-manager.asset" || source.system?.assetType !== "asset") {
-            ui.notifications.warn("Only asset-type items can be set as an upgrade target.");
-            return;
-          }
-          if (!this.item.parent) {
-            // World item context — store the reference directly (no actor to embed into)
-            await this.item.update({ "system.upgradeTargetId": source.id });
-            ui.notifications.info(`Upgrade target set to ${source.name}.`);
-            return;
-          }
-          // Embedded context — create a copy in this province so it appears in the kingdom
-          const itemData = source.toObject();
-          itemData.system.provinceId = this.item.system.provinceId || "";
-          itemData.system.location   = this.item.system.location   || "";
-          const [created] = await this.item.parent.createEmbeddedDocuments("Item", [itemData]);
-          if (!created) return;
-          await this.item.update({ "system.upgradeTargetId": created.id });
-          ui.notifications.info(`${created.name} created and set as upgrade target.`);
-          return;
-        }
-
-        if (dropped.system.assetType !== "asset") {
+        let source;
+        try { source = await fromUuid(uuid); } catch(e) { return; }
+        if (!source || source.type !== "kingdom-manager.asset" || source.system?.assetType !== "asset") {
           ui.notifications.warn("Only asset-type items can be set as an upgrade target.");
           return;
         }
-        if (dropped.id === this.item.id) return;
-        await this.item.update({ "system.upgradeTargetId": dropped.id });
-        ui.notifications.info(`Upgrade target set to ${dropped.name}.`);
+        if (source.id === this.item.id) return;
+        await this.item.update({ "system.upgradeTargetId": source.id });
+        ui.notifications.info(`Upgrade target set to ${source.name}. Use "Begin Build" in the kingdom sheet to start building.`);
         return;
       }
 
