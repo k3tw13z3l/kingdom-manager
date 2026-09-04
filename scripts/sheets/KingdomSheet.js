@@ -215,8 +215,15 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
             .filter(i => i.type === "kingdom-manager.asset" && i.system.assetType === "province" && i.system.buildState?.active)
             .map(i => i.id)
         );
-        if (!activeProvinceIds.has(source.system.provinceId)) return; // already unstationed
-        await this.document.updateEmbeddedDocuments("Item", [{ _id: sortId, "system.provinceId": "" }]);
+        const activeProvinceNames = new Set(
+          [...activeProvinceIds].map(id => this.document.items.get(id)?.name).filter(Boolean)
+        );
+        const isStationed = activeProvinceIds.has(source.system.provinceId) ||
+          (source.system.location && activeProvinceNames.has(source.system.location));
+        if (!isStationed) return; // already unstationed
+        await this.document.updateEmbeddedDocuments("Item", [{
+          _id: sortId, "system.provinceId": "", "system.location": ""
+        }]);
         return;
       }
 
@@ -260,11 +267,15 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
             .filter(i => i.type === "kingdom-manager.asset" && i.system.assetType === "province" && i.system.buildState?.active)
             .map(i => i.id)
         );
+        const activeProvinceNames = new Set(
+          [...activeProvinceIds].map(id => this.document.items.get(id)?.name).filter(Boolean)
+        );
         const panelGroup = this.document.items.filter(i =>
           i.type === "kingdom-manager.asset" &&
           i.system.assetType === "unit" &&
           i.system.buildState?.active &&
           !activeProvinceIds.has(i.system.provinceId) &&
+          !activeProvinceNames.has(i.system.location) &&
           i.id !== sortId
         ).sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
 
@@ -277,10 +288,12 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
           .filter(({ item, sort }) => (item.sort ?? 0) !== sort)
           .map(({ item, sort }) => ({ _id: item.id, sort }));
 
-        if (activeProvinceIds.has(source.system.provinceId)) {
+        const isStationed = activeProvinceIds.has(source.system.provinceId) ||
+          (source.system.location && activeProvinceNames.has(source.system.location));
+        if (isStationed) {
           const srcEntry = updates.find(u => u._id === sortId);
-          if (srcEntry) srcEntry["system.provinceId"] = "";
-          else updates.push({ _id: sortId, "system.provinceId": "" });
+          if (srcEntry) { srcEntry["system.provinceId"] = ""; srcEntry["system.location"] = ""; }
+          else updates.push({ _id: sortId, "system.provinceId": "", "system.location": "" });
         }
 
         if (updates.length) await this.document.updateEmbeddedDocuments("Item", updates);
@@ -312,9 +325,13 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
         .map(({ item, sort }) => ({ _id: item.id, sort }));
 
       if (destProvinceId !== srcProvinceId) {
+        // For units, also sync location to the destination province name
+        const locationUpdate = source.system.assetType === "unit"
+          ? { "system.location": this.document.items.get(destProvinceId)?.name ?? "" }
+          : {};
         const srcEntry = updates.find(u => u._id === sortId);
-        if (srcEntry) srcEntry["system.provinceId"] = destProvinceId;
-        else updates.push({ _id: sortId, "system.provinceId": destProvinceId });
+        if (srcEntry) { srcEntry["system.provinceId"] = destProvinceId; Object.assign(srcEntry, locationUpdate); }
+        else updates.push({ _id: sortId, "system.provinceId": destProvinceId, ...locationUpdate });
       }
 
       if (updates.length) await this.document.updateEmbeddedDocuments("Item", updates);

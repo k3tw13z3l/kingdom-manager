@@ -60,12 +60,32 @@ export class AssetSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     const win = this.element.parentElement ?? this.element;
 
     win.addEventListener("dragover", (event) => {
-      if (event.dataTransfer?.types?.includes("text/plain")) event.preventDefault();
+      if (event.dataTransfer?.types?.includes("text/plain") ||
+          event.dataTransfer?.types?.includes("application/x-km-sort")) event.preventDefault();
     });
     win.addEventListener("drop", async (event) => {
       // Only handle drops within this specific sheet's element
       if (!this.element?.contains(event.target)) return;
       event.preventDefault();
+
+      // Upgrade target — accept km-sort drags (from kingdom sheet) or standard item drags
+      if (event.target.closest(".km-upgrade-input")) {
+        const kmId = event.dataTransfer.getData("application/x-km-sort");
+        const itemId = kmId || (() => {
+          try { return JSON.parse(event.dataTransfer.getData("text/plain")); } catch(e) { return null; }
+        })()?.uuid?.split(".").pop();
+        if (!itemId) return;
+        const dropped = this.item.parent?.items?.get(itemId);
+        if (!dropped || dropped.system.assetType !== "asset") {
+          ui.notifications.warn("Only asset-type items can be set as an upgrade target.");
+          return;
+        }
+        if (dropped.id === this.item.id) return;
+        await this.item.update({ "system.upgradeTargetId": itemId });
+        ui.notifications.info(`Upgrade target set to ${dropped.name}.`);
+        return;
+      }
+
       let data;
       try { data = JSON.parse(event.dataTransfer.getData("text/plain")); } catch(e) { return; }
       if (data?.type === "JournalEntry") {
@@ -74,16 +94,6 @@ export class AssetSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
           await this.item.update({ "system.journalId": id });
           ui.notifications.info("Journal linked.");
         }
-      } else if (data?.type === "Item" && event.target.closest(".km-upgrade-input")) {
-        const id = data.uuid?.split(".").pop() ?? data.id;
-        const dropped = this.item.parent?.items?.get(id);
-        if (!dropped || dropped.system.assetType !== "asset") {
-          ui.notifications.warn("Only asset-type items can be set as an upgrade target.");
-          return;
-        }
-        if (dropped.id === this.item.id) return;
-        await this.item.update({ "system.upgradeTargetId": id });
-        ui.notifications.info(`Upgrade target set to ${dropped.name}.`);
       }
     });
 
