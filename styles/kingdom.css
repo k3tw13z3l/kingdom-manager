@@ -522,7 +522,7 @@
 }
 
 /* ── Asset sheet form ─────────────────────────────────────────────────────── */
-.asset-sheet .window-content { padding: 1rem; color: var(--km-text); background: #f5f4f0; }
+.asset-sheet .window-content { padding: 1rem; color: var(--km-text); background: #f5f4f0; overflow-y: auto; }
 .km-asset-form { display: flex; flex-direction: column; gap: 12px; }
 
 .km-form-name { display: flex; align-items: center; gap: 10px; }
