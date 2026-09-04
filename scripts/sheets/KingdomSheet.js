@@ -193,7 +193,9 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       const garrisonSlot = ev.target.closest(".km-garrison-slot");
       if (garrisonSlot) {
         const source = this.document.items.get(_dragId);
-        if (isEligibleForGarrison(source) && garrisonSlot.dataset.itemId !== _dragId) {
+        const asset  = this.document.items.get(garrisonSlot.dataset.itemId);
+        if (isEligibleForGarrison(source) && garrisonSlot.dataset.itemId !== _dragId &&
+            this._sameProvince(source, asset)) {
           ev.preventDefault();
           for (const el of win.querySelectorAll(".km-garrison-drag-over")) el.classList.remove("km-garrison-drag-over");
           garrisonSlot.classList.add("km-garrison-drag-over");
@@ -921,10 +923,24 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     if (item) await this._updateItem(item, { "system.garrisonAssetId": "" });
   }
 
+  _sameProvince(unit, asset) {
+    if (!unit || !asset) return false;
+    if (unit.system.provinceId && unit.system.provinceId === asset.system.provinceId) return true;
+    if (unit.system.location) {
+      const prov = this.document.items.get(asset.system.provinceId);
+      if (prov && unit.system.location === prov.name) return true;
+    }
+    return false;
+  }
+
   async _km_assignGarrison(unit, assetId) {
     const asset = this.document.items.get(assetId);
     if (!asset || !(asset.system.unitSlots > 0)) return;
     if (unit.system.garrisonAssetId === assetId) return;
+    if (!this._sameProvince(unit, asset)) {
+      ui.notifications.warn(`${unit.name} is not in the same province as ${asset.name}.`);
+      return;
+    }
 
     const slots = asset.system.unitSlots;
     const currently = this.document.items.filter(i =>
