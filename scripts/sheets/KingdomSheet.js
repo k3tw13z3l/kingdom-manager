@@ -1319,7 +1319,7 @@ function buildProvinceData(items, state, blockedIds, itemIndex) {
         isGarrisoned,
         garrisonAssetId:    garrisonInfo?.assetId  ?? "",
         garrisonAssetName:  garrisonInfo?.assetName ?? "",
-        garrisonOptions:    eligible && provGarrisonAssets.length > 1 ? provGarrisonAssets : [],
+        garrisonOptions:    eligible && provGarrisonAssets.length > 0 ? provGarrisonAssets : [],
         unitType:           i.system.unitType ?? "army",
         isAgent:            (i.system.unitType ?? "army") !== "army",
         hasFeature:         !!(i.system.unitFeatureStat),
