@@ -1309,9 +1309,10 @@ function buildProvinceData(items, state, blockedIds, itemIndex) {
       const pills = Object.entries(i.system.stats ?? {})
         .filter(([, v]) => v !== null && v !== undefined && v !== 0)
         .map(([stat, val]) => ({ stat, label: STAT_SHORT[stat], cost: Math.abs(val) }));
-      const garrisonInfo    = state.garrisonedUnitMap?.get(i.id) ?? null;
-      const isGarrisoned    = !!garrisonInfo;
-      const eligible        = i.system.unitType === "army" || i.system.unitType === "garrison";
+      const garrisonInfo       = state.garrisonedUnitMap?.get(i.id) ?? null;
+      const isGarrisoned       = !!garrisonInfo;
+      const eligible           = i.system.unitType === "army" || i.system.unitType === "garrison";
+      const showGarrisonSelect = eligible && provGarrisonAssets.length > 0;
       return {
         id: i.id, name: i.name, system: i.system, pills,
         isGM:               state._isGM,
@@ -1319,7 +1320,8 @@ function buildProvinceData(items, state, blockedIds, itemIndex) {
         isGarrisoned,
         garrisonAssetId:    garrisonInfo?.assetId  ?? "",
         garrisonAssetName:  garrisonInfo?.assetName ?? "",
-        garrisonOptions:    eligible && provGarrisonAssets.length > 0 ? provGarrisonAssets : [],
+        showGarrisonSelect,
+        garrisonOptions:    showGarrisonSelect ? provGarrisonAssets : [],
         unitType:           i.system.unitType ?? "army",
         isAgent:            (i.system.unitType ?? "army") !== "army",
         hasFeature:         !!(i.system.unitFeatureStat),

@@ -369,8 +369,9 @@
               {{#if isGarrisoned}}<i class="fas fa-home km-garrison-icon" title="Upkeep covered by garrison" aria-hidden="true"></i>{{/if}}
               {{#if hasFeature}}<span class="km-unit-feature km-pt-{{featureStat}}">{{capitalize featureStat}} +{{featureBonus}}</span>{{/if}}
             </span>
-            {{#if garrisonOptions.length}}
+            {{#if showGarrisonSelect}}
               <select class="km-garrison-select" title="Choose garrison asset">
+                <option value="" {{#unless garrisonAssetId}}selected{{/unless}}>—</option>
                 {{#each garrisonOptions}}<option value="{{id}}" {{#if (eq id ../garrisonAssetId)}}selected{{/if}}>{{name}}</option>{{/each}}
               </select>
             {{else if isGarrisoned}}
