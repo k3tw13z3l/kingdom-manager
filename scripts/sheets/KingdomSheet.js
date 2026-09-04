@@ -894,7 +894,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     if (!item || !upgradeId) return;
 
     const worldItem = game.items?.get(upgradeId);
-    if (!worldItem || worldItem.system?.assetType !== "asset") {
+    if (!worldItem || !["asset","unit"].includes(worldItem.system?.assetType)) {
       ui.notifications.warn("Upgrade source item not found in the world items list.");
       return;
     }
@@ -1301,10 +1301,10 @@ function buildProvinceData(items, state, blockedIds, itemIndex) {
     const devPct    = prov.magicPotential > 0 ? Math.min(100, Math.round((prov.devLoad/prov.magicPotential)*100)) : 0;
     const devClass  = devPct >= 100 ? "full" : devPct >= 60 ? "warn" : "safe";
 
-    // WIP assets that are upgrades of an active asset in this province — render indented under their target
+    // WIP assets/units that are upgrades of an active item — render indented under their target
     const upgradeByTargetId = new Map();
     for (const i of provItems) {
-      if (i.system.assetType !== "asset" || i.system.buildState?.active || !i.system.upgradeTargetId) continue;
+      if (!["asset","unit"].includes(i.system.assetType) || i.system.buildState?.active || !i.system.upgradeTargetId) continue;
       upgradeByTargetId.set(i.system.upgradeTargetId, i);
     }
     const upgradeItemIds = new Set([...upgradeByTargetId.values()].map(i => i.id));
@@ -1394,6 +1394,19 @@ function buildProvinceData(items, state, blockedIds, itemIndex) {
         .map(([stat, val]) => ({ stat, label: STAT_SHORT[stat], cost: Math.abs(val) }));
       const garrisonInfo = state.garrisonedUnitMap?.get(i.id) ?? null;
       const isGarrisoned = !!garrisonInfo;
+      const upgradeItem  = upgradeByTargetId.get(i.id);
+      const upgrade      = upgradeItem ? {
+        id: upgradeItem.id, name: upgradeItem.name, system: upgradeItem.system,
+        canRoll: state._canRoll, isGM: state._isGM,
+        checks: (upgradeItem.system.buildState?.checks ?? []).map(c => ({ ...c, buildBonus: state.buildBonus[c.stat] ?? 0 }))
+      } : null;
+      let potentialUpgrade = null;
+      if (!upgrade && i.system.upgradeTargetId && state._isGM) {
+        const worldItem = game.items?.get(i.system.upgradeTargetId);
+        if (worldItem && worldItem.system?.assetType === "unit") {
+          potentialUpgrade = { id: worldItem.id, name: worldItem.name, system: worldItem.system };
+        }
+      }
       return {
         id: i.id, name: i.name, system: i.system, pills,
         isGM:              state._isGM,
@@ -1405,6 +1418,9 @@ function buildProvinceData(items, state, blockedIds, itemIndex) {
         featureStat:       i.system.unitFeatureStat ?? "",
         featureBonus:      i.system.unitFeatureBonus ?? 0,
         journalId:         i.system.journalId ?? "",
+        upgrade,
+        potentialUpgrade,
+        hasNotes:          !!(i.system.description || potentialUpgrade),
       };
     });
 
