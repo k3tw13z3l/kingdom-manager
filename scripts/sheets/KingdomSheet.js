@@ -872,7 +872,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
   static async _km_activateAsset(event, target) {
     const item = this.document.items.get(target.dataset.itemId);
     if (!item) return;
-    await item.update({ "system.buildState.active": true });
+    await item.update({ "system.buildState.active": true, "system.upgradeTargetId": "" });
 
     // If another asset declared this one as its upgrade target, delete that predecessor
     const predecessor = this.document.items.find(i =>

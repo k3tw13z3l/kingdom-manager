@@ -74,7 +74,7 @@ export class AssetSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
         if (kmId) {
           // Kingdom-sheet drag — link an already-embedded WIP as upgrade target
           const dropped = this.item.parent?.items?.get(kmId);
-          if (!dropped || !["asset","unit"].includes(dropped.system.assetType) || dropped.id === this.item.id) return;
+          if (!dropped || dropped.system.assetType !== this.item.system.assetType || dropped.id === this.item.id) return;
           // Set both directions so buildProvinceData and _km_activateAsset both work
           await this.item.update({ "system.upgradeTargetId": dropped.id });
           if (!dropped.system.buildState?.active) {
@@ -93,8 +93,8 @@ export class AssetSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
 
         let source;
         try { source = await fromUuid(uuid); } catch(e) { return; }
-        if (!source || source.type !== "kingdom-manager.asset" || !["asset","unit"].includes(source.system?.assetType)) {
-          ui.notifications.warn("Only asset or unit items can be set as an upgrade target.");
+        if (!source || source.type !== "kingdom-manager.asset" || source.system?.assetType !== this.item.system.assetType) {
+          ui.notifications.warn(`Only ${this.item.system.assetType} items can be set as an upgrade target.`);
           return;
         }
         if (source.id === this.item.id) return;
