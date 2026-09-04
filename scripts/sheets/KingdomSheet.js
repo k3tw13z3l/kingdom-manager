@@ -954,26 +954,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     if (currently.length < slots) {
       await this._updateItem(unit, { "system.garrisonAssetId": assetId });
     } else {
-      const opts = currently.map(u => `<option value="${u.id}">${u.name}</option>`).join("");
-      new Dialog({
-        title: "Garrison Full",
-        content: `<p>All ${slots} slot(s) in <strong>${asset.name}</strong> are occupied.</p>
-                  <p>Remove which unit to make room for <strong>${unit.name}</strong>?</p>
-                  <select id="km-evict-sel" style="width:100%;margin-top:4px">${opts}</select>`,
-        buttons: {
-          evict: {
-            label: "Remove & Garrison",
-            callback: async (html) => {
-              const evictId   = html.find("#km-evict-sel").val();
-              const evictUnit = this.document.items.get(evictId);
-              if (evictUnit) await this._updateItem(evictUnit, { "system.garrisonAssetId": "" });
-              await this._updateItem(unit, { "system.garrisonAssetId": assetId });
-            }
-          },
-          cancel: { label: "Cancel" }
-        },
-        default: "evict"
-      }).render(true);
+      ui.notifications.warn(`All ${slots} garrison slot(s) in ${asset.name} are occupied. Use the × button on a garrisoned unit to free a slot first.`);
     }
   }
 
@@ -1293,6 +1274,14 @@ function buildItemIndex(items) {
 function buildProvinceData(items, state, blockedIds, itemIndex) {
   const { byId, byProvince, unitsByLocation } = itemIndex;
 
+  // Reverse garrison map: assetId → [{id, name}]
+  const garrisonedByAsset = new Map();
+  for (const [unitId, info] of (state.garrisonedUnitMap ?? new Map())) {
+    if (!garrisonedByAsset.has(info.assetId)) garrisonedByAsset.set(info.assetId, []);
+    const unit = byId.get(unitId);
+    if (unit) garrisonedByAsset.get(info.assetId).push({ id: unitId, name: unit.name });
+  }
+
   return state.provinces.map(prov => {
     const provItems = byProvince.get(prov.id) ?? [];
     const devPct    = prov.magicPotential > 0 ? Math.min(100, Math.round((prov.devLoad/prov.magicPotential)*100)) : 0;
@@ -1326,11 +1315,13 @@ function buildProvinceData(items, state, blockedIds, itemIndex) {
         }
       }
 
+      const unitSlots = i.system.unitSlots ?? 0;
       return {
         id: i.id, name: i.name, system: i.system,
         isGM: state._isGM, canRoll: state._canRoll,
         isBlocked: blockedIds.has(i.id),
-        unitSlots: i.system.unitSlots ?? 0,
+        unitSlots,
+        garrisonedUnits: unitSlots > 0 ? (garrisonedByAsset.get(i.id) ?? []) : [],
         journalId: i.system.journalId ?? "",
         upkeepPills,
         upgrade,

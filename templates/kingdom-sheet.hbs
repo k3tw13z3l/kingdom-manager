@@ -280,6 +280,12 @@
               <button type="button" data-action="deleteItem" data-item-id="{{id}}"><i class="fas fa-trash" aria-hidden="true"></i></button>
             </div>{{/if}}
           </div>
+          {{#if garrisonedUnits.length}}
+          <div class="km-garrison-occupants">
+            <i class="fas fa-home" aria-hidden="true"></i>
+            {{#each garrisonedUnits}}<span class="km-garrison-occupant">{{name}}</span>{{/each}}
+          </div>
+          {{/if}}
           {{#if system.description}}
           <div class="km-asset-desc" id="desc-{{id}}">{{system.description}}</div>
           {{/if}}
