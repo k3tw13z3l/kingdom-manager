@@ -28,6 +28,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       deleteItem:       KingdomSheet._km_deleteItem,
       toggleBuildCheck: KingdomSheet._km_toggleBuildCheck,
       activateAsset:    KingdomSheet._km_activateAsset,
+      startUpgrade:     KingdomSheet._km_startUpgrade,
       accumulateWealth: KingdomSheet._km_accumulateWealth,
       toggleDomainTurn: KingdomSheet._km_toggleDomainTurn,
     }
@@ -103,8 +104,13 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       // Description chevron toggle
       const toggle = event.target.closest(".km-desc-toggle");
       if (toggle) {
-        const el = win.querySelector("#" + toggle.dataset.target);
-        if (el) { el.classList.toggle("open"); toggle.classList.toggle("open"); }
+        const el     = win.querySelector("#" + toggle.dataset.target);
+        if (el) el.classList.toggle("open");
+        const isOpen = toggle.classList.toggle("open");
+        // Also show/hide the potential-upgrade row for this item
+        const itemId = (toggle.dataset.target ?? "").replace("desc-", "");
+        const upgPot = win.querySelector(`#upgpot-${itemId}`);
+        if (upgPot) upgPot.style.display = isOpen ? "flex" : "none";
         return;
       }
       // Ruler portrait/name → open linked actor sheet
@@ -830,6 +836,29 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     ui.notifications.info(`${item.name} is now ${verb}.${predecessor ? ` ${predecessor.name} removed.` : ""}`);
   }
 
+  static async _km_startUpgrade(event, target) {
+    const item      = this.document.items.get(target.dataset.itemId);
+    const upgradeId = target.dataset.upgradeId;
+    if (!item || !upgradeId) return;
+
+    const worldItem = game.items?.get(upgradeId);
+    if (!worldItem || worldItem.system?.assetType !== "asset") {
+      ui.notifications.warn("Upgrade source item not found in the world items list.");
+      return;
+    }
+
+    const itemData = worldItem.toObject();
+    itemData.system.provinceId = item.system.provinceId || "";
+    itemData.system.location   = item.system.location   || "";
+    itemData.sort = (item.sort ?? 0) + 100;
+
+    const [created] = await this.document.createEmbeddedDocuments("Item", [itemData]);
+    if (!created) return;
+
+    await item.update({ "system.upgradeTargetId": created.id });
+    ui.notifications.info(`${created.name} added as an upgrade-in-progress for ${item.name}.`);
+  }
+
   static async _km_toggleDomainTurn(event, target) {
     const turn  = Number(target.dataset.turn);
     const field = `system.turn.domainTurn${turn}Used`;
@@ -1177,6 +1206,16 @@ function buildProvinceData(items, state, blockedIds, itemIndex) {
         canRoll: state._canRoll, isGM: state._isGM,
         checks: (upgradeItem.system.buildState?.checks ?? []).map(c => ({ ...c, buildBonus: state.buildBonus[c.stat] ?? 0 }))
       } : null;
+
+      // potentialUpgrade: upgradeTargetId points to a world item (not yet embedded)
+      let potentialUpgrade = null;
+      if (!upgrade && i.system.upgradeTargetId && state._isGM) {
+        const worldItem = game.items?.get(i.system.upgradeTargetId);
+        if (worldItem && worldItem.system?.assetType === "asset") {
+          potentialUpgrade = { id: worldItem.id, name: worldItem.name, system: worldItem.system };
+        }
+      }
+
       return {
         id: i.id, name: i.name, system: i.system,
         isGM: state._isGM, canRoll: state._canRoll,
@@ -1185,6 +1224,8 @@ function buildProvinceData(items, state, blockedIds, itemIndex) {
         journalId: i.system.journalId ?? "",
         upkeepPills,
         upgrade,
+        potentialUpgrade,
+        hasNotes: !!(i.system.description || potentialUpgrade),
       };
     });
 

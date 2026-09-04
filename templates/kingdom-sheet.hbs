@@ -270,7 +270,7 @@
             {{else}}
             <span class="km-badge km-badge-active"><i class="fas fa-check" aria-hidden="true"></i> Active</span>
             {{/if}}
-            {{#if system.description}}
+            {{#if hasNotes}}
             <span class="km-desc-toggle" data-target="desc-{{id}}" title="Toggle description">
               <i class="fas fa-chevron-down" aria-hidden="true"></i>
             </span>
@@ -282,6 +282,23 @@
           </div>
           {{#if system.description}}
           <div class="km-asset-desc" id="desc-{{id}}">{{system.description}}</div>
+          {{/if}}
+          {{#if potentialUpgrade}}
+          <div class="km-asset-row km-potential-upgrade-row" id="upgpot-{{id}}" style="display:none;">
+            <span class="km-asset-name km-upgrade-icon"><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> {{potentialUpgrade.name}}</span>
+            <div class="km-asset-pills">
+              {{#each (statPills potentialUpgrade.system.stats)}}<span class="km-pill {{cssClass}}">{{label}}</span>{{/each}}
+            </div>
+            <span class="km-badge km-badge-avail"><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> Available</span>
+            <span class="km-potential-upgrade-note">Not yet started</span>
+            {{#if isGM}}
+            <div class="km-asset-actions">
+              <button type="button" data-action="startUpgrade" data-item-id="{{id}}" data-upgrade-id="{{potentialUpgrade.id}}" class="km-btn-primary km-btn-xs">
+                <i class="fas fa-hammer" aria-hidden="true"></i> Begin Build
+              </button>
+            </div>
+            {{/if}}
+          </div>
           {{/if}}
           {{#if upgrade}}
           <div class="km-asset-row km-asset-wip km-upgrade-row" data-item-id="{{upgrade.id}}">

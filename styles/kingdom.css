@@ -1156,6 +1156,13 @@ button.km-domain-turn-btn:hover { background: #eceae5; }
 .km-dark .km-upgrade-row       { border-left-color: #3a78c9 !important; }
 .km-dark .km-upgrade-wip-block { border-left-color: #3a78c9; }
 
+.km-potential-upgrade-row  { margin-left: 20px; border-left: 2px dashed #4a90d9 !important; padding-left: 6px; background: rgba(74,144,217,.06); }
+.km-badge-avail            { background: #E6F1FB; color: #1a4e8a; }
+.km-potential-upgrade-note { font-size: 11px; color: #999; font-style: italic; flex-shrink: 0; }
+.km-dark .km-potential-upgrade-row  { background: rgba(74,144,217,.08); border-left-color: #3a78c9 !important; }
+.km-dark .km-badge-avail            { background: #162133; color: #7ab8ef; }
+.km-dark .km-potential-upgrade-note { color: #5e5a55; }
+
 /* ── Drag-to-sort ─────────────────────────────────────────────────────────── */
 .km-asset-row[draggable],
 .km-province-block[draggable],
