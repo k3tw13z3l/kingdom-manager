@@ -366,17 +366,18 @@
             <span class="km-asset-name">
               {{#if journalId}}<i class="fas fa-book-open km-journal-link" data-journal-id="{{journalId}}" title="Open journal" aria-hidden="true"></i> {{/if}}{{name}}
               {{#if isAgent}}<span class="km-unit-agent-tag">{{capitalize unitType}}</span>{{/if}}
-              {{#if isGarrisoned}}<i class="fas fa-home km-garrison-icon" title="Upkeep covered by garrison" aria-hidden="true"></i>
-                {{#if garrisonOptions.length}}
-                <select class="km-garrison-select" title="Choose garrison asset">
-                  {{#each garrisonOptions}}<option value="{{id}}" {{#if (eq id ../garrisonAssetId)}}selected{{/if}}>{{name}}</option>{{/each}}
-                </select>
-                {{else}}
-                <span class="km-garrison-name">{{garrisonAssetName}}</span>
-                {{/if}}
-              {{/if}}
+              {{#if isGarrisoned}}<i class="fas fa-home km-garrison-icon" title="Upkeep covered by garrison" aria-hidden="true"></i>{{/if}}
               {{#if hasFeature}}<span class="km-unit-feature km-pt-{{featureStat}}">{{capitalize featureStat}} +{{featureBonus}}</span>{{/if}}
             </span>
+            {{#if isGarrisoned}}
+              {{#if garrisonOptions.length}}
+              <select class="km-garrison-select" title="Choose garrison asset">
+                {{#each garrisonOptions}}<option value="{{id}}" {{#if (eq id ../garrisonAssetId)}}selected{{/if}}>{{name}}</option>{{/each}}
+              </select>
+              {{else}}
+              <span class="km-garrison-name">{{garrisonAssetName}}</span>
+              {{/if}}
+            {{/if}}
             <div class="km-asset-pills">
               {{#each pills}}<span class="km-pill km-pill-upk">{{label}} -{{cost}}</span>{{/each}}
             </div>
