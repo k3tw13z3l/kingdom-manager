@@ -91,14 +91,20 @@ export class AssetSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
         let dropped = this.item.parent?.items?.get(embeddedId);
 
         if (!dropped) {
-          // World / compendium item — fetch and create an embedded copy in this province
+          // World / compendium item — fetch it
           let source;
           try { source = await fromUuid(uuid); } catch(e) { return; }
           if (!source || source.type !== "kingdom-manager.asset" || source.system?.assetType !== "asset") {
             ui.notifications.warn("Only asset-type items can be set as an upgrade target.");
             return;
           }
-          if (!this.item.parent) return;
+          if (!this.item.parent) {
+            // World item context — store the reference directly (no actor to embed into)
+            await this.item.update({ "system.upgradeTargetId": source.id });
+            ui.notifications.info(`Upgrade target set to ${source.name}.`);
+            return;
+          }
+          // Embedded context — create a copy in this province so it appears in the kingdom
           const itemData = source.toObject();
           itemData.system.provinceId = this.item.system.provinceId || "";
           itemData.system.location   = this.item.system.location   || "";
@@ -221,7 +227,9 @@ export class AssetSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       obstacleDC:         sys.obstacleDC,
       requiredChecks:     sys.requiredChecks,
       journalName:        sys.journalId ? (game.journal?.get(sys.journalId)?.name ?? sys.journalId) : "",
-      upgradeName:        sys.upgradeTargetId ? (this.item.parent?.items?.get(sys.upgradeTargetId)?.name ?? sys.upgradeTargetId) : "",
+      upgradeName:        sys.upgradeTargetId
+        ? (this.item.parent?.items?.get(sys.upgradeTargetId)?.name ?? game.items?.get(sys.upgradeTargetId)?.name ?? sys.upgradeTargetId)
+        : "",
     };
   }
 }
