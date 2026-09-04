@@ -203,14 +203,22 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
         return;
       }
       for (const el of win.querySelectorAll(".km-garrison-drag-over")) el.classList.remove("km-garrison-drag-over");
+      const source = this.document.items.get(_dragId);
+      const isGarrisonUnit = source?.system.assetType === "unit" && source?.system.unitType === "garrison";
       const dropZone = ev.target.closest(".km-drop-zone");
       if (dropZone) {
-        const source = this.document.items.get(_dragId);
-        if (source?.system.assetType === "unit") { ev.preventDefault(); dropZone.classList.add("km-drag-over"); }
+        if (source?.system.assetType === "unit" && !isGarrisonUnit) { ev.preventDefault(); dropZone.classList.add("km-drag-over"); }
         return;
       }
       const target = ev.target.closest(ROW_SEL);
       if (!target || target.dataset.itemId === _dragId) return;
+      if (isGarrisonUnit) {
+        const tgtItem = this.document.items.get(target.dataset.itemId);
+        const tgtProv = target.classList.contains("km-province-block")
+          ? target.dataset.itemId
+          : (tgtItem?.system.assetType === "province" ? tgtItem.id : tgtItem?.system.provinceId ?? "");
+        if (tgtProv !== source.system.provinceId) return;
+      }
       ev.preventDefault();
       win.querySelector(".km-drop-zone")?.classList.remove("km-drag-over");
       for (const el of win.querySelectorAll(".km-drop-above, .km-drop-below")) {
@@ -248,6 +256,10 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       // Drop onto the units panel drop zone → unstation the unit
       if (ev.target.closest(".km-drop-zone")) {
         if (source.system.assetType !== "unit") return;
+        if (source.system.unitType === "garrison") {
+          ui.notifications.warn(`${source.name} is a garrison unit and cannot leave its province.`);
+          return;
+        }
         const activeProvinceIds = new Set(
           this.document.items
             .filter(i => i.type === "kingdom-manager.asset" && i.system.assetType === "province" && i.system.buildState?.active)
@@ -329,6 +341,10 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
         const isStationed = activeProvinceIds.has(source.system.provinceId) ||
           (source.system.location && activeProvinceNames.has(source.system.location));
         if (isStationed) {
+          if (source.system.unitType === "garrison") {
+            ui.notifications.warn(`${source.name} is a garrison unit and cannot leave its province.`);
+            return;
+          }
           const srcEntry = updates.find(u => u._id === sortId);
           if (srcEntry) { srcEntry["system.provinceId"] = ""; srcEntry["system.location"] = ""; }
           else updates.push({ _id: sortId, "system.provinceId": "", "system.location": "" });
@@ -363,6 +379,10 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
         .map(({ item, sort }) => ({ _id: item.id, sort }));
 
       if (destProvinceId !== srcProvinceId) {
+        if (source.system.assetType === "unit" && source.system.unitType === "garrison") {
+          ui.notifications.warn(`${source.name} is a garrison unit and cannot leave its province.`);
+          return;
+        }
         // For units, also sync location to the destination province name
         const locationUpdate = source.system.assetType === "unit"
           ? { "system.location": this.document.items.get(destProvinceId)?.name ?? "" }
