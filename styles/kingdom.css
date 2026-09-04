@@ -883,6 +883,26 @@ button.km-domain-turn-btn:hover { background: #eceae5; }
   vertical-align: middle;
 }
 
+.km-garrison-name {
+  font-size: 11px;
+  color: #27500A;
+  font-style: italic;
+  margin-left: 3px;
+}
+.km-garrison-select {
+  font-size: 11px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  border: 1px solid #b8c8a8;
+  background: #eaf3de;
+  color: #27500A;
+  margin-left: 3px;
+  cursor: pointer;
+  max-width: 120px;
+}
+.km-dark .km-garrison-name   { color: #6ac48a; }
+.km-dark .km-garrison-select { background: #0e2418; border-color: #2a5a38; color: #6ac48a; }
+
 /* ── Agent unit tag ───────────────────────────────────────────────────────── */
 .km-unit-agent-tag {
   display: inline-block;

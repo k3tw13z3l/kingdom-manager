@@ -116,6 +116,7 @@ export class AssetItemData extends foundry.abstract.TypeDataModel {
       location:         new fields.StringField({ initial: "" }),
       // ID of the asset item this will replace when activated (upgrade flow)
       upgradeTargetId:  new fields.StringField({ initial: "", nullable: true }),
+      garrisonAssetId:  new fields.StringField({ initial: "", nullable: true }),
     };
   }
 

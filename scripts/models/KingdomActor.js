@@ -61,8 +61,7 @@ export class KingdomActorData extends foundry.abstract.TypeDataModel {
     const provinceNameById = Object.fromEntries(
       Object.entries(provinces).map(([id, p]) => [id, p.item.name])
     );
-    const locationKey      = (sys) => sys.location || provinceNameById[sys.provinceId] || "";
-    const slotsByLocation  = this._collectUnitSlots(items, locationKey);
+    const locationKey = (sys) => sys.location || provinceNameById[sys.provinceId] || "";
 
     const ratings = zeroStats();
     const upkeep  = zeroStats();
@@ -75,7 +74,23 @@ export class KingdomActorData extends foundry.abstract.TypeDataModel {
       }
     }
 
-    const garrisonedUnitIds = new Set();
+    // Per-asset remaining slots, keyed by asset item ID
+    const assetSlotRemaining = new Map();
+    // Garrison assets grouped by location key: locationKey → [{assetId, assetName, slots}]
+    const garrisonAssetsByLoc = new Map();
+    for (const item of items) {
+      if (item.type !== "kingdom-manager.asset") continue;
+      const d = item.system;
+      if (d.assetType !== "asset" || !d.buildState?.active || !d.unitSlots) continue;
+      const key = locationKey(d);
+      if (!key) continue;
+      if (!garrisonAssetsByLoc.has(key)) garrisonAssetsByLoc.set(key, []);
+      garrisonAssetsByLoc.get(key).push({ assetId: item.id, assetName: item.name, slots: d.unitSlots });
+      assetSlotRemaining.set(item.id, d.unitSlots);
+    }
+
+    // unitId → { assetId, assetName }
+    const garrisonedUnitMap = new Map();
 
     for (const item of items) {
       if (item.type !== "kingdom-manager.asset") continue;
@@ -86,11 +101,24 @@ export class KingdomActorData extends foundry.abstract.TypeDataModel {
 
       if (d.isUnit) {
         if (!d.buildState?.active) continue;
-        const key     = locationKey(d);
-        const hasSlot = (d.unitType === "army" || d.unitType === "garrison") && key && (slotsByLocation[key] ?? 0) > 0;
-        if (hasSlot) {
-          slotsByLocation[key]--;
-          garrisonedUnitIds.add(item.id);
+        const key      = locationKey(d);
+        const eligible = (d.unitType === "army" || d.unitType === "garrison") && !!key;
+        if (eligible) {
+          const garrisons = garrisonAssetsByLoc.get(key) ?? [];
+          let assigned = null;
+          // Honour the unit's preferred garrison asset
+          if (d.garrisonAssetId) {
+            const pref = garrisons.find(g => g.assetId === d.garrisonAssetId && (assetSlotRemaining.get(g.assetId) ?? 0) > 0);
+            if (pref) assigned = pref;
+          }
+          // Fall back to first asset with remaining slots
+          if (!assigned) assigned = garrisons.find(g => (assetSlotRemaining.get(g.assetId) ?? 0) > 0);
+          if (assigned) {
+            assetSlotRemaining.set(assigned.assetId, (assetSlotRemaining.get(assigned.assetId) ?? 0) - 1);
+            garrisonedUnitMap.set(item.id, { assetId: assigned.assetId, assetName: assigned.assetName });
+          } else {
+            addStats(upkeep, d.stats, /* abs */ true);
+          }
         } else {
           addStats(upkeep, d.stats, /* abs */ true);
         }
@@ -129,7 +157,8 @@ export class KingdomActorData extends foundry.abstract.TypeDataModel {
       headroom[stat]   = ratings[stat] - upkeep[stat];
     }
 
-    return { ratings, upkeep, headroom, buildBonus, provinces: provinceList, garrisonedUnitIds };
+    const garrisonedUnitIds = new Set(garrisonedUnitMap.keys());
+    return { ratings, upkeep, headroom, buildBonus, provinces: provinceList, garrisonedUnitIds, garrisonedUnitMap, garrisonAssetsByLoc };
   }
 
   _indexProvinces(items) {

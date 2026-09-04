@@ -143,14 +143,22 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       }
     });
 
-    // Ruler personal turn checkbox
+    // Ruler personal turn checkbox + garrison asset selector
     win.addEventListener("change", async (event) => {
       const cb = event.target.closest(".km-rc-checkbox input[type=checkbox]");
-      if (!cb) return;
-      const rulers = foundry.utils.deepClone(this.document.system.rulers);
-      const ruler  = rulers.find(r => r.id === cb.dataset.rulerId);
-      if (ruler) ruler.personalTurnUsed = cb.checked;
-      await this.document.update({ "system.rulers": rulers });
+      if (cb) {
+        const rulers = foundry.utils.deepClone(this.document.system.rulers);
+        const ruler  = rulers.find(r => r.id === cb.dataset.rulerId);
+        if (ruler) ruler.personalTurnUsed = cb.checked;
+        await this.document.update({ "system.rulers": rulers });
+        return;
+      }
+      const sel = event.target.closest(".km-garrison-select");
+      if (sel) {
+        const itemId = sel.closest("[data-item-id]")?.dataset.itemId;
+        const item   = this.document.items.get(itemId);
+        if (item) await this._updateItem(item, { "system.garrisonAssetId": sel.value });
+      }
     });
 
     this._attachSortListeners(win);
@@ -1288,6 +1296,11 @@ function buildProvinceData(items, state, blockedIds, itemIndex) {
         };
       });
 
+    // Garrison assets available in this province (for selector)
+    const provGarrisonAssets = provItems
+      .filter(i => i.system.assetType === "asset" && i.system.buildState?.active && (i.system.unitSlots ?? 0) > 0)
+      .map(i => ({ id: i.id, name: i.name }));
+
     // Units stationed here: those indexed by location name + those by provinceId with no location set
     const stationedUnits = [
       ...(unitsByLocation.get(prov.name) ?? []),
@@ -1296,17 +1309,23 @@ function buildProvinceData(items, state, blockedIds, itemIndex) {
       const pills = Object.entries(i.system.stats ?? {})
         .filter(([, v]) => v !== null && v !== undefined && v !== 0)
         .map(([stat, val]) => ({ stat, label: STAT_SHORT[stat], cost: Math.abs(val) }));
+      const garrisonInfo    = state.garrisonedUnitMap?.get(i.id) ?? null;
+      const isGarrisoned    = !!garrisonInfo;
+      const eligible        = i.system.unitType === "army" || i.system.unitType === "garrison";
       return {
         id: i.id, name: i.name, system: i.system, pills,
-        isGM:         state._isGM,
-        isBlocked:    blockedIds.has(i.id),
-        isGarrisoned: state.garrisonedUnitIds?.has(i.id) ?? false,
-        unitType:     i.system.unitType ?? "army",
-        isAgent:      (i.system.unitType ?? "army") !== "army",
-        hasFeature:   !!(i.system.unitFeatureStat),
-        featureStat:  i.system.unitFeatureStat ?? "",
-        featureBonus: i.system.unitFeatureBonus ?? 0,
-        journalId:    i.system.journalId ?? "",
+        isGM:               state._isGM,
+        isBlocked:          blockedIds.has(i.id),
+        isGarrisoned,
+        garrisonAssetId:    garrisonInfo?.assetId  ?? "",
+        garrisonAssetName:  garrisonInfo?.assetName ?? "",
+        garrisonOptions:    eligible && provGarrisonAssets.length > 1 ? provGarrisonAssets : [],
+        unitType:           i.system.unitType ?? "army",
+        isAgent:            (i.system.unitType ?? "army") !== "army",
+        hasFeature:         !!(i.system.unitFeatureStat),
+        featureStat:        i.system.unitFeatureStat ?? "",
+        featureBonus:       i.system.unitFeatureBonus ?? 0,
+        journalId:          i.system.journalId ?? "",
       };
     });
 
