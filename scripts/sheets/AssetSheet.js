@@ -71,17 +71,50 @@ export class AssetSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       // Upgrade target — accept km-sort drags (from kingdom sheet) or standard item drags
       if (event.target.closest(".km-upgrade-input")) {
         const kmId = event.dataTransfer.getData("application/x-km-sort");
-        const itemId = kmId || (() => {
-          try { return JSON.parse(event.dataTransfer.getData("text/plain")); } catch(e) { return null; }
-        })()?.uuid?.split(".").pop();
-        if (!itemId) return;
-        const dropped = this.item.parent?.items?.get(itemId);
-        if (!dropped || dropped.system.assetType !== "asset") {
+        if (kmId) {
+          // Kingdom-sheet drag — silently ignore if not a valid asset (likely a mis-drag)
+          const dropped = this.item.parent?.items?.get(kmId);
+          if (!dropped || dropped.system.assetType !== "asset" || dropped.id === this.item.id) return;
+          await this.item.update({ "system.upgradeTargetId": kmId });
+          ui.notifications.info(`Upgrade target set to ${dropped.name}.`);
+          return;
+        }
+        // Sidebar / compendium item drag (text/plain)
+        let data;
+        try { data = JSON.parse(event.dataTransfer.getData("text/plain")); } catch(e) { return; }
+        if (data?.type !== "Item") return;
+        const uuid = data.uuid;
+        if (!uuid) return;
+
+        // Check if it's already an embedded item in this actor
+        const embeddedId = uuid.split(".").pop();
+        let dropped = this.item.parent?.items?.get(embeddedId);
+
+        if (!dropped) {
+          // World / compendium item — fetch and create an embedded copy in this province
+          let source;
+          try { source = await fromUuid(uuid); } catch(e) { return; }
+          if (!source || source.type !== "kingdom-manager.asset" || source.system?.assetType !== "asset") {
+            ui.notifications.warn("Only asset-type items can be set as an upgrade target.");
+            return;
+          }
+          if (!this.item.parent) return;
+          const itemData = source.toObject();
+          itemData.system.provinceId = this.item.system.provinceId || "";
+          itemData.system.location   = this.item.system.location   || "";
+          const [created] = await this.item.parent.createEmbeddedDocuments("Item", [itemData]);
+          if (!created) return;
+          await this.item.update({ "system.upgradeTargetId": created.id });
+          ui.notifications.info(`${created.name} created and set as upgrade target.`);
+          return;
+        }
+
+        if (dropped.system.assetType !== "asset") {
           ui.notifications.warn("Only asset-type items can be set as an upgrade target.");
           return;
         }
         if (dropped.id === this.item.id) return;
-        await this.item.update({ "system.upgradeTargetId": itemId });
+        await this.item.update({ "system.upgradeTargetId": dropped.id });
         ui.notifications.info(`Upgrade target set to ${dropped.name}.`);
         return;
       }
