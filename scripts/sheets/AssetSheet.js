@@ -12,7 +12,7 @@ export class AssetSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     position: { width: 480, height: 580 },
     window:   { resizable: true },
     form:     { handler: AssetSheet._onFormChange, submitOnChange: true },
-    actions:  { clearJournal: AssetSheet._clearJournal },
+    actions:  { clearJournal: AssetSheet._clearJournal, clearUpgrade: AssetSheet._clearUpgrade },
   };
 
   static PARTS = {
@@ -74,6 +74,16 @@ export class AssetSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
           await this.item.update({ "system.journalId": id });
           ui.notifications.info("Journal linked.");
         }
+      } else if (data?.type === "Item" && event.target.closest(".km-upgrade-input")) {
+        const id = data.uuid?.split(".").pop() ?? data.id;
+        const dropped = this.item.parent?.items?.get(id);
+        if (!dropped || dropped.system.assetType !== "asset") {
+          ui.notifications.warn("Only asset-type items can be set as an upgrade target.");
+          return;
+        }
+        if (dropped.id === this.item.id) return;
+        await this.item.update({ "system.upgradeTargetId": id });
+        ui.notifications.info(`Upgrade target set to ${dropped.name}.`);
       }
     });
 
@@ -105,6 +115,10 @@ export class AssetSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
 
   static async _clearJournal(event, target) {
     await this.item.update({ "system.journalId": "" });
+  }
+
+  static async _clearUpgrade(event, target) {
+    await this.item.update({ "system.upgradeTargetId": "" });
   }
 
 
@@ -164,6 +178,7 @@ export class AssetSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       obstacleDC:         sys.obstacleDC,
       requiredChecks:     sys.requiredChecks,
       journalName:        sys.journalId ? (game.journal?.get(sys.journalId)?.name ?? sys.journalId) : "",
+      upgradeName:        sys.upgradeTargetId ? (this.item.parent?.items?.get(sys.upgradeTargetId)?.name ?? sys.upgradeTargetId) : "",
     };
   }
 }

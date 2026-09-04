@@ -283,6 +283,63 @@
           {{#if system.description}}
           <div class="km-asset-desc" id="desc-{{id}}">{{system.description}}</div>
           {{/if}}
+          {{#if upgrade}}
+          <div class="km-asset-row km-asset-wip km-upgrade-row" data-item-id="{{upgrade.id}}">
+            <span class="km-asset-name"><i class="fas fa-arrow-circle-up km-upgrade-icon" aria-hidden="true"></i> {{upgrade.name}}</span>
+            <div class="km-asset-pills">
+              {{#each (statPills upgrade.system.stats)}}<span class="km-pill {{cssClass}}">{{label}}</span>{{/each}}
+              {{#if upgrade.system.devCost}}<span class="km-pill km-pill-dev">Dev {{upgrade.system.devCost}}</span>{{/if}}
+            </div>
+            <span class="km-badge km-badge-wip"><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> Upgrading</span>
+            {{#if upgrade.isGM}}<div class="km-asset-actions">
+              <button type="button" data-action="editItem"   data-item-id="{{upgrade.id}}"><i class="fas fa-edit"  aria-hidden="true"></i></button>
+              <button type="button" data-action="deleteItem" data-item-id="{{upgrade.id}}"><i class="fas fa-trash" aria-hidden="true"></i></button>
+            </div>{{/if}}
+          </div>
+          <div class="km-wip-block km-upgrade-wip-block">
+            <div class="km-wip-title"><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> {{upgrade.name}} — upgrade progress</div>
+            {{#if upgrade.system.skipChecks}}
+            <div class="km-wip-complete">
+              <i class="fas fa-forward" aria-hidden="true"></i> Checks bypassed —
+              <button type="button" data-action="activateAsset" data-item-id="{{upgrade.id}}" class="km-btn-primary km-btn-xs">
+                <i class="fas fa-check-circle" aria-hidden="true"></i> Activate
+              </button>
+            </div>
+            {{else}}
+            {{#each upgrade.checks}}
+            <div class="km-wip-row">
+              <div class="km-wip-dot {{#if passed}}km-dot-pass{{else}}km-dot-pend{{/if}}"></div>
+              <span class="km-wip-stat">{{capitalize stat}}</span>
+              <span class="km-wip-dc">DC {{dc}}</span>
+              <span class="km-wip-bonus">+{{buildBonus}} kingdom</span>
+              {{#unless passed}}
+              {{#if ../upgrade.canRoll}}
+              <span role="button" tabindex="0" data-km-action="rollBuildCheck" data-item-id="{{../upgrade.id}}" data-check-idx="{{@index}}"
+                      class="km-btn-xs" style="color:#0C447C;border-color:#185FA5;background:#E6F1FB;">
+                <i class="fas fa-dice-d20" aria-hidden="true"></i> Roll
+              </span>
+              {{/if}}
+              {{/unless}}
+              {{#if ../upgrade.isGM}}
+              <button type="button" data-action="toggleBuildCheck" data-item-id="{{../upgrade.id}}" data-check-idx="{{@index}}"
+                      class="km-btn-xs {{#if passed}}km-check-passed{{/if}}">
+                {{#if passed}}<i class="fas fa-check" aria-hidden="true"></i> Passed
+                {{else}}<i class="fas fa-times" aria-hidden="true"></i> Manual{{/if}}
+              </button>
+              {{/if}}
+            </div>
+            {{/each}}
+            {{#if (allPassed upgrade.checks)}}
+            <div class="km-wip-complete">
+              <i class="fas fa-check-circle" aria-hidden="true"></i> All checks passed —
+              <button type="button" data-action="activateAsset" data-item-id="{{upgrade.id}}" class="km-btn-primary km-btn-xs">
+                <i class="fas fa-check-circle" aria-hidden="true"></i> Activate
+              </button>
+            </div>
+            {{/if}}
+            {{/if}}
+          </div>
+          {{/if}}
           {{/each}}
 
           {{! Stationed units in this province}}

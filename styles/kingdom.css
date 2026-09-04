@@ -1149,6 +1149,13 @@ button.km-domain-turn-btn:hover { background: #eceae5; }
   color: #6a6760;
 }
 
+/* ── Upgrade-in-progress rows ─────────────────────────────────────────────── */
+.km-upgrade-row       { margin-left: 20px; border-left: 2px solid #4a90d9 !important; padding-left: 6px; }
+.km-upgrade-wip-block { margin-left: 20px; border-left: 2px solid #4a90d9; padding-left: 6px; }
+.km-upgrade-icon      { color: #4a90d9; margin-right: 4px; }
+.km-dark .km-upgrade-row       { border-left-color: #3a78c9 !important; }
+.km-dark .km-upgrade-wip-block { border-left-color: #3a78c9; }
+
 /* ── Drag-to-sort ─────────────────────────────────────────────────────────── */
 .km-asset-row[draggable],
 .km-province-block[draggable],

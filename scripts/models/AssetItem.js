@@ -110,10 +110,12 @@ export class AssetItemData extends foundry.abstract.TypeDataModel {
       unitFeatureBonus: new fields.NumberField({ initial: 0, integer: true }),
 
       // ── Shared ────────────────────────────────────────────────────────
-      skipChecks:  new fields.BooleanField({ initial: false }),
-      journalId:   new fields.StringField({ initial: "", nullable: true }),
-      description: new fields.StringField({ initial: "" }),
-      location:    new fields.StringField({ initial: "" }),
+      skipChecks:       new fields.BooleanField({ initial: false }),
+      journalId:        new fields.StringField({ initial: "", nullable: true }),
+      description:      new fields.StringField({ initial: "" }),
+      location:         new fields.StringField({ initial: "" }),
+      // ID of the asset item this will replace when activated (upgrade flow)
+      upgradeTargetId:  new fields.StringField({ initial: "", nullable: true }),
     };
   }
 

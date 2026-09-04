@@ -798,11 +798,19 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     const item = this.document.items.get(target.dataset.itemId);
     if (!item) return;
     await item.update({ "system.buildState.active": true });
+
+    // If another asset declared this one as its upgrade target, delete that predecessor
+    const predecessor = this.document.items.find(i =>
+      i.type === "kingdom-manager.asset" && i.system.upgradeTargetId === item.id
+    );
+    if (predecessor) await predecessor.delete();
+
     const verb = item.system.assetType === "unit" ? "mustered and ready" : "completed and active";
     const log  = foundry.utils.deepClone(this.document.system.turn.log ?? []);
-    log.push(`[T${this.document.system.turn.number}] ${item.name} ${verb}.`);
+    const suffix = predecessor ? `, replacing ${predecessor.name}` : "";
+    log.push(`[T${this.document.system.turn.number}] ${item.name} ${verb}${suffix}.`);
     await this.document.update({ "system.turn.log": log });
-    ui.notifications.info(`${item.name} is now ${verb}.`);
+    ui.notifications.info(`${item.name} is now ${verb}.${predecessor ? ` ${predecessor.name} removed.` : ""}`);
   }
 
   static async _km_toggleDomainTurn(event, target) {
@@ -1134,10 +1142,24 @@ function buildProvinceData(items, state, blockedIds, itemIndex) {
     const devPct    = prov.magicPotential > 0 ? Math.min(100, Math.round((prov.devLoad/prov.magicPotential)*100)) : 0;
     const devClass  = devPct >= 100 ? "full" : devPct >= 60 ? "warn" : "safe";
 
+    // WIP assets that are upgrades of an active asset in this province — render indented under their target
+    const upgradeByTargetId = new Map();
+    for (const i of provItems) {
+      if (i.system.assetType !== "asset" || i.system.buildState?.active || !i.system.upgradeTargetId) continue;
+      upgradeByTargetId.set(i.system.upgradeTargetId, i);
+    }
+    const upgradeItemIds = new Set([...upgradeByTargetId.values()].map(i => i.id));
+
     const assets = (prov.assets ?? []).sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0)).map(i => {
       const upkeepPills = STATS
         .filter(s => (i.system.upkeep?.[s] ?? 0) > 0)
         .map(s => ({ label: STAT_SHORT[s], cost: i.system.upkeep[s] }));
+      const upgradeItem = upgradeByTargetId.get(i.id);
+      const upgrade = upgradeItem ? {
+        id: upgradeItem.id, name: upgradeItem.name, system: upgradeItem.system,
+        canRoll: state._canRoll, isGM: state._isGM,
+        checks: (upgradeItem.system.buildState?.checks ?? []).map(c => ({ ...c, buildBonus: state.buildBonus[c.stat] ?? 0 }))
+      } : null;
       return {
         id: i.id, name: i.name, system: i.system,
         isGM: state._isGM, canRoll: state._canRoll,
@@ -1145,6 +1167,7 @@ function buildProvinceData(items, state, blockedIds, itemIndex) {
         unitSlots: i.system.unitSlots ?? 0,
         journalId: i.system.journalId ?? "",
         upkeepPills,
+        upgrade,
       };
     });
 
@@ -1159,7 +1182,7 @@ function buildProvinceData(items, state, blockedIds, itemIndex) {
     }
 
     const wipAssets = provItems
-      .filter(i => ["asset","unit"].includes(i.system.assetType) && !i.system.buildState?.active)
+      .filter(i => ["asset","unit"].includes(i.system.assetType) && !i.system.buildState?.active && !upgradeItemIds.has(i.id))
       .sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0))
       .map(i => ({
         id: i.id, name: i.name, system: i.system,
