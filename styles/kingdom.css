@@ -1082,6 +1082,7 @@ button.km-domain-turn-btn:hover { background: #eceae5; }
 .km-dark .km-log-row                     { color: #9a9690 !important; border-color: #383840 !important; }
 /* Drop zones */
 .km-dark .km-drop-zone                   { background: #222228 !important; border-color: #404045 !important; color: #5e5c58 !important; }
+.km-dark .km-drop-zone.km-drag-over      { border-color: #4a90d9 !important; background: #1a2535 !important; }
 /* Wip dots */
 .km-dark .km-dot-pend                    { background: #404045 !important; }
 .km-dark .km-dot-pass                    { background: #4dbb88 !important; }
@@ -1150,9 +1151,11 @@ button.km-domain-turn-btn:hover { background: #eceae5; }
 
 /* ── Drag-to-sort ─────────────────────────────────────────────────────────── */
 .km-asset-row[draggable],
-.km-province-block[draggable] { cursor: grab; }
+.km-province-block[draggable],
+.km-unit-row[draggable] { cursor: grab; }
 .km-asset-row[draggable]:active,
-.km-province-block[draggable]:active { cursor: grabbing; }
+.km-province-block[draggable]:active,
+.km-unit-row[draggable]:active { cursor: grabbing; }
 .km-drag-source { opacity: 0.4; }
 .km-drop-above  { border-top: 2px solid #185FA5 !important; }
 .km-drop-below  { border-bottom: 2px solid #185FA5 !important; }

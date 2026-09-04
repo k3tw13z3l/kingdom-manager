@@ -60,7 +60,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     } catch(e) {}
 
     // Make sortable rows draggable on every render (DOM is recreated each render)
-    for (const el of this.element.querySelectorAll(".km-asset-row[data-item-id], .km-province-block[data-item-id]")) {
+    for (const el of this.element.querySelectorAll(".km-asset-row[data-item-id], .km-province-block[data-item-id], .km-unit-row[data-item-id]")) {
       el.setAttribute("draggable", "true");
     }
 
@@ -152,11 +152,12 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
 
   _attachSortListeners(win) {
     let _dragId = null;
+    const ROW_SEL = ".km-asset-row[data-item-id], .km-province-block[data-item-id], .km-unit-row[data-item-id]";
 
     win.addEventListener("dragstart", (ev) => {
       if (!game.user.isGM) return;
       if (ev.target.closest("button, a, input, [data-action], [data-km-action]")) return;
-      const row = ev.target.closest(".km-asset-row[data-item-id], .km-province-block[data-item-id]");
+      const row = ev.target.closest(ROW_SEL);
       if (!row) return;
       _dragId = row.dataset.itemId;
       ev.dataTransfer.setData("application/x-km-sort", _dragId);
@@ -169,13 +170,21 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       for (const el of win.querySelectorAll(".km-drag-source, .km-drop-above, .km-drop-below")) {
         el.classList.remove("km-drag-source", "km-drop-above", "km-drop-below");
       }
+      win.querySelector(".km-drop-zone")?.classList.remove("km-drag-over");
     });
 
     win.addEventListener("dragover", (ev) => {
       if (!_dragId) return;
-      const target = ev.target.closest(".km-asset-row[data-item-id], .km-province-block[data-item-id]");
+      const dropZone = ev.target.closest(".km-drop-zone");
+      if (dropZone) {
+        const source = this.document.items.get(_dragId);
+        if (source?.system.assetType === "unit") { ev.preventDefault(); dropZone.classList.add("km-drag-over"); }
+        return;
+      }
+      const target = ev.target.closest(ROW_SEL);
       if (!target || target.dataset.itemId === _dragId) return;
       ev.preventDefault();
+      win.querySelector(".km-drop-zone")?.classList.remove("km-drag-over");
       for (const el of win.querySelectorAll(".km-drop-above, .km-drop-below")) {
         el.classList.remove("km-drop-above", "km-drop-below");
       }
@@ -184,7 +193,9 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     });
 
     win.addEventListener("dragleave", (ev) => {
-      const target = ev.target.closest?.(".km-asset-row[data-item-id], .km-province-block[data-item-id]");
+      const dropZone = ev.target.closest?.(".km-drop-zone");
+      if (dropZone) { dropZone.classList.remove("km-drag-over"); return; }
+      const target = ev.target.closest?.(ROW_SEL);
       if (target) target.classList.remove("km-drop-above", "km-drop-below");
     });
 
@@ -193,18 +204,33 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       if (!sortId) return;
       ev.preventDefault();
 
-      const targetEl = ev.target.closest(".km-asset-row[data-item-id], .km-province-block[data-item-id]");
+      const source = this.document.items.get(sortId);
+      if (!source) return;
+
+      // Drop onto the units panel drop zone → unstation the unit
+      if (ev.target.closest(".km-drop-zone")) {
+        if (source.system.assetType !== "unit") return;
+        const activeProvinceIds = new Set(
+          this.document.items
+            .filter(i => i.type === "kingdom-manager.asset" && i.system.assetType === "province" && i.system.buildState?.active)
+            .map(i => i.id)
+        );
+        if (!activeProvinceIds.has(source.system.provinceId)) return; // already unstationed
+        await this.document.updateEmbeddedDocuments("Item", [{ _id: sortId, "system.provinceId": "" }]);
+        return;
+      }
+
+      const targetEl = ev.target.closest(ROW_SEL);
       if (!targetEl || targetEl.dataset.itemId === sortId) return;
 
       const rect = targetEl.getBoundingClientRect();
       const sortBefore = ev.clientY < rect.top + rect.height / 2;
-
-      const source = this.document.items.get(sortId);
       const target = this.document.items.get(targetEl.dataset.itemId);
-      if (!source || !target) return;
+      if (!target) return;
 
       const srcIsProvince = source.system.assetType === "province";
       const tgtIsProvince = target.system.assetType === "province";
+      const tgtIsUnitPanel = targetEl.classList.contains("km-unit-row");
 
       // Dragging a province onto a non-province doesn't make sense
       if (srcIsProvince && !tgtIsProvince) return;
@@ -227,12 +253,44 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
         return;
       }
 
-      // Asset drop — destination province is the target province (if dropped on header)
-      // or the target asset's province (if dropped on a sibling asset, same or different province)
+      // Unit dropped onto units panel → reorder among unstationed units, unstation if needed
+      if (tgtIsUnitPanel) {
+        const activeProvinceIds = new Set(
+          this.document.items
+            .filter(i => i.type === "kingdom-manager.asset" && i.system.assetType === "province" && i.system.buildState?.active)
+            .map(i => i.id)
+        );
+        const panelGroup = this.document.items.filter(i =>
+          i.type === "kingdom-manager.asset" &&
+          i.system.assetType === "unit" &&
+          i.system.buildState?.active &&
+          !activeProvinceIds.has(i.system.provinceId) &&
+          i.id !== sortId
+        ).sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
+
+        const targetIdx = panelGroup.findIndex(i => i.id === target.id);
+        if (targetIdx === -1) return;
+        panelGroup.splice(sortBefore ? targetIdx : targetIdx + 1, 0, source);
+
+        const updates = panelGroup
+          .map((item, idx) => ({ item, sort: (idx + 1) * 100000 }))
+          .filter(({ item, sort }) => (item.sort ?? 0) !== sort)
+          .map(({ item, sort }) => ({ _id: item.id, sort }));
+
+        if (activeProvinceIds.has(source.system.provinceId)) {
+          const srcEntry = updates.find(u => u._id === sortId);
+          if (srcEntry) srcEntry["system.provinceId"] = "";
+          else updates.push({ _id: sortId, "system.provinceId": "" });
+        }
+
+        if (updates.length) await this.document.updateEmbeddedDocuments("Item", updates);
+        return;
+      }
+
+      // Asset/unit drop onto a province block or an asset/unit inside a province
       const destProvinceId = tgtIsProvince ? target.id : target.system.provinceId;
       const srcProvinceId = source.system.provinceId;
 
-      // Build ordered list of destination province's assets, excluding the dragged item
       const destGroup = this.document.items.filter(i =>
         i.type === "kingdom-manager.asset" &&
         i.system.assetType !== "province" &&
@@ -241,7 +299,6 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       ).sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
 
       if (tgtIsProvince) {
-        // Dropped on province header: append at end (prepend if cursor is in top half)
         destGroup.splice(sortBefore ? 0 : destGroup.length, 0, source);
       } else {
         const targetIdx = destGroup.findIndex(i => i.id === target.id);
@@ -254,7 +311,6 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
         .filter(({ item, sort }) => (item.sort ?? 0) !== sort)
         .map(({ item, sort }) => ({ _id: item.id, sort }));
 
-      // If moving to a different province, update provinceId on the source
       if (destProvinceId !== srcProvinceId) {
         const srcEntry = updates.find(u => u._id === sortId);
         if (srcEntry) srcEntry["system.provinceId"] = destProvinceId;
