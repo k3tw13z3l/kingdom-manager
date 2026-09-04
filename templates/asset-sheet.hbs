@@ -240,10 +240,10 @@
     {{#if system.journalId}}<button type="button" data-action="clearJournal" class="km-btn-xs km-btn-danger" style="flex-shrink:0;"><i class="fas fa-times" aria-hidden="true"></i></button>{{/if}}
   </div>
 
-  {{#if isAsset}}
+  {{#if canUpgrade}}
   <div class="km-form-row">
     <label><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> Upgrades to</label>
-    <input type="text" class="km-upgrade-input" value="{{upgradeName}}" placeholder="Drop an asset here…" readonly />
+    <input type="text" class="km-upgrade-input" value="{{upgradeName}}" placeholder="Drop an item here…" readonly />
     {{#if system.upgradeTargetId}}<button type="button" data-action="clearUpgrade" class="km-btn-xs km-btn-danger" style="flex-shrink:0;"><i class="fas fa-times" aria-hidden="true"></i></button>{{/if}}
   </div>
   {{/if}}

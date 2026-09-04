@@ -74,7 +74,7 @@ export class AssetSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
         if (kmId) {
           // Kingdom-sheet drag — link an already-embedded WIP as upgrade target
           const dropped = this.item.parent?.items?.get(kmId);
-          if (!dropped || dropped.system.assetType !== "asset" || dropped.id === this.item.id) return;
+          if (!dropped || !["asset","unit"].includes(dropped.system.assetType) || dropped.id === this.item.id) return;
           // Set both directions so buildProvinceData and _km_activateAsset both work
           await this.item.update({ "system.upgradeTargetId": dropped.id });
           if (!dropped.system.buildState?.active) {
@@ -93,8 +93,8 @@ export class AssetSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
 
         let source;
         try { source = await fromUuid(uuid); } catch(e) { return; }
-        if (!source || source.type !== "kingdom-manager.asset" || source.system?.assetType !== "asset") {
-          ui.notifications.warn("Only asset-type items can be set as an upgrade target.");
+        if (!source || source.type !== "kingdom-manager.asset" || !["asset","unit"].includes(source.system?.assetType)) {
+          ui.notifications.warn("Only asset or unit items can be set as an upgrade target.");
           return;
         }
         if (source.id === this.item.id) return;
@@ -153,10 +153,11 @@ export class AssetSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
   async _prepareContext(options) {
     const ctx        = await super._prepareContext(options);
     const sys        = this.item.system;
-    const isProvince = sys.assetType === "province";
-    const isUnit     = sys.assetType === "unit";
-    const isObstacle = sys.assetType === "obstacle";
-    const isAsset    = sys.assetType === "asset";
+    const isProvince  = sys.assetType === "province";
+    const isUnit      = sys.assetType === "unit";
+    const isObstacle  = sys.assetType === "obstacle";
+    const isAsset     = sys.assetType === "asset";
+    const canUpgrade  = isAsset || (isUnit && sys.unitType !== "army");
 
     const terrainOptions = Object.entries(TERRAIN_TYPES).map(([key, t]) => ({
       value: key,
@@ -197,7 +198,7 @@ export class AssetSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       ...ctx,
       item:               this.item,
       system:             sys,
-      isProvince, isUnit, isObstacle, isAsset,
+      isProvince, isUnit, isObstacle, isAsset, canUpgrade,
       terrainOptions,
       assetTypeOptions,
       obstacleStatOptions,
