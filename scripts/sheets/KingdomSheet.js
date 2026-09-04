@@ -29,6 +29,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       toggleBuildCheck: KingdomSheet._km_toggleBuildCheck,
       activateAsset:    KingdomSheet._km_activateAsset,
       startUpgrade:     KingdomSheet._km_startUpgrade,
+      degarrison:       KingdomSheet._km_degarrison,
       accumulateWealth: KingdomSheet._km_accumulateWealth,
       toggleDomainTurn: KingdomSheet._km_toggleDomainTurn,
     }
@@ -153,12 +154,6 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
         await this.document.update({ "system.rulers": rulers });
         return;
       }
-      const sel = event.target.closest(".km-garrison-select");
-      if (sel) {
-        const itemId = sel.closest("[data-item-id]")?.dataset.itemId;
-        const item   = this.document.items.get(itemId);
-        if (item) await this._updateItem(item, { "system.garrisonAssetId": sel.value });
-      }
     });
 
     this._attachSortListeners(win);
@@ -185,10 +180,27 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
         el.classList.remove("km-drag-source", "km-drop-above", "km-drop-below");
       }
       win.querySelector(".km-drop-zone")?.classList.remove("km-drag-over");
+      for (const el of win.querySelectorAll(".km-garrison-drag-over")) el.classList.remove("km-garrison-drag-over");
     });
+
+    const isEligibleForGarrison = (item) =>
+      item?.system.assetType === "unit" &&
+      (item?.system.unitType === "army" || item?.system.unitType === "garrison");
 
     win.addEventListener("dragover", (ev) => {
       if (!_dragId) return;
+      // Garrison slot drop target (has priority over sort logic)
+      const garrisonSlot = ev.target.closest(".km-garrison-slot");
+      if (garrisonSlot) {
+        const source = this.document.items.get(_dragId);
+        if (isEligibleForGarrison(source) && garrisonSlot.dataset.itemId !== _dragId) {
+          ev.preventDefault();
+          for (const el of win.querySelectorAll(".km-garrison-drag-over")) el.classList.remove("km-garrison-drag-over");
+          garrisonSlot.classList.add("km-garrison-drag-over");
+        }
+        return;
+      }
+      for (const el of win.querySelectorAll(".km-garrison-drag-over")) el.classList.remove("km-garrison-drag-over");
       const dropZone = ev.target.closest(".km-drop-zone");
       if (dropZone) {
         const source = this.document.items.get(_dragId);
@@ -207,6 +219,8 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     });
 
     win.addEventListener("dragleave", (ev) => {
+      const garrisonSlot = ev.target.closest?.(".km-garrison-slot");
+      if (garrisonSlot) { garrisonSlot.classList.remove("km-garrison-drag-over"); return; }
       const dropZone = ev.target.closest?.(".km-drop-zone");
       if (dropZone) { dropZone.classList.remove("km-drag-over"); return; }
       const target = ev.target.closest?.(ROW_SEL);
@@ -220,6 +234,14 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
 
       const source = this.document.items.get(sortId);
       if (!source) return;
+
+      // Drop onto a garrison slot asset → assign garrison
+      const garrisonSlot = ev.target.closest(".km-garrison-slot");
+      if (garrisonSlot) {
+        for (const el of win.querySelectorAll(".km-garrison-drag-over")) el.classList.remove("km-garrison-drag-over");
+        if (isEligibleForGarrison(source)) await this._km_assignGarrison(source, garrisonSlot.dataset.itemId);
+        return;
+      }
 
       // Drop onto the units panel drop zone → unstation the unit
       if (ev.target.closest(".km-drop-zone")) {
@@ -894,6 +916,51 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     await this._updateActor({ [field]: !cur });
   }
 
+  static async _km_degarrison(event, target) {
+    const item = this.document.items.get(target.dataset.itemId);
+    if (item) await this._updateItem(item, { "system.garrisonAssetId": "" });
+  }
+
+  async _km_assignGarrison(unit, assetId) {
+    const asset = this.document.items.get(assetId);
+    if (!asset || !(asset.system.unitSlots > 0)) return;
+    if (unit.system.garrisonAssetId === assetId) return;
+
+    const slots = asset.system.unitSlots;
+    const currently = this.document.items.filter(i =>
+      i.type === "kingdom-manager.asset" &&
+      i.system.assetType === "unit" &&
+      i.system.buildState?.active &&
+      i.system.garrisonAssetId === assetId &&
+      i.id !== unit.id
+    );
+
+    if (currently.length < slots) {
+      await this._updateItem(unit, { "system.garrisonAssetId": assetId });
+    } else {
+      const opts = currently.map(u => `<option value="${u.id}">${u.name}</option>`).join("");
+      new Dialog({
+        title: "Garrison Full",
+        content: `<p>All ${slots} slot(s) in <strong>${asset.name}</strong> are occupied.</p>
+                  <p>Remove which unit to make room for <strong>${unit.name}</strong>?</p>
+                  <select id="km-evict-sel" style="width:100%;margin-top:4px">${opts}</select>`,
+        buttons: {
+          evict: {
+            label: "Remove & Garrison",
+            callback: async (html) => {
+              const evictId   = html.find("#km-evict-sel").val();
+              const evictUnit = this.document.items.get(evictId);
+              if (evictUnit) await this._updateItem(evictUnit, { "system.garrisonAssetId": "" });
+              await this._updateItem(unit, { "system.garrisonAssetId": assetId });
+            }
+          },
+          cancel: { label: "Cancel" }
+        },
+        default: "evict"
+      }).render(true);
+    }
+  }
+
   static async _km_accumulateWealth(event, target) {
     const treasury    = this.document.system.treasury ?? 0;
     const dc          = 10 + treasury;
@@ -1296,11 +1363,6 @@ function buildProvinceData(items, state, blockedIds, itemIndex) {
         };
       });
 
-    // Garrison assets available in this province (for selector)
-    const provGarrisonAssets = provItems
-      .filter(i => i.system.assetType === "asset" && i.system.buildState?.active && (i.system.unitSlots ?? 0) > 0)
-      .map(i => ({ id: i.id, name: i.name }));
-
     // Units stationed here: those indexed by location name + those by provinceId with no location set
     const stationedUnits = [
       ...(unitsByLocation.get(prov.name) ?? []),
@@ -1309,25 +1371,20 @@ function buildProvinceData(items, state, blockedIds, itemIndex) {
       const pills = Object.entries(i.system.stats ?? {})
         .filter(([, v]) => v !== null && v !== undefined && v !== 0)
         .map(([stat, val]) => ({ stat, label: STAT_SHORT[stat], cost: Math.abs(val) }));
-      const garrisonInfo       = state.garrisonedUnitMap?.get(i.id) ?? null;
-      const isGarrisoned       = !!garrisonInfo;
-      const eligible           = i.system.unitType === "army" || i.system.unitType === "garrison";
-      const showGarrisonSelect = eligible && provGarrisonAssets.length > 0;
+      const garrisonInfo = state.garrisonedUnitMap?.get(i.id) ?? null;
+      const isGarrisoned = !!garrisonInfo;
       return {
         id: i.id, name: i.name, system: i.system, pills,
-        isGM:               state._isGM,
-        isBlocked:          blockedIds.has(i.id),
+        isGM:              state._isGM,
+        isBlocked:         blockedIds.has(i.id),
         isGarrisoned,
-        garrisonAssetId:    garrisonInfo?.assetId  ?? "",
-        garrisonAssetName:  garrisonInfo?.assetName ?? "",
-        showGarrisonSelect,
-        garrisonOptions:    showGarrisonSelect ? provGarrisonAssets : [],
-        unitType:           i.system.unitType ?? "army",
-        isAgent:            (i.system.unitType ?? "army") !== "army",
-        hasFeature:         !!(i.system.unitFeatureStat),
-        featureStat:        i.system.unitFeatureStat ?? "",
-        featureBonus:       i.system.unitFeatureBonus ?? 0,
-        journalId:          i.system.journalId ?? "",
+        garrisonAssetName: garrisonInfo?.assetName ?? "",
+        unitType:          i.system.unitType ?? "army",
+        isAgent:           (i.system.unitType ?? "army") !== "army",
+        hasFeature:        !!(i.system.unitFeatureStat),
+        featureStat:       i.system.unitFeatureStat ?? "",
+        featureBonus:      i.system.unitFeatureBonus ?? 0,
+        journalId:         i.system.journalId ?? "",
       };
     });
 

@@ -889,19 +889,27 @@ button.km-domain-turn-btn:hover { background: #eceae5; }
   font-style: italic;
   margin-left: 3px;
 }
-.km-garrison-select {
-  font-size: 11px;
-  padding: 1px 4px;
-  border-radius: 3px;
-  border: 1px solid #b8c8a8;
-  background: #eaf3de;
-  color: #27500A;
-  margin-left: 3px;
+.km-btn-degarrison {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 10px;
+  padding: 0 3px;
   cursor: pointer;
-  max-width: 120px;
+  line-height: 1;
+  opacity: 0.6;
 }
-.km-dark .km-garrison-name   { color: #6ac48a; }
-.km-dark .km-garrison-select { background: #0e2418; border-color: #2a5a38; color: #6ac48a; }
+.km-btn-degarrison:hover { opacity: 1; color: #c0392b; }
+
+/* Garrison slot drop target */
+.km-garrison-slot { cursor: copy; }
+.km-garrison-slot.km-garrison-drag-over {
+  outline: 2px dashed #4a8c3f;
+  outline-offset: -2px;
+  background: rgba(74, 140, 63, 0.08);
+}
+.km-dark .km-garrison-name { color: #6ac48a; }
+.km-dark .km-garrison-slot.km-garrison-drag-over { outline-color: #6ac48a; background: rgba(106, 196, 138, 0.1); }
 
 /* ── Agent unit tag ───────────────────────────────────────────────────────── */
 .km-unit-agent-tag {

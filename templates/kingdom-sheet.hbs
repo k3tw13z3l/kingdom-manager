@@ -257,7 +257,7 @@
           {{/if}}
 
           {{#each assets}}
-          <div class="km-asset-row {{#if isBlocked}}km-asset-blocked{{/if}}" data-item-id="{{id}}">
+          <div class="km-asset-row {{#if isBlocked}}km-asset-blocked{{/if}}{{#if unitSlots}} km-garrison-slot{{/if}}" data-item-id="{{id}}">
             <span class="km-asset-name">{{#if journalId}}<i class="fas fa-book-open km-journal-link" data-journal-id="{{journalId}}" title="Open journal" aria-hidden="true"></i> {{/if}}{{name}}</span>
             <div class="km-asset-pills">
               {{#each (statPills system.stats)}}<span class="km-pill {{cssClass}}">{{label}}</span>{{/each}}
@@ -369,13 +369,9 @@
               {{#if isGarrisoned}}<i class="fas fa-home km-garrison-icon" title="Upkeep covered by garrison" aria-hidden="true"></i>{{/if}}
               {{#if hasFeature}}<span class="km-unit-feature km-pt-{{featureStat}}">{{capitalize featureStat}} +{{featureBonus}}</span>{{/if}}
             </span>
-            {{#if showGarrisonSelect}}
-              <select class="km-garrison-select" title="Choose garrison asset">
-                <option value="" {{#unless garrisonAssetId}}selected{{/unless}}>—</option>
-                {{#each garrisonOptions}}<option value="{{id}}" {{#if (eq id ../garrisonAssetId)}}selected{{/if}}>{{name}}</option>{{/each}}
-              </select>
-            {{else if isGarrisoned}}
+            {{#if isGarrisoned}}
               <span class="km-garrison-name">{{garrisonAssetName}}</span>
+              {{#if isGM}}<button type="button" data-action="degarrison" data-item-id="{{id}}" class="km-btn-degarrison" title="Remove from garrison"><i class="fas fa-times" aria-hidden="true"></i></button>{{/if}}
             {{/if}}
             <div class="km-asset-pills">
               {{#each pills}}<span class="km-pill km-pill-upk">{{label}} -{{cost}}</span>{{/each}}

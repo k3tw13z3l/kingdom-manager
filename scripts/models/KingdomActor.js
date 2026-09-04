@@ -74,23 +74,30 @@ export class KingdomActorData extends foundry.abstract.TypeDataModel {
       }
     }
 
-    // Per-asset remaining slots, keyed by asset item ID
-    const assetSlotRemaining = new Map();
-    // Garrison assets grouped by location key: locationKey → [{assetId, assetName, slots}]
-    const garrisonAssetsByLoc = new Map();
+    // Garrison assets: assetId → { name, slots }
+    const garrisonAssetMap = new Map();
     for (const item of items) {
       if (item.type !== "kingdom-manager.asset") continue;
       const d = item.system;
       if (d.assetType !== "asset" || !d.buildState?.active || !d.unitSlots) continue;
-      const key = locationKey(d);
-      if (!key) continue;
-      if (!garrisonAssetsByLoc.has(key)) garrisonAssetsByLoc.set(key, []);
-      garrisonAssetsByLoc.get(key).push({ assetId: item.id, assetName: item.name, slots: d.unitSlots });
-      assetSlotRemaining.set(item.id, d.unitSlots);
+      garrisonAssetMap.set(item.id, { name: item.name, slots: d.unitSlots });
     }
 
-    // unitId → { assetId, assetName }
+    // Explicit garrison assignment: units whose garrisonAssetId points to a valid garrison asset
     const garrisonedUnitMap = new Map();
+    const garrisonUsed = new Map();
+    for (const item of items) {
+      if (item.type !== "kingdom-manager.asset") continue;
+      const d = item.system;
+      if (d.assetType !== "unit" || !d.buildState?.active || !d.garrisonAssetId) continue;
+      const garrison = garrisonAssetMap.get(d.garrisonAssetId);
+      if (!garrison) continue;
+      const used = garrisonUsed.get(d.garrisonAssetId) ?? 0;
+      if (used < garrison.slots) {
+        garrisonedUnitMap.set(item.id, { assetId: d.garrisonAssetId, assetName: garrison.name });
+        garrisonUsed.set(d.garrisonAssetId, used + 1);
+      }
+    }
 
     for (const item of items) {
       if (item.type !== "kingdom-manager.asset") continue;
@@ -101,27 +108,7 @@ export class KingdomActorData extends foundry.abstract.TypeDataModel {
 
       if (d.isUnit) {
         if (!d.buildState?.active) continue;
-        const key      = locationKey(d);
-        const eligible = (d.unitType === "army" || d.unitType === "garrison") && !!key;
-        if (eligible) {
-          const garrisons = garrisonAssetsByLoc.get(key) ?? [];
-          let assigned = null;
-          // Honour the unit's preferred garrison asset
-          if (d.garrisonAssetId) {
-            const pref = garrisons.find(g => g.assetId === d.garrisonAssetId && (assetSlotRemaining.get(g.assetId) ?? 0) > 0);
-            if (pref) assigned = pref;
-          }
-          // Fall back to first asset with remaining slots
-          if (!assigned) assigned = garrisons.find(g => (assetSlotRemaining.get(g.assetId) ?? 0) > 0);
-          if (assigned) {
-            assetSlotRemaining.set(assigned.assetId, (assetSlotRemaining.get(assigned.assetId) ?? 0) - 1);
-            garrisonedUnitMap.set(item.id, { assetId: assigned.assetId, assetName: assigned.assetName });
-          } else {
-            addStats(upkeep, d.stats, /* abs */ true);
-          }
-        } else {
-          addStats(upkeep, d.stats, /* abs */ true);
-        }
+        if (!garrisonedUnitMap.has(item.id)) addStats(upkeep, d.stats, /* abs */ true);
         if (prov) prov.units.push(item);
       } else if (d.isObstacle) {
         // Obstacle drains ceil(score/2) from all stats ONLY if not blocking a specific asset
@@ -158,7 +145,7 @@ export class KingdomActorData extends foundry.abstract.TypeDataModel {
     }
 
     const garrisonedUnitIds = new Set(garrisonedUnitMap.keys());
-    return { ratings, upkeep, headroom, buildBonus, provinces: provinceList, garrisonedUnitIds, garrisonedUnitMap, garrisonAssetsByLoc };
+    return { ratings, upkeep, headroom, buildBonus, provinces: provinceList, garrisonedUnitIds, garrisonedUnitMap };
   }
 
   _indexProvinces(items) {
