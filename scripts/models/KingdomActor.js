@@ -61,8 +61,6 @@ export class KingdomActorData extends foundry.abstract.TypeDataModel {
     const provinceNameById = Object.fromEntries(
       Object.entries(provinces).map(([id, p]) => [id, p.item.name])
     );
-    const locationKey = (sys) => sys.location || provinceNameById[sys.provinceId] || "";
-
     const ratings = zeroStats();
     const upkeep  = zeroStats();
 
@@ -129,7 +127,7 @@ export class KingdomActorData extends foundry.abstract.TypeDataModel {
     const provinceList = this._buildProvinceList(provinces, ratings);
 
     // Atrocity upkeep penalty: 2 + floor(atrocity/4) to all stats
-    const atrocity = this.parent?.system?.atrocity ?? 0;
+    const atrocity = this.atrocity ?? 0;
     if (atrocity > 0) {
       const penalty = 2 + Math.floor(atrocity / 4);
       for (const stat of STATS) upkeep[stat] += penalty;
@@ -174,18 +172,6 @@ export class KingdomActorData extends foundry.abstract.TypeDataModel {
         blockedIds.add(item.system.blockedAssetId);
     }
     return blockedIds;
-  }
-
-  _collectUnitSlots(items, locationKey) {
-    const slotsByLocation = {};
-    for (const item of items) {
-      if (item.type !== "kingdom-manager.asset") continue;
-      const d = item.system;
-      if (d.assetType !== "asset" || !d.buildState?.active || !d.unitSlots) continue;
-      const key = locationKey(d);
-      if (key) slotsByLocation[key] = (slotsByLocation[key] ?? 0) + d.unitSlots;
-    }
-    return slotsByLocation;
   }
 
   _buildProvinceList(provinces, ratings) {

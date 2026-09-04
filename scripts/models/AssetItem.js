@@ -104,7 +104,7 @@ export class AssetItemData extends foundry.abstract.TypeDataModel {
       obstacleLog: new fields.ArrayField(new fields.StringField()),
 
       // ── Unit feature — allows unit to roll obstacle resolve checks ──────────
-      // Unit subtype — only "army" can be garrisoned in a barracks (no upkeep)
+      // Unit subtype — "army" and "garrison" types can be garrisoned in a barracks (no upkeep)
       unitType: new fields.StringField({ initial: "army", nullable: true }),
       unitFeatureStat:  new fields.StringField({ initial: "", nullable: true }),
       unitFeatureBonus: new fields.NumberField({ initial: 0, integer: true }),

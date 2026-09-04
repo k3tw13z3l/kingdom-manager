@@ -1265,10 +1265,9 @@ function buildRatingDisplay(state) {
 }
 
 function buildItemIndex(items) {
-  const byId                  = new Map();
-  const byProvince            = new Map(); // provinceId → item[]
-  const unitsByLocation       = new Map(); // locationName → active unit[]
-  const upkeepOffsetByProvince = new Map(); // provinceId → stat totals
+  const byId            = new Map();
+  const byProvince      = new Map(); // provinceId → item[]
+  const unitsByLocation = new Map(); // locationName → active unit[]
 
   for (const i of items) {
     byId.set(i.id, i);
@@ -1277,18 +1276,13 @@ function buildItemIndex(items) {
     if (pid) {
       if (!byProvince.has(pid)) byProvince.set(pid, []);
       byProvince.get(pid).push(i);
-      if (i.system.buildState?.active) {
-        if (!upkeepOffsetByProvince.has(pid)) upkeepOffsetByProvince.set(pid, zeroStats());
-        const o = upkeepOffsetByProvince.get(pid);
-        for (const s of STATS) o[s] += i.system.upkeepOffset?.[s] ?? 0;
-      }
     }
     if (i.system.assetType === "unit" && i.system.buildState?.active && i.system.location) {
       if (!unitsByLocation.has(i.system.location)) unitsByLocation.set(i.system.location, []);
       unitsByLocation.get(i.system.location).push(i);
     }
   }
-  return { byId, byProvince, unitsByLocation, upkeepOffsetByProvince };
+  return { byId, byProvince, unitsByLocation };
 }
 
 function buildProvinceData(items, state, blockedIds, itemIndex) {
@@ -1407,7 +1401,7 @@ function buildProvinceData(items, state, blockedIds, itemIndex) {
         isGarrisoned,
         garrisonAssetName: garrisonInfo?.assetName ?? "",
         unitType:          i.system.unitType ?? "army",
-        isAgent:           (i.system.unitType ?? "army") !== "army",
+        isAgent:           !["army", "garrison"].includes(i.system.unitType ?? "army"),
         hasFeature:        !!(i.system.unitFeatureStat),
         featureStat:       i.system.unitFeatureStat ?? "",
         featureBonus:      i.system.unitFeatureBonus ?? 0,
@@ -1420,7 +1414,7 @@ function buildProvinceData(items, state, blockedIds, itemIndex) {
 }
 
 function buildUnitData(items, state, garrisonedUnitIds = new Set(), blockedIds, itemIndex) {
-  const { byId, upkeepOffsetByProvince } = itemIndex;
+  const { byId } = itemIndex;
   const activeProvinceIds   = new Set();
   const activeProvinceNames = new Set();
   for (const i of items) {
@@ -1436,10 +1430,9 @@ function buildUnitData(items, state, garrisonedUnitIds = new Set(), blockedIds, 
     return !activeProvinceIds.has(i.system.provinceId);
   }).sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0)).map(unit => {
     const stats  = unit.system.stats;
-    const offset = upkeepOffsetByProvince.get(unit.system.provinceId) ?? zeroStats();
     const pills = Object.entries(stats)
       .filter(([, v]) => v !== null && v !== undefined && v !== 0)
-      .map(([stat, val]) => ({ stat, label: STAT_SHORT[stat] ?? stat, cost: Math.abs(val), offset: offset[stat] ?? 0 }));
+      .map(([stat, val]) => ({ stat, label: STAT_SHORT[stat] ?? stat, cost: Math.abs(val) }));
     const provinceItem = byId.get(unit.system.provinceId);
     return {
       id: unit.id, name: unit.name, system: unit.system, pills,
@@ -1449,7 +1442,7 @@ function buildUnitData(items, state, garrisonedUnitIds = new Set(), blockedIds, 
       isBlocked:    blockedIds.has(unit.id),
       isGarrisoned: garrisonedUnitIds.has(unit.id),
       unitType:     unit.system.unitType ?? "army",
-      isAgent:      (unit.system.unitType ?? "army") !== "army",
+      isAgent:      !["army", "garrison"].includes(unit.system.unitType ?? "army"),
       hasFeature:   !!(unit.system.unitFeatureStat),
       featureStat:  unit.system.unitFeatureStat ?? "",
       featureBonus: unit.system.unitFeatureBonus ?? 0,
