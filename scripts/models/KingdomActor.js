@@ -87,7 +87,7 @@ export class KingdomActorData extends foundry.abstract.TypeDataModel {
       if (d.isUnit) {
         if (!d.buildState?.active) continue;
         const key     = locationKey(d);
-        const hasSlot = d.unitType === "army" && key && (slotsByLocation[key] ?? 0) > 0;
+        const hasSlot = (d.unitType === "army" || d.unitType === "garrison") && key && (slotsByLocation[key] ?? 0) > 0;
         if (hasSlot) {
           slotsByLocation[key]--;
           garrisonedUnitIds.add(item.id);
