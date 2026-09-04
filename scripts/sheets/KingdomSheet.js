@@ -205,29 +205,63 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
 
       const srcIsProvince = source.system.assetType === "province";
       const tgtIsProvince = target.system.assetType === "province";
-      if (srcIsProvince !== tgtIsProvince) return;
 
-      // All items in the same sort group, ordered by current sort value
-      const group = this.document.items.filter(i =>
-        i.type === "kingdom-manager.asset" && (
-          srcIsProvince
-            ? i.system.assetType === "province"
-            : i.system.assetType !== "province" && i.system.provinceId === source.system.provinceId
-        )
+      // Dragging a province onto a non-province doesn't make sense
+      if (srcIsProvince && !tgtIsProvince) return;
+
+      if (srcIsProvince) {
+        // Province reorder: sort among all provinces
+        const group = this.document.items.filter(i =>
+          i.type === "kingdom-manager.asset" && i.system.assetType === "province"
+        ).sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
+
+        const reordered = group.filter(i => i.id !== sortId);
+        const targetIdx = reordered.findIndex(i => i.id === target.id);
+        if (targetIdx === -1) return;
+        reordered.splice(sortBefore ? targetIdx : targetIdx + 1, 0, source);
+
+        const updates = reordered
+          .map((item, idx) => ({ item, sort: (idx + 1) * 100000 }))
+          .filter(({ item, sort }) => (item.sort ?? 0) !== sort);
+        await this.document.updateEmbeddedDocuments("Item", updates.map(({ item, sort }) => ({ _id: item.id, sort })));
+        return;
+      }
+
+      // Asset drop — destination province is the target province (if dropped on header)
+      // or the target asset's province (if dropped on a sibling asset, same or different province)
+      const destProvinceId = tgtIsProvince ? target.id : target.system.provinceId;
+      const srcProvinceId = source.system.provinceId;
+
+      // Build ordered list of destination province's assets, excluding the dragged item
+      const destGroup = this.document.items.filter(i =>
+        i.type === "kingdom-manager.asset" &&
+        i.system.assetType !== "province" &&
+        i.system.provinceId === destProvinceId &&
+        i.id !== sortId
       ).sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
 
-      // Re-insert source before or after target
-      const reordered = group.filter(i => i.id !== sortId);
-      const targetIdx = reordered.findIndex(i => i.id === target.id);
-      if (targetIdx === -1) return;
-      reordered.splice(sortBefore ? targetIdx : targetIdx + 1, 0, source);
+      if (tgtIsProvince) {
+        // Dropped on province header: append at end (prepend if cursor is in top half)
+        destGroup.splice(sortBefore ? 0 : destGroup.length, 0, source);
+      } else {
+        const targetIdx = destGroup.findIndex(i => i.id === target.id);
+        if (targetIdx === -1) return;
+        destGroup.splice(sortBefore ? targetIdx : targetIdx + 1, 0, source);
+      }
 
-      // Update sort values for any item that changed position
-      const updates = reordered
+      const updates = destGroup
         .map((item, idx) => ({ item, sort: (idx + 1) * 100000 }))
-        .filter(({ item, sort }) => (item.sort ?? 0) !== sort);
+        .filter(({ item, sort }) => (item.sort ?? 0) !== sort)
+        .map(({ item, sort }) => ({ _id: item.id, sort }));
 
-      await this.document.updateEmbeddedDocuments("Item", updates.map(({ item, sort }) => ({ _id: item.id, sort })));
+      // If moving to a different province, update provinceId on the source
+      if (destProvinceId !== srcProvinceId) {
+        const srcEntry = updates.find(u => u._id === sortId);
+        if (srcEntry) srcEntry["system.provinceId"] = destProvinceId;
+        else updates.push({ _id: sortId, "system.provinceId": destProvinceId });
+      }
+
+      if (updates.length) await this.document.updateEmbeddedDocuments("Item", updates);
     });
   }
 
