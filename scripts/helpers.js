@@ -91,4 +91,43 @@ export function registerHelpers() {
 
   // Reverse index helper for log (log is reversed for display, so index needs inverting)
   Handlebars.registerHelper("reverseIndex", (idx, len) => len - 1 - idx);
+
+  // Shared partial: WIP build/claim/upgrade check rows + activate button.
+  // Context must provide: id, checks, canRoll, isGM, system.skipChecks,
+  //                       activateIcon (full FA class), activateLabel, passedLabel.
+  Handlebars.registerPartial("km-wip-checks", `\
+{{#if system.skipChecks}}\
+<div class="km-wip-complete">\
+<i class="fas fa-forward" aria-hidden="true"></i> Checks bypassed —\
+<button type="button" data-action="activateAsset" data-item-id="{{id}}" class="km-btn-primary km-btn-xs">\
+<i class="{{activateIcon}}" aria-hidden="true"></i> {{activateLabel}}\
+</button></div>\
+{{else}}\
+{{#each checks}}\
+<div class="km-wip-row">\
+<div class="km-wip-dot {{#if passed}}km-dot-pass{{else}}km-dot-pend{{/if}}"></div>\
+<span class="km-wip-stat">{{capitalize stat}}</span>\
+<span class="km-wip-dc">DC {{dc}}</span>\
+<span class="km-wip-bonus">+{{buildBonus}} kingdom</span>\
+{{#unless passed}}{{#if ../canRoll}}\
+<span role="button" tabindex="0" data-km-action="rollBuildCheck" data-item-id="{{../id}}" data-check-idx="{{@index}}" class="km-btn-xs km-btn-roll">\
+<i class="fas fa-dice-d20" aria-hidden="true"></i> Roll\
+</span>\
+{{/if}}{{/unless}}\
+{{#if ../isGM}}\
+<button type="button" data-action="toggleBuildCheck" data-item-id="{{../id}}" data-check-idx="{{@index}}" class="km-btn-xs {{#if passed}}km-check-passed{{/if}}">\
+{{#if passed}}<i class="fas fa-check" aria-hidden="true"></i> {{../passedLabel}}\
+{{else}}<i class="fas fa-times" aria-hidden="true"></i> Manual{{/if}}\
+</button>\
+{{/if}}\
+</div>\
+{{/each}}\
+{{#if (allPassed checks)}}\
+<div class="km-wip-complete">\
+<i class="fas fa-check-circle" aria-hidden="true"></i> All checks passed —\
+<button type="button" data-action="activateAsset" data-item-id="{{id}}" class="km-btn-primary km-btn-xs">\
+<i class="{{activateIcon}}" aria-hidden="true"></i> {{activateLabel}}\
+</button></div>\
+{{/if}}\
+{{/if}}`);
 }

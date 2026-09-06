@@ -591,6 +591,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     let provinces = [], units = [];
     try { provinces = buildProvinceData(items, state, blockedIds, itemIndex); } catch(e) { console.error("KM | buildProvinceData error:", e); }
     try { units     = buildUnitData(items, state, state.garrisonedUnitIds ?? new Set(), blockedIds, itemIndex); } catch(e) { console.error("KM | buildUnitData error:", e); }
+    const obstacles = provinces.flatMap(p => p.obstacles);
     for (const r of rulers) {
       r.canRollCheck = domainTurnsLeft > 0 || (r.hasPersonalTurn && !r.personalTurnUsed);
     }
@@ -608,7 +609,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     ).map(i => ({ id: i.id, name: i.name, system: i.system, isGM }));
 
     return {
-      ...ctx, actor, system: sys, state, provinces, units, rulers, orphanedWip,
+      ...ctx, actor, system: sys, state, provinces, units, rulers, orphanedWip, obstacles,
       atrocityPenalty: sys.atrocity > 0 ? 2 + Math.floor(sys.atrocity / 4) : 0,
       canRoll, isGM,
       showMoveCost: game.settings.get("kingdom-manager", "showMoveCost"),
@@ -1323,7 +1324,8 @@ function buildProvinceData(items, state, blockedIds, itemIndex) {
       const upgrade = upgradeItem ? {
         id: upgradeItem.id, name: upgradeItem.name, system: upgradeItem.system,
         canRoll: state._canRoll, isGM: state._isGM,
-        checks: (upgradeItem.system.buildState?.checks ?? []).map(c => ({ ...c, buildBonus: state.buildBonus[c.stat] ?? 0 }))
+        checks: (upgradeItem.system.buildState?.checks ?? []).map(c => ({ ...c, buildBonus: state.buildBonus[c.stat] ?? 0 })),
+        activateIcon: "fas fa-check-circle", activateLabel: "Activate", passedLabel: "Passed",
       } : null;
 
       // potentialUpgrade: upgradeTargetId points to a world item (not yet embedded)
@@ -1363,17 +1365,24 @@ function buildProvinceData(items, state, blockedIds, itemIndex) {
     const wipAssets = provItems
       .filter(i => ["asset","unit"].includes(i.system.assetType) && !i.system.buildState?.active && !upgradeItemIds.has(i.id))
       .sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0))
-      .map(i => ({
-        id: i.id, name: i.name, system: i.system,
-        isMuster: i.system.assetType === "unit",
-        canRoll: state._canRoll, isGM: state._isGM,
-        checks: (i.system.buildState?.checks ?? []).map(c => ({ ...c, buildBonus: state.buildBonus[c.stat] ?? 0 }))
-      }));
+      .map(i => {
+        const isMuster = i.system.assetType === "unit";
+        return {
+          id: i.id, name: i.name, system: i.system,
+          isMuster,
+          canRoll: state._canRoll, isGM: state._isGM,
+          checks: (i.system.buildState?.checks ?? []).map(c => ({ ...c, buildBonus: state.buildBonus[c.stat] ?? 0 })),
+          activateIcon: isMuster ? "fas fa-drum" : "fas fa-check-circle",
+          activateLabel: isMuster ? "Muster unit" : "Activate",
+          passedLabel: "Passed",
+        };
+      });
 
     const claimingProv = prov.item.system.buildState?.active === false ? {
       id: prov.id, name: prov.name, system: prov.item.system, isClaiming: true,
       canRoll: state._canRoll, isGM: state._isGM,
-      checks: (prov.item.system.buildState?.checks ?? []).map(c => ({ ...c, buildBonus: state.buildBonus[c.stat] ?? 0 }))
+      checks: (prov.item.system.buildState?.checks ?? []).map(c => ({ ...c, buildBonus: state.buildBonus[c.stat] ?? 0 })),
+      activateIcon: "fas fa-flag", activateLabel: "Claim province", passedLabel: "Claimed",
     } : null;
 
     const obstacles = provItems
@@ -1387,6 +1396,7 @@ function buildProvinceData(items, state, blockedIds, itemIndex) {
           upkeepDrain: blockedAsset ? null : Math.ceil((i.system.obstacleScore ?? 0) / 2),
           blockedAssetName: blockedAsset?.name ?? null,
           isGM: state._isGM, canRoll: state._canRoll,
+          provinceName: prov.name,
         };
       });
 
@@ -1404,7 +1414,8 @@ function buildProvinceData(items, state, blockedIds, itemIndex) {
       const upgrade      = upgradeItem ? {
         id: upgradeItem.id, name: upgradeItem.name, system: upgradeItem.system,
         canRoll: state._canRoll, isGM: state._isGM,
-        checks: (upgradeItem.system.buildState?.checks ?? []).map(c => ({ ...c, buildBonus: state.buildBonus[c.stat] ?? 0 }))
+        checks: (upgradeItem.system.buildState?.checks ?? []).map(c => ({ ...c, buildBonus: state.buildBonus[c.stat] ?? 0 })),
+        activateIcon: "fas fa-check-circle", activateLabel: "Muster", passedLabel: "Passed",
       } : null;
       let potentialUpgrade = null;
       if (!upgrade && i.system.upgradeTargetId && state._isGM) {

@@ -154,6 +154,10 @@
 }
 .km-btn-primary:hover { background: #B5D4F4; }
 
+/* Roll button — km-btn-xs size, primary colours */
+.km-btn-roll { color: #0C447C; border-color: #185FA5; background: #E6F1FB; }
+.km-btn-roll:hover { background: #B5D4F4; }
+
 /* ── Ratings ──────────────────────────────────────────────────────────────── */
 .km-ratings {
   display: grid;
@@ -312,9 +316,10 @@
   font-size: 10px; padding: 2px 8px; border-radius: var(--km-radius);
   white-space: nowrap; display: inline-flex; align-items: center; gap: 3px; font-weight: 500;
 }
-.km-badge-active { background: var(--km-soc-bg); color: var(--km-soc-txt); }
-.km-badge-wip    { background: var(--km-wea-bg); color: var(--km-wea-txt); }
-.km-badge-over   { background: var(--km-neg-bg); color: var(--km-neg-txt); }
+.km-badge-active      { background: var(--km-soc-bg); color: var(--km-soc-txt); }
+.km-badge-wip         { background: var(--km-wea-bg); color: var(--km-wea-txt); }
+.km-badge-over        { background: var(--km-neg-bg); color: var(--km-neg-txt); }
+.km-badge-unassigned  { background: #FCEBEB; color: #A32D2D; }
 
 /* ── WIP build progress ───────────────────────────────────────────────────── */
 .km-wip-block {
@@ -670,6 +675,15 @@
   padding: 1px 7px;
   border-radius: 99px;
 }
+/* Blocked-asset variant reuses the mil token colours */
+.km-obstacle-blocked { background: var(--km-mil-bg) !important; color: var(--km-mil-txt) !important; }
+
+/* Province label inside obstacle name */
+.km-obstacle-province { font-size: 10px; color: #888; }
+
+/* Orphaned WIP rows */
+.km-orphaned-wip-row { border-left: 2px solid #E24B4A !important; padding-left: 10px !important; }
+.km-orphaned-province-note { font-size: 10px; color: #E24B4A; }
 
 /* ── Asset description toggle ─────────────────────────────────────────────── */
 .km-desc-toggle {
@@ -1144,7 +1158,17 @@ button.km-domain-turn-btn:hover { background: #eceae5; }
 /* Section headers */
 .km-dark .km-card-label                 { color: #9a9690 !important; }
 /* Resolve button */
-.km-dark span[data-km-action]           { background: #3d1212 !important; border-color: #6a2020 !important; color: #f0a0a0 !important; }
+.km-dark span[data-km-action="resolveObstacle"] { background: #3d1212 !important; border-color: #6a2020 !important; color: #f0a0a0 !important; }
+/* Roll button */
+.km-dark .km-btn-roll                   { background: #1a3a5c !important; border-color: #2a5480 !important; color: #90c4e8 !important; }
+.km-dark .km-btn-roll:hover             { background: #1e4878 !important; }
+/* Obstacle blocked badge (mil colours adapt automatically via token, but ensure override) */
+.km-dark .km-obstacle-blocked           { background: var(--km-mil-bg) !important; color: var(--km-mil-txt) !important; }
+/* Orphaned wip */
+.km-dark .km-orphaned-wip-row           { border-left-color: #c04848 !important; }
+.km-dark .km-orphaned-province-note     { color: #c04848 !important; }
+.km-dark .km-obstacle-province          { color: #5e5c58 !important; }
+.km-dark .km-badge-unassigned           { background: #3d1212 !important; color: #f09090 !important; }
 
 /* ── Dark theme — units table + scrollbar area ───────────────────────────── */
 .km-dark .km-units                       { background: #28282e !important; border-color: #404045 !important; }
