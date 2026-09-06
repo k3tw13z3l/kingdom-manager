@@ -267,6 +267,9 @@
             </div>
             {{/if}}
           </div>
+          {{#if potentialUpgrade.system.description}}
+          <div class="km-upgrade-notes" id="upgdesc-{{id}}" style="display:none;">{{potentialUpgrade.system.description}}</div>
+          {{/if}}
           {{/if}}
           {{#if upgrade}}
           <div class="km-asset-row km-asset-wip km-upgrade-row" data-item-id="{{upgrade.id}}">
@@ -285,7 +288,6 @@
           <div class="km-wip-block km-upgrade-wip-block">
             <div class="km-wip-title"><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> {{upgrade.name}} — upgrade progress</div>
             {{> km-wip-checks upgrade}}
-            {{#if upgrade.system.description}}<div class="km-upgrade-notes">{{upgrade.system.description}}</div>{{/if}}
           </div>
           {{/if}}
           {{/each}}
@@ -339,6 +341,9 @@
             </div>
             {{/if}}
           </div>
+          {{#if potentialUpgrade.system.description}}
+          <div class="km-upgrade-notes" id="upgdesc-{{id}}" style="display:none;">{{potentialUpgrade.system.description}}</div>
+          {{/if}}
           {{/if}}
           {{#if upgrade}}
           <div class="km-asset-row km-asset-wip km-upgrade-row" data-item-id="{{upgrade.id}}">
@@ -357,7 +362,6 @@
           <div class="km-wip-block km-upgrade-wip-block">
             <div class="km-wip-title"><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> {{upgrade.name}} — upgrade progress</div>
             {{> km-wip-checks upgrade}}
-            {{#if upgrade.system.description}}<div class="km-upgrade-notes">{{upgrade.system.description}}</div>{{/if}}
           </div>
           {{/if}}
           {{/each}}

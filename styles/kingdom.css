@@ -348,7 +348,7 @@
 }
 .km-upgrade-notes {
   font-size: 11px; color: var(--km-text-secondary); font-style: italic;
-  margin-top: 6px; padding-top: 6px; border-top: var(--km-border); line-height: 1.4;
+  margin: 0 12px 6px; padding: 4px 0; line-height: 1.4;
 }
 
 /* ── Units ────────────────────────────────────────────────────────────────── */
