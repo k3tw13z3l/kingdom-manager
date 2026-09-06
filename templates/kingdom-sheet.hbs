@@ -291,15 +291,15 @@
 
           {{! Stationed units in this province}}
           {{#each stationedUnits}}
-          <div class="km-asset-row km-unit-stationed {{#if isBlocked}}km-asset-blocked{{/if}}" data-item-id="{{id}}">
+          <div class="km-asset-row km-unit-stationed {{#if isBlocked}}km-asset-blocked{{/if}}" data-item-id="{{id}}"{{#if warfareActorId}} data-warfare-actor-id="{{warfareActorId}}"{{/if}}>
             <i class="{{unitTypeIcon unitType}} km-unit-type-icon" aria-hidden="true"></i>
-            <span class="km-asset-name">
+            <span class="km-asset-name{{#if warfareActorId}} km-unit-warfare-link{{/if}}">
               {{#if journalId}}<i class="fas fa-book-open km-journal-link" data-journal-id="{{journalId}}" title="Open journal" aria-hidden="true"></i> {{/if}}{{name}}
               <span class="km-unit-agent-tag">{{capitalize unitType}}</span>
-              {{#if isGarrisoned}}<i class="fas fa-home km-garrison-icon" title="Upkeep covered by garrison" aria-hidden="true"></i>{{/if}}
               {{#if hasFeature}}<span class="km-unit-feature km-pt-{{featureStat}}">{{capitalize featureStat}} +{{featureBonus}}</span>{{/if}}
             </span>
             {{#if isGarrisoned}}
+              <i class="fas fa-home km-garrison-icon" title="Upkeep covered by garrison" aria-hidden="true"></i>
               <span class="km-garrison-name">{{garrisonAssetName}}</span>
               {{#if isGM}}<button type="button" data-action="degarrison" data-item-id="{{id}}" class="km-btn-degarrison" title="Remove from garrison"><i class="fas fa-times" aria-hidden="true"></i></button>{{/if}}
             {{/if}}
@@ -468,8 +468,8 @@
             <span></span>
           </div>
           {{#each units}}
-          <div class="km-unit-row {{#if isBlocked}}km-asset-blocked{{/if}}" data-item-id="{{id}}">
-            <span class="km-unit-name">{{name}}
+          <div class="km-unit-row {{#if isBlocked}}km-asset-blocked{{/if}}" data-item-id="{{id}}"{{#if warfareActorId}} data-warfare-actor-id="{{warfareActorId}}"{{/if}}>
+            <span class="km-unit-name{{#if warfareActorId}} km-unit-warfare-link{{/if}}">{{name}}
               <span class="km-unit-agent-tag">{{capitalize unitType}}</span>
               {{#if isGarrisoned}}<i class="fas fa-home km-garrison-icon" title="Upkeep covered by garrison" aria-hidden="true"></i>{{/if}}
               {{#if hasFeature}}<span class="km-unit-feature km-pt-{{featureStat}}">{{capitalize featureStat}} +{{featureBonus}}</span>{{/if}}

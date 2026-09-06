@@ -115,6 +115,18 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
         if (upgPot) upgPot.style.display = isOpen ? "flex" : "none";
         return;
       }
+      // Army unit name → open linked warfare actor sheet
+      const warfareLink = event.target.closest(".km-unit-warfare-link");
+      if (warfareLink) {
+        const row     = warfareLink.closest("[data-warfare-actor-id]");
+        const actorId = row?.dataset.warfareActorId;
+        if (actorId) {
+          const actor = game.actors?.get(actorId);
+          if (actor) actor.sheet.render({ force: true });
+        }
+        return;
+      }
+
       // Ruler portrait/name → open linked actor sheet
       const rulerEl = event.target.closest(".km-rc-portrait, .km-rc-name");
       if (rulerEl) {
@@ -756,8 +768,9 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       type: "kingdom-manager.asset",
       img:  actor.img,
       system: {
-        assetType:   "unit",
-        unitType:    "army",
+        assetType:     "unit",
+        unitType:      "army",
+        warfareActorId: actor.id,
         provinceId,
         location:    province?.name ?? "",
         stats: {
@@ -1435,6 +1448,7 @@ function buildProvinceData(items, state, blockedIds, itemIndex) {
         featureStat:       i.system.unitFeatureStat ?? "",
         featureBonus:      i.system.unitFeatureBonus ?? 0,
         journalId:         i.system.journalId ?? "",
+        warfareActorId:    i.system.warfareActorId ?? "",
         upgrade,
         potentialUpgrade,
         hasNotes:          !!(i.system.description || potentialUpgrade),
@@ -1471,12 +1485,13 @@ function buildUnitData(items, state, garrisonedUnitIds = new Set(), blockedIds, 
       isOver: Object.values(state.headroom).some(v => v < 0),
       provinceName: unit.system.location || (provinceItem?.system.assetType === "province" ? provinceItem.name : null) || "—",
       isGM: state._isGM, canRoll: state._canRoll,
-      isBlocked:    blockedIds.has(unit.id),
-      isGarrisoned: garrisonedUnitIds.has(unit.id),
-      unitType:     unit.system.unitType ?? "army",
-      hasFeature:   !!(unit.system.unitFeatureStat),
-      featureStat:  unit.system.unitFeatureStat ?? "",
-      featureBonus: unit.system.unitFeatureBonus ?? 0,
+      isBlocked:      blockedIds.has(unit.id),
+      isGarrisoned:   garrisonedUnitIds.has(unit.id),
+      unitType:       unit.system.unitType ?? "army",
+      hasFeature:     !!(unit.system.unitFeatureStat),
+      featureStat:    unit.system.unitFeatureStat ?? "",
+      featureBonus:   unit.system.unitFeatureBonus ?? 0,
+      warfareActorId: unit.system.warfareActorId ?? "",
     };
   });
 }

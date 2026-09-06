@@ -966,6 +966,10 @@ button.km-domain-turn-btn:hover { background: #eceae5; }
   border: 0.5px dashed currentColor;
 }
 
+/* ── Warfare actor link (clickable unit name) ─────────────────────────────── */
+.km-unit-warfare-link { cursor: pointer; }
+.km-unit-warfare-link:hover { text-decoration: underline; }
+
 /* ── Journal book-icon link ───────────────────────────────────────────────── */
 .km-journal-link {
   cursor: pointer;

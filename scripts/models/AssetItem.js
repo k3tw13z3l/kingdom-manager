@@ -117,6 +117,8 @@ export class AssetItemData extends foundry.abstract.TypeDataModel {
       // ID of the asset item this will replace when activated (upgrade flow)
       upgradeTargetId:  new fields.StringField({ initial: "", nullable: true }),
       garrisonAssetId:  new fields.StringField({ initial: "", nullable: true }),
+      // ID of the linked knw-army.warfare Actor (if this unit was created by dropping one)
+      warfareActorId:   new fields.StringField({ initial: "", nullable: true }),
     };
   }
 
