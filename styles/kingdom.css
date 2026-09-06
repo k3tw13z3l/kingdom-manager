@@ -346,6 +346,10 @@
   margin-top: 8px; padding-top: 8px; border-top: var(--km-border);
   font-size: 11px; color: #1D7A56; display: flex; align-items: center; gap: 6px;
 }
+.km-upgrade-notes {
+  font-size: 11px; color: var(--km-text-secondary); font-style: italic;
+  margin-top: 6px; padding-top: 6px; border-top: var(--km-border); line-height: 1.4;
+}
 
 /* ── Units ────────────────────────────────────────────────────────────────── */
 /* ── Unit list (div-based, matches card style) ────────────────────────────── */
@@ -1077,6 +1081,7 @@ button.km-domain-turn-btn:hover { background: #eceae5; }
 .km-dark .km-wip-title                   { color: #9a9690 !important; }
 .km-dark .km-wip-stat                    { color: #dddad4 !important; }
 .km-dark .km-wip-dc                      { color: #9a9690 !important; }
+.km-dark .km-upgrade-notes               { color: #9a9690 !important; border-color: #404045 !important; }
 
 /* Pills */
 .km-dark .km-pill-mil                    { background: #2d2a52 !important; color: #c4c0f0 !important; }

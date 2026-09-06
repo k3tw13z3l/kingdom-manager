@@ -1343,7 +1343,7 @@ function buildProvinceData(items, state, blockedIds, itemIndex) {
 
       // potentialUpgrade: upgradeTargetId points to a world item (not yet embedded)
       let potentialUpgrade = null;
-      if (!upgrade && i.system.upgradeTargetId && state._isGM) {
+      if (!upgrade && i.system.upgradeTargetId) {
         const worldItem = game.items?.get(i.system.upgradeTargetId);
         if (worldItem && worldItem.system?.assetType === "asset") {
           potentialUpgrade = { id: worldItem.id, name: worldItem.name, system: worldItem.system };
@@ -1431,7 +1431,7 @@ function buildProvinceData(items, state, blockedIds, itemIndex) {
         activateIcon: "fas fa-check-circle", activateLabel: "Muster", passedLabel: "Passed",
       } : null;
       let potentialUpgrade = null;
-      if (!upgrade && i.system.upgradeTargetId && state._isGM) {
+      if (!upgrade && i.system.upgradeTargetId) {
         const worldItem = game.items?.get(i.system.upgradeTargetId);
         if (worldItem && worldItem.system?.assetType === "unit") {
           potentialUpgrade = { id: worldItem.id, name: worldItem.name, system: worldItem.system };

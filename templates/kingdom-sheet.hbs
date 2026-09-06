@@ -285,6 +285,7 @@
           <div class="km-wip-block km-upgrade-wip-block">
             <div class="km-wip-title"><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> {{upgrade.name}} — upgrade progress</div>
             {{> km-wip-checks upgrade}}
+            {{#if upgrade.system.description}}<div class="km-upgrade-notes">{{upgrade.system.description}}</div>{{/if}}
           </div>
           {{/if}}
           {{/each}}
@@ -356,6 +357,7 @@
           <div class="km-wip-block km-upgrade-wip-block">
             <div class="km-wip-title"><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> {{upgrade.name}} — upgrade progress</div>
             {{> km-wip-checks upgrade}}
+            {{#if upgrade.system.description}}<div class="km-upgrade-notes">{{upgrade.system.description}}</div>{{/if}}
           </div>
           {{/if}}
           {{/each}}
