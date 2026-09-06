@@ -544,6 +544,9 @@
 .km-form-row { display: flex; align-items: center; gap: 10px; }
 .km-form-row label { font-size: 12px; color: var(--km-text-secondary); min-width: 80px; flex-shrink: 0; }
 .km-form-row input, .km-form-row select { flex: 1; color: var(--km-text); }
+.km-form-row button { flex-shrink: 0; }
+.km-input-sm { width: 60px !important; flex: none !important; text-align: center; }
+.km-asset-dev-slots { margin-top: 6px; }
 .km-form-desc { align-items: flex-start; }
 .km-form-desc label { padding-top: 4px; }
 .km-form-desc textarea { flex: 1; min-height: 80px; resize: vertical; color: var(--km-text); }
@@ -583,7 +586,7 @@
   color: #1a1a1a;
 }
 /* Override dnd5e dark theme inputs inside our sheet */
-.asset-sheet input,
+.asset-sheet input:not([type="checkbox"]),
 .asset-sheet select,
 .asset-sheet textarea {
   background: #ffffff !important;
@@ -1122,7 +1125,7 @@ button.km-domain-turn-btn:hover { background: #eceae5; }
 .km-dark .km-dev-warn                    { background: #e09020 !important; }
 .km-dark .km-dev-full                    { background: #c04040 !important; }
 /* Inputs */
-.km-dark input,
+.km-dark input:not([type="checkbox"]),
 .km-dark select,
 .km-dark textarea                        { background: #222228 !important; border-color: #404045 !important; color: #dddad4 !important; }
 .km-dark input::placeholder              { color: #5e5c58 !important; }

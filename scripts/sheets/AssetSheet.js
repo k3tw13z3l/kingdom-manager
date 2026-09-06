@@ -172,6 +172,34 @@ export class AssetSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       value: key, label
     }));
 
+    const unitTypeOptions = [
+      { value: "army",      label: "Army (can occupy garrison slots)" },
+      { value: "assassin",  label: "Assassin" },
+      { value: "bodyguard", label: "Bodyguard" },
+      { value: "diplomat",  label: "Diplomat" },
+      { value: "garrison",  label: "Garrison (can occupy garrison slots)" },
+      { value: "merchant",  label: "Merchant" },
+      { value: "prophet",   label: "Prophet" },
+      { value: "sage",      label: "Sage" },
+      { value: "spy",       label: "Spy" },
+      { value: "warden",    label: "Warden" },
+    ];
+
+    const unitFeatureStatOptions = [
+      { value: "military", label: "Military" },
+      { value: "wealth",   label: "Wealth" },
+      { value: "social",   label: "Social" },
+      { value: "magic",    label: "Magic" },
+    ];
+
+    const allStatDefs = [
+      { key: "military", icon: "fas fa-shield-alt", label: "Military" },
+      { key: "wealth",   icon: "fas fa-coins",      label: "Wealth" },
+      { key: "social",   icon: "fas fa-users",      label: "Social" },
+      { key: "magic",    icon: "fas fa-magic",      label: "Magic" },
+    ];
+    const statDefs = isProvince ? allStatDefs.slice(0, 3) : allStatDefs;
+
     // For obstacles: list blockable assets/units in same province
     let blockableOptions = [];
     if (isObstacle && this.item.parent) {
@@ -202,6 +230,9 @@ export class AssetSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       terrainOptions,
       assetTypeOptions,
       obstacleStatOptions,
+      unitTypeOptions,
+      unitFeatureStatOptions,
+      statDefs,
       blockableOptions,
       obstacleDC:         sys.obstacleDC,
       requiredChecks:     sys.requiredChecks,

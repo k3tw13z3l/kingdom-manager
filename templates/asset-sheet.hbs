@@ -32,16 +32,9 @@
   <div class="km-form-row">
     <label>Unit type</label>
     <select name="system.unitType">
-      <option value="army"       {{#if (eq system.unitType "army")}}selected{{/if}}>Army (can occupy garrison slots)</option>
-      <option value="assassin"   {{#if (eq system.unitType "assassin")}}selected{{/if}}>Assassin</option>
-      <option value="bodyguard"  {{#if (eq system.unitType "bodyguard")}}selected{{/if}}>Bodyguard</option>
-      <option value="diplomat"   {{#if (eq system.unitType "diplomat")}}selected{{/if}}>Diplomat</option>
-      <option value="garrison"   {{#if (eq system.unitType "garrison")}}selected{{/if}}>Garrison (can occupy garrison slots)</option>
-      <option value="merchant"   {{#if (eq system.unitType "merchant")}}selected{{/if}}>Merchant</option>
-      <option value="prophet"    {{#if (eq system.unitType "prophet")}}selected{{/if}}>Prophet</option>
-      <option value="sage"       {{#if (eq system.unitType "sage")}}selected{{/if}}>Sage</option>
-      <option value="spy"        {{#if (eq system.unitType "spy")}}selected{{/if}}>Spy</option>
-      <option value="warden"     {{#if (eq system.unitType "warden")}}selected{{/if}}>Warden</option>
+      {{#each unitTypeOptions}}
+      <option value="{{value}}" {{#if (eq value ../system.unitType)}}selected{{/if}}>{{label}}</option>
+      {{/each}}
     </select>
   </div>
   {{/if}}
@@ -104,7 +97,7 @@
   {{#if isAsset}}
   <div class="km-form-row">
     <label><i class="fas fa-dice-d20"></i> Base build DC</label>
-    <input type="number" name="system.buildBaseDC" value="{{system.buildBaseDC}}" min="1" style="width:60px;" />
+    <input type="number" name="system.buildBaseDC" value="{{system.buildBaseDC}}" min="1" class="km-input-sm" />
     <span class="km-stat-hint">DC per check = base + abs(stat) + upkeep</span>
   </div>
   {{/if}}
@@ -147,46 +140,19 @@
       </div>
     </div>
     {{else}}
-    {{! Single column for province and unit }}
+    {{! Single column for province and unit — statDefs excludes magic for provinces }}
     <div class="km-stat-inputs">
+      {{#each statDefs}}
       <div class="km-stat-input-row">
-        <label><i class="fas fa-shield-alt"></i> Military</label>
-        <input type="text" name="system.stats.military"
-               value="{{#if (ne system.stats.military null)}}{{system.stats.military}}{{else}}-{{/if}}"
+        <label><i class="{{icon}}"></i> {{label}}</label>
+        <input type="text" name="system.stats.{{key}}"
+               value="{{#if (ne (lookup ../system.stats key) null)}}{{lookup ../system.stats key}}{{else}}-{{/if}}"
                placeholder="-" class="km-stat-field" />
-        {{#unless isProvince}}<span class="km-stat-hint">
-          {{#if (ne system.stats.military null)}}DC {{add system.buildBaseDC (abs (nullish system.stats.military 0))}}{{else}}ignored{{/if}}
+        {{#unless ../isProvince}}<span class="km-stat-hint">
+          {{#if (ne (lookup ../system.stats key) null)}}DC {{add ../system.buildBaseDC (abs (nullish (lookup ../system.stats key) 0))}}{{else}}ignored{{/if}}
         </span>{{/unless}}
       </div>
-      <div class="km-stat-input-row">
-        <label><i class="fas fa-coins"></i> Wealth</label>
-        <input type="text" name="system.stats.wealth"
-               value="{{#if (ne system.stats.wealth null)}}{{system.stats.wealth}}{{else}}-{{/if}}"
-               placeholder="-" class="km-stat-field" />
-        {{#unless isProvince}}<span class="km-stat-hint">
-          {{#if (ne system.stats.wealth null)}}DC {{add system.buildBaseDC (abs (nullish system.stats.wealth 0))}}{{else}}ignored{{/if}}
-        </span>{{/unless}}
-      </div>
-      <div class="km-stat-input-row">
-        <label><i class="fas fa-users"></i> Social</label>
-        <input type="text" name="system.stats.social"
-               value="{{#if (ne system.stats.social null)}}{{system.stats.social}}{{else}}-{{/if}}"
-               placeholder="-" class="km-stat-field" />
-        {{#unless isProvince}}<span class="km-stat-hint">
-          {{#if (ne system.stats.social null)}}DC {{add system.buildBaseDC (abs (nullish system.stats.social 0))}}{{else}}ignored{{/if}}
-        </span>{{/unless}}
-      </div>
-      {{#unless isProvince}}
-      <div class="km-stat-input-row">
-        <label><i class="fas fa-magic"></i> Magic</label>
-        <input type="text" name="system.stats.magic"
-               value="{{#if (ne system.stats.magic null)}}{{system.stats.magic}}{{else}}-{{/if}}"
-               placeholder="-" class="km-stat-field" />
-        <span class="km-stat-hint">
-          {{#if (ne system.stats.magic null)}}DC {{add system.buildBaseDC (abs (nullish system.stats.magic 0))}}{{else}}ignored{{/if}}
-        </span>
-      </div>
-      {{/unless}}
+      {{/each}}
     </div>
     {{/if}}
   </fieldset>
@@ -194,15 +160,15 @@
 
   {{! ── Development cost, unit slots and base DC (assets only) ── }}
   {{#if isAsset}}
-  <div class="km-stats-two-col" style="margin-top:6px;">
+  <div class="km-stats-two-col km-asset-dev-slots">
     <div class="km-form-row">
       <label><i class="fas fa-building"></i> Dev cost</label>
-      <input type="number" name="system.devCost" value="{{system.devCost}}" min="0" style="width:60px;" />
+      <input type="number" name="system.devCost" value="{{system.devCost}}" min="0" class="km-input-sm" />
       <span class="km-stat-hint">Suppresses magic</span>
     </div>
     <div class="km-form-row">
       <label><i class="fas fa-home"></i> Unit slots</label>
-      <input type="number" name="system.unitSlots" value="{{system.unitSlots}}" min="0" style="width:60px;" />
+      <input type="number" name="system.unitSlots" value="{{system.unitSlots}}" min="0" class="km-input-sm" />
       <span class="km-stat-hint">Free garrison slots</span>
     </div>
   </div>
@@ -216,10 +182,9 @@
         <label>Stat</label>
         <select name="system.unitFeatureStat">
           <option value="">— none —</option>
-          <option value="military" {{#if (eq system.unitFeatureStat "military")}}selected{{/if}}>Military</option>
-          <option value="wealth"   {{#if (eq system.unitFeatureStat "wealth")}}selected{{/if}}>Wealth</option>
-          <option value="social"   {{#if (eq system.unitFeatureStat "social")}}selected{{/if}}>Social</option>
-          <option value="magic"    {{#if (eq system.unitFeatureStat "magic")}}selected{{/if}}>Magic</option>
+          {{#each unitFeatureStatOptions}}
+          <option value="{{value}}" {{#if (eq value ../system.unitFeatureStat)}}selected{{/if}}>{{label}}</option>
+          {{/each}}
         </select>
         <span class="km-stat-hint">Which obstacle type this unit can resolve</span>
       </div>
@@ -237,14 +202,14 @@
   <div class="km-form-row">
     <label><i class="fas fa-book" aria-hidden="true"></i> Journal</label>
     <input type="text" name="system.journalId" value="{{#if system.journalId}}{{journalName}}{{/if}}" placeholder="Drop a journal entry here…" class="km-journal-input" readonly />
-    {{#if system.journalId}}<button type="button" data-action="clearJournal" class="km-btn-xs km-btn-danger" style="flex-shrink:0;"><i class="fas fa-times" aria-hidden="true"></i></button>{{/if}}
+    {{#if system.journalId}}<button type="button" data-action="clearJournal" class="km-btn-xs km-btn-danger"><i class="fas fa-times" aria-hidden="true"></i></button>{{/if}}
   </div>
 
   {{#if canUpgrade}}
   <div class="km-form-row">
     <label><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> Upgrades to</label>
     <input type="text" class="km-upgrade-input" value="{{upgradeName}}" placeholder="Drop an item here…" readonly />
-    {{#if system.upgradeTargetId}}<button type="button" data-action="clearUpgrade" class="km-btn-xs km-btn-danger" style="flex-shrink:0;"><i class="fas fa-times" aria-hidden="true"></i></button>{{/if}}
+    {{#if system.upgradeTargetId}}<button type="button" data-action="clearUpgrade" class="km-btn-xs km-btn-danger"><i class="fas fa-times" aria-hidden="true"></i></button>{{/if}}
   </div>
   {{/if}}
 
