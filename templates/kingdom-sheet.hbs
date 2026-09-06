@@ -251,25 +251,25 @@
           <div class="km-asset-desc" id="desc-{{id}}">{{system.description}}</div>
           {{/if}}
           {{#if potentialUpgrade}}
-          <div class="km-asset-row km-potential-upgrade-row" id="upgpot-{{id}}" style="display:none;">
-            {{#if potentialUpgrade.system.unitType}}<i class="{{unitTypeIcon potentialUpgrade.system.unitType}} km-unit-type-icon" aria-hidden="true"></i>{{/if}}
-            <span class="km-asset-name km-upgrade-icon"><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> {{potentialUpgrade.name}}</span>
-            <div class="km-asset-pills">
-              {{#each (statPills potentialUpgrade.system.stats)}}<span class="km-pill {{cssClass}}">{{label}}</span>{{/each}}
+          <div class="km-potential-upgrade-block" id="upgpot-{{id}}" style="display:none;">
+            <div class="km-asset-row km-potential-upgrade-row">
+              {{#if potentialUpgrade.system.unitType}}<i class="{{unitTypeIcon potentialUpgrade.system.unitType}} km-unit-type-icon" aria-hidden="true"></i>{{/if}}
+              <span class="km-asset-name km-upgrade-icon"><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> {{potentialUpgrade.name}}</span>
+              <div class="km-asset-pills">
+                {{#each (statPills potentialUpgrade.system.stats)}}<span class="km-pill {{cssClass}}">{{label}}</span>{{/each}}
+              </div>
+              <span class="km-badge km-badge-avail"><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> Available</span>
+              <span class="km-potential-upgrade-note">Not yet started</span>
+              {{#if isGM}}
+              <div class="km-asset-actions">
+                <button type="button" data-action="startUpgrade" data-item-id="{{id}}" data-upgrade-id="{{potentialUpgrade.id}}" class="km-btn-primary km-btn-xs">
+                  <i class="fas fa-hammer" aria-hidden="true"></i>
+                </button>
+              </div>
+              {{/if}}
             </div>
-            <span class="km-badge km-badge-avail"><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> Available</span>
-            <span class="km-potential-upgrade-note">Not yet started</span>
-            {{#if isGM}}
-            <div class="km-asset-actions">
-              <button type="button" data-action="startUpgrade" data-item-id="{{id}}" data-upgrade-id="{{potentialUpgrade.id}}" class="km-btn-primary km-btn-xs">
-                <i class="fas fa-hammer" aria-hidden="true"></i>
-              </button>
-            </div>
-            {{/if}}
+            {{#if potentialUpgrade.system.description}}<div class="km-upgrade-notes">{{potentialUpgrade.system.description}}</div>{{/if}}
           </div>
-          {{#if potentialUpgrade.system.description}}
-          <div class="km-upgrade-notes" id="upgdesc-{{id}}" style="display:none;">{{potentialUpgrade.system.description}}</div>
-          {{/if}}
           {{/if}}
           {{#if upgrade}}
           <div class="km-asset-row km-asset-wip km-upgrade-row" data-item-id="{{upgrade.id}}">
@@ -326,25 +326,25 @@
           <div class="km-asset-desc" id="desc-{{id}}">{{system.description}}</div>
           {{/if}}
           {{#if potentialUpgrade}}
-          <div class="km-asset-row km-potential-upgrade-row" id="upgpot-{{id}}" style="display:none;">
-            {{#if potentialUpgrade.system.unitType}}<i class="{{unitTypeIcon potentialUpgrade.system.unitType}} km-unit-type-icon" aria-hidden="true"></i>{{/if}}
-            <span class="km-asset-name km-upgrade-icon"><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> {{potentialUpgrade.name}}</span>
-            <div class="km-asset-pills">
-              {{#each (statPills potentialUpgrade.system.stats)}}<span class="km-pill {{cssClass}}">{{label}}</span>{{/each}}
+          <div class="km-potential-upgrade-block" id="upgpot-{{id}}" style="display:none;">
+            <div class="km-asset-row km-potential-upgrade-row">
+              {{#if potentialUpgrade.system.unitType}}<i class="{{unitTypeIcon potentialUpgrade.system.unitType}} km-unit-type-icon" aria-hidden="true"></i>{{/if}}
+              <span class="km-asset-name km-upgrade-icon"><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> {{potentialUpgrade.name}}</span>
+              <div class="km-asset-pills">
+                {{#each (statPills potentialUpgrade.system.stats)}}<span class="km-pill {{cssClass}}">{{label}}</span>{{/each}}
+              </div>
+              <span class="km-badge km-badge-avail"><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> Available</span>
+              <span class="km-potential-upgrade-note">Not yet started</span>
+              {{#if isGM}}
+              <div class="km-asset-actions">
+                <button type="button" data-action="startUpgrade" data-item-id="{{id}}" data-upgrade-id="{{potentialUpgrade.id}}" class="km-btn-primary km-btn-xs">
+                  <i class="fas fa-hammer" aria-hidden="true"></i>
+                </button>
+              </div>
+              {{/if}}
             </div>
-            <span class="km-badge km-badge-avail"><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> Available</span>
-            <span class="km-potential-upgrade-note">Not yet started</span>
-            {{#if isGM}}
-            <div class="km-asset-actions">
-              <button type="button" data-action="startUpgrade" data-item-id="{{id}}" data-upgrade-id="{{potentialUpgrade.id}}" class="km-btn-primary km-btn-xs">
-                <i class="fas fa-hammer" aria-hidden="true"></i>
-              </button>
-            </div>
-            {{/if}}
+            {{#if potentialUpgrade.system.description}}<div class="km-upgrade-notes">{{potentialUpgrade.system.description}}</div>{{/if}}
           </div>
-          {{#if potentialUpgrade.system.description}}
-          <div class="km-upgrade-notes" id="upgdesc-{{id}}" style="display:none;">{{potentialUpgrade.system.description}}</div>
-          {{/if}}
           {{/if}}
           {{#if upgrade}}
           <div class="km-asset-row km-asset-wip km-upgrade-row" data-item-id="{{upgrade.id}}">

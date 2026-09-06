@@ -112,9 +112,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
         // Also show/hide the potential-upgrade row for this item
         const itemId = (toggle.dataset.target ?? "").replace("desc-", "");
         const upgPot  = win.querySelector(`#upgpot-${itemId}`);
-        if (upgPot) upgPot.style.display = isOpen ? "flex" : "none";
-        const upgDesc = win.querySelector(`#upgdesc-${itemId}`);
-        if (upgDesc) upgDesc.style.display = isOpen ? "block" : "none";
+        if (upgPot) upgPot.style.display = isOpen ? "block" : "none";
         return;
       }
       // Army unit name → open linked warfare actor sheet
