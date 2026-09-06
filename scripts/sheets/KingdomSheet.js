@@ -1339,6 +1339,7 @@ function buildProvinceData(items, state, blockedIds, itemIndex) {
         canRoll: state._canRoll, isGM: state._isGM,
         checks: (upgradeItem.system.buildState?.checks ?? []).map(c => ({ ...c, buildBonus: state.buildBonus[c.stat] ?? 0 })),
         activateIcon: "fas fa-check-circle", activateLabel: "Activate", passedLabel: "Passed",
+        pills: Object.entries(upgradeItem.system.stats ?? {}).filter(([,v]) => v !== null && v !== 0).map(([s,v]) => ({ label: STAT_SHORT[s], cost: Math.abs(v) })),
       } : null;
 
       // potentialUpgrade: upgradeTargetId points to a world item (not yet embedded)
@@ -1346,7 +1347,8 @@ function buildProvinceData(items, state, blockedIds, itemIndex) {
       if (!upgrade && i.system.upgradeTargetId) {
         const worldItem = game.items?.get(i.system.upgradeTargetId);
         if (worldItem && worldItem.system?.assetType === "asset") {
-          potentialUpgrade = { id: worldItem.id, name: worldItem.name, system: worldItem.system };
+          potentialUpgrade = { id: worldItem.id, name: worldItem.name, system: worldItem.system,
+            pills: Object.entries(worldItem.system.stats ?? {}).filter(([,v]) => v !== null && v !== 0).map(([s,v]) => ({ label: STAT_SHORT[s], cost: Math.abs(v) })) };
         }
       }
 
@@ -1429,12 +1431,14 @@ function buildProvinceData(items, state, blockedIds, itemIndex) {
         canRoll: state._canRoll, isGM: state._isGM,
         checks: (upgradeItem.system.buildState?.checks ?? []).map(c => ({ ...c, buildBonus: state.buildBonus[c.stat] ?? 0 })),
         activateIcon: "fas fa-check-circle", activateLabel: "Muster", passedLabel: "Passed",
+        pills: Object.entries(upgradeItem.system.stats ?? {}).filter(([,v]) => v !== null && v !== 0).map(([s,v]) => ({ label: STAT_SHORT[s], cost: Math.abs(v) })),
       } : null;
       let potentialUpgrade = null;
       if (!upgrade && i.system.upgradeTargetId) {
         const worldItem = game.items?.get(i.system.upgradeTargetId);
         if (worldItem && worldItem.system?.assetType === "unit") {
-          potentialUpgrade = { id: worldItem.id, name: worldItem.name, system: worldItem.system };
+          potentialUpgrade = { id: worldItem.id, name: worldItem.name, system: worldItem.system,
+            pills: Object.entries(worldItem.system.stats ?? {}).filter(([,v]) => v !== null && v !== 0).map(([s,v]) => ({ label: STAT_SHORT[s], cost: Math.abs(v) })) };
         }
       }
       return {

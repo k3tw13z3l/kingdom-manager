@@ -256,7 +256,11 @@
               {{#if potentialUpgrade.system.isUnit}}<i class="{{unitTypeIcon potentialUpgrade.system.unitType}} km-unit-type-icon" aria-hidden="true"></i>{{/if}}
               <span class="km-asset-name km-upgrade-icon"><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> {{potentialUpgrade.name}}</span>
               <div class="km-asset-pills">
-                {{#each (statPills potentialUpgrade.system.stats)}}<span class="km-pill {{cssClass}}">{{label}}</span>{{/each}}
+                {{#if potentialUpgrade.system.isUnit}}
+                  {{#each potentialUpgrade.pills}}<span class="km-pill km-pill-upk">{{label}} -{{cost}}</span>{{/each}}
+                {{else}}
+                  {{#each (statPills potentialUpgrade.system.stats)}}<span class="km-pill {{cssClass}}">{{label}}</span>{{/each}}
+                {{/if}}
               </div>
               <span class="km-badge km-badge-avail"><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> Available</span>
               <span class="km-potential-upgrade-note">Not yet started</span>
@@ -276,8 +280,12 @@
             {{#if upgrade.system.isUnit}}<i class="{{unitTypeIcon upgrade.system.unitType}} km-unit-type-icon" aria-hidden="true"></i>{{/if}}
             <span class="km-asset-name"><i class="fas fa-arrow-circle-up km-upgrade-icon" aria-hidden="true"></i> {{upgrade.name}}</span>
             <div class="km-asset-pills">
-              {{#each (statPills upgrade.system.stats)}}<span class="km-pill {{cssClass}}">{{label}}</span>{{/each}}
-              {{#if upgrade.system.devCost}}<span class="km-pill km-pill-dev">Dev {{upgrade.system.devCost}}</span>{{/if}}
+              {{#if upgrade.system.isUnit}}
+                {{#each upgrade.pills}}<span class="km-pill km-pill-upk">{{label}} -{{cost}}</span>{{/each}}
+              {{else}}
+                {{#each (statPills upgrade.system.stats)}}<span class="km-pill {{cssClass}}">{{label}}</span>{{/each}}
+                {{#if upgrade.system.devCost}}<span class="km-pill km-pill-dev">Dev {{upgrade.system.devCost}}</span>{{/if}}
+              {{/if}}
             </div>
             <span class="km-badge km-badge-wip"><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> Upgrading</span>
             {{#if upgrade.isGM}}<div class="km-asset-actions">
@@ -331,7 +339,11 @@
               {{#if potentialUpgrade.system.isUnit}}<i class="{{unitTypeIcon potentialUpgrade.system.unitType}} km-unit-type-icon" aria-hidden="true"></i>{{/if}}
               <span class="km-asset-name km-upgrade-icon"><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> {{potentialUpgrade.name}}</span>
               <div class="km-asset-pills">
-                {{#each (statPills potentialUpgrade.system.stats)}}<span class="km-pill {{cssClass}}">{{label}}</span>{{/each}}
+                {{#if potentialUpgrade.system.isUnit}}
+                  {{#each potentialUpgrade.pills}}<span class="km-pill km-pill-upk">{{label}} -{{cost}}</span>{{/each}}
+                {{else}}
+                  {{#each (statPills potentialUpgrade.system.stats)}}<span class="km-pill {{cssClass}}">{{label}}</span>{{/each}}
+                {{/if}}
               </div>
               <span class="km-badge km-badge-avail"><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> Available</span>
               <span class="km-potential-upgrade-note">Not yet started</span>
@@ -351,8 +363,12 @@
             {{#if upgrade.system.isUnit}}<i class="{{unitTypeIcon upgrade.system.unitType}} km-unit-type-icon" aria-hidden="true"></i>{{/if}}
             <span class="km-asset-name"><i class="fas fa-arrow-circle-up km-upgrade-icon" aria-hidden="true"></i> {{upgrade.name}}</span>
             <div class="km-asset-pills">
-              {{#each (statPills upgrade.system.stats)}}<span class="km-pill {{cssClass}}">{{label}}</span>{{/each}}
-              {{#if upgrade.system.devCost}}<span class="km-pill km-pill-dev">Dev {{upgrade.system.devCost}}</span>{{/if}}
+              {{#if upgrade.system.isUnit}}
+                {{#each upgrade.pills}}<span class="km-pill km-pill-upk">{{label}} -{{cost}}</span>{{/each}}
+              {{else}}
+                {{#each (statPills upgrade.system.stats)}}<span class="km-pill {{cssClass}}">{{label}}</span>{{/each}}
+                {{#if upgrade.system.devCost}}<span class="km-pill km-pill-dev">Dev {{upgrade.system.devCost}}</span>{{/if}}
+              {{/if}}
             </div>
             <span class="km-badge km-badge-wip"><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> Upgrading</span>
             {{#if upgrade.isGM}}<div class="km-asset-actions">
