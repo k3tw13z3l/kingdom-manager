@@ -253,7 +253,7 @@
           {{#if potentialUpgrade}}
           <div class="km-potential-upgrade-block" id="upgpot-{{id}}" style="display:none;">
             <div class="km-asset-row km-potential-upgrade-row">
-              {{#if potentialUpgrade.system.unitType}}<i class="{{unitTypeIcon potentialUpgrade.system.unitType}} km-unit-type-icon" aria-hidden="true"></i>{{/if}}
+              {{#if potentialUpgrade.system.isUnit}}<i class="{{unitTypeIcon potentialUpgrade.system.unitType}} km-unit-type-icon" aria-hidden="true"></i>{{/if}}
               <span class="km-asset-name km-upgrade-icon"><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> {{potentialUpgrade.name}}</span>
               <div class="km-asset-pills">
                 {{#each (statPills potentialUpgrade.system.stats)}}<span class="km-pill {{cssClass}}">{{label}}</span>{{/each}}
@@ -328,7 +328,7 @@
           {{#if potentialUpgrade}}
           <div class="km-potential-upgrade-block" id="upgpot-{{id}}" style="display:none;">
             <div class="km-asset-row km-potential-upgrade-row">
-              {{#if potentialUpgrade.system.unitType}}<i class="{{unitTypeIcon potentialUpgrade.system.unitType}} km-unit-type-icon" aria-hidden="true"></i>{{/if}}
+              {{#if potentialUpgrade.system.isUnit}}<i class="{{unitTypeIcon potentialUpgrade.system.unitType}} km-unit-type-icon" aria-hidden="true"></i>{{/if}}
               <span class="km-asset-name km-upgrade-icon"><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> {{potentialUpgrade.name}}</span>
               <div class="km-asset-pills">
                 {{#each (statPills potentialUpgrade.system.stats)}}<span class="km-pill {{cssClass}}">{{label}}</span>{{/each}}
