@@ -892,12 +892,17 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
   static async _km_activateAsset(event, target) {
     const item = this.document.items.get(target.dataset.itemId);
     if (!item) return;
-    await item.update({ "system.buildState.active": true, "system.upgradeTargetId": "" });
 
-    // If another asset declared this one as its upgrade target, delete that predecessor
+    // Find predecessor before updating — another asset that declared this one as its upgrade target
     const predecessor = this.document.items.find(i =>
       i.type === "kingdom-manager.asset" && i.system.upgradeTargetId === item.id
     );
+    // Only clear upgradeTargetId when this is a WIP upgrade replacing a predecessor;
+    // preserve it for fresh activations that still have a potential future upgrade set.
+    const updateData = { "system.buildState.active": true };
+    if (predecessor) updateData["system.upgradeTargetId"] = "";
+    await item.update(updateData);
+
     if (predecessor) await predecessor.delete();
 
     const verb = item.system.assetType === "unit" ? "mustered and ready" : "completed and active";
