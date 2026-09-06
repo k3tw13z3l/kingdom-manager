@@ -80,6 +80,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     const win = this.element.parentElement ?? this.element;
 
     win.addEventListener("click", async (event) => {
+      if (!this.element?.contains(event.target)) return;
       // Province collapse toggle — skip if clicking action buttons or journal links
       const provToggle = event.target.closest(".km-prov-toggle");
       if (provToggle && !event.target.closest(".km-prov-actions") && !event.target.closest(".km-journal-link")) {
@@ -146,6 +147,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
 
     // Ruler personal turn checkbox + garrison asset selector
     win.addEventListener("change", async (event) => {
+      if (!this.element?.contains(event.target)) return;
       const cb = event.target.closest(".km-rc-checkbox input[type=checkbox]");
       if (cb) {
         const rulers = foundry.utils.deepClone(this.document.system.rulers);
@@ -164,6 +166,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     const ROW_SEL = ".km-asset-row[data-item-id], .km-province-block[data-item-id], .km-unit-row[data-item-id]";
 
     win.addEventListener("dragstart", (ev) => {
+      if (!this.element?.contains(ev.target)) return;
       if (!game.user.isGM) return;
       if (ev.target.closest("button, a, input, [data-action], [data-km-action]")) return;
       const row = ev.target.closest(ROW_SEL);
@@ -188,6 +191,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       (item?.system.unitType === "army" || item?.system.unitType === "garrison");
 
     win.addEventListener("dragover", (ev) => {
+      if (!this.element?.contains(ev.target)) return;
       if (!_dragId) return;
       // Garrison slot drop target (has priority over sort logic)
       const garrisonSlot = ev.target.closest(".km-garrison-slot");
@@ -229,6 +233,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     });
 
     win.addEventListener("dragleave", (ev) => {
+      if (!this.element?.contains(ev.target)) return;
       const garrisonSlot = ev.target.closest?.(".km-garrison-slot");
       if (garrisonSlot) { garrisonSlot.classList.remove("km-garrison-drag-over"); return; }
       const dropZone = ev.target.closest?.(".km-drop-zone");
@@ -238,6 +243,7 @@ export class KingdomSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     });
 
     win.addEventListener("drop", async (ev) => {
+      if (!this.element?.contains(ev.target)) return;
       const sortId = ev.dataTransfer.getData("application/x-km-sort");
       if (!sortId) return;
       ev.preventDefault();
