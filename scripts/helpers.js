@@ -95,6 +95,62 @@ export function registerHelpers() {
   // Shared partial: WIP build/claim/upgrade check rows + activate button.
   // Context must provide: id, checks, canRoll, isGM, system.skipChecks,
   //                       activateIcon (full FA class), activateLabel, passedLabel.
+  // Potential-upgrade block (light-blue box). Context: item with id, isGM, potentialUpgrade.
+  Handlebars.registerPartial("km-potential-upgrade", `\
+{{#if potentialUpgrade}}\
+<div class="km-potential-upgrade-block" id="upgpot-{{id}}" style="display:none;">\
+<div class="km-asset-row km-potential-upgrade-row">\
+{{#if potentialUpgrade.system.isUnit}}<i class="{{unitTypeIcon potentialUpgrade.system.unitType}} km-unit-type-icon" aria-hidden="true"></i>{{/if}}\
+<span class="km-asset-name km-upgrade-icon"><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> {{potentialUpgrade.name}}</span>\
+<div class="km-asset-pills">\
+{{#if potentialUpgrade.system.isUnit}}\
+{{#each potentialUpgrade.pills}}<span class="km-pill km-pill-upk">{{label}} -{{cost}}</span>{{/each}}\
+{{else}}\
+{{#each (statPills potentialUpgrade.system.stats)}}<span class="km-pill {{cssClass}}">{{label}}</span>{{/each}}\
+{{/if}}\
+</div>\
+<span class="km-badge km-badge-avail"><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> Available</span>\
+<span class="km-potential-upgrade-note">Not yet started</span>\
+{{#if isGM}}\
+<div class="km-asset-actions">\
+<button type="button" data-action="startUpgrade" data-item-id="{{id}}" data-upgrade-id="{{potentialUpgrade.id}}" class="km-btn-primary km-btn-xs">\
+<i class="fas fa-hammer" aria-hidden="true"></i>\
+</button>\
+</div>\
+{{/if}}\
+</div>\
+{{#if potentialUpgrade.system.description}}<div class="km-upgrade-notes">{{potentialUpgrade.system.description}}</div>{{/if}}\
+</div>\
+{{/if}}`);
+
+  // Upgrade-in-progress row + WIP block. Context: the upgrade object itself.
+  Handlebars.registerPartial("km-upgrade-wip", `\
+<div class="km-asset-row km-asset-wip km-upgrade-row" data-item-id="{{id}}">\
+{{#if system.isUnit}}<i class="{{unitTypeIcon system.unitType}} km-unit-type-icon" aria-hidden="true"></i>{{/if}}\
+<span class="km-asset-name"><i class="fas fa-arrow-circle-up km-upgrade-icon" aria-hidden="true"></i> {{name}}</span>\
+<div class="km-asset-pills">\
+{{#if system.isUnit}}\
+{{#each pills}}<span class="km-pill km-pill-upk">{{label}} -{{cost}}</span>{{/each}}\
+{{else}}\
+{{#each (statPills system.stats)}}<span class="km-pill {{cssClass}}">{{label}}</span>{{/each}}\
+{{#if system.devCost}}<span class="km-pill km-pill-dev">Dev {{system.devCost}}</span>{{/if}}\
+{{/if}}\
+</div>\
+<span class="km-badge km-badge-wip"><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> Upgrading</span>\
+{{#if isGM}}<div class="km-asset-actions">\
+<button type="button" data-action="editItem" data-item-id="{{id}}"><i class="fas fa-edit" aria-hidden="true"></i></button>\
+<button type="button" data-action="deleteItem" data-item-id="{{id}}"><i class="fas fa-trash" aria-hidden="true"></i></button>\
+</div>{{/if}}\
+</div>\
+<div class="km-wip-block km-upgrade-wip-block">\
+<div class="km-wip-title"><i class="fas fa-arrow-circle-up" aria-hidden="true"></i> {{name}} — upgrade progress</div>\
+{{> km-wip-checks this}}\
+{{#if system.description}}<div class="km-upgrade-notes">{{system.description}}</div>{{/if}}\
+</div>`);
+
+  // Shared partial: WIP build/claim/upgrade check rows + activate button.
+  // Context must provide: id, checks, canRoll, isGM, system.skipChecks,
+  //                       activateIcon (full FA class), activateLabel, passedLabel.
   Handlebars.registerPartial("km-wip-checks", `\
 {{#if system.skipChecks}}\
 <div class="km-wip-complete">\
